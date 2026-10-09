@@ -1,0 +1,54 @@
+{
+  "name": "rentcart-backend",
+  "version": "1.0.0",
+  "description": "RentCart REST API — Node.js + Express + TypeScript + Prisma",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only --exit-child src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write src/**/*.ts",
+    "migrate": "node node_modules/prisma/build/index.js migrate dev",
+    "migrate:deploy": "node node_modules/prisma/build/index.js migrate deploy",
+    "generate": "node node_modules/prisma/build/index.js generate",
+    "seed": "ts-node prisma/seed.ts",
+    "studio": "node node_modules/prisma/build/index.js studio"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "5.22.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.6",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "prisma": "5.22.0",
+    "uuid": "^14.0.2",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.6.4",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.71.1",
+    "@typescript-eslint/parser": "^8.71.1",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.9",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "5.8.3"
+  }
+}
