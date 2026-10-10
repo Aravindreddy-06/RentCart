@@ -7,6 +7,7 @@ export const colors = {
   primary: {
     50:  '#f0fdfb',
     100: '#ccfbf4',
+    200: '#99f6e4',
     300: '#5eead6',
     400: '#2dd4be',
     500: '#0F9D8A',  // Brand teal

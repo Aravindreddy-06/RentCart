@@ -10,10 +10,10 @@ import { authenticate } from '../middlewares/auth.middleware';
 
 const router = Router();
 
-// Strict rate limit for login/register — 10 requests per 15 minutes per IP
+// Rate limit for login/register
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 100,
   message: { success: false, message: 'Too many attempts, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,

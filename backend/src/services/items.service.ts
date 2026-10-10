@@ -158,3 +158,6 @@ export async function toggleAvailability(id: string, isAvailable: boolean) {
     },
   });
 }
+
+export { getBookedDates } from './rentals.service';
+

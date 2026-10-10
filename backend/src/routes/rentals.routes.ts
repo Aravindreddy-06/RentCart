@@ -1,0 +1,31 @@
+/**
+ * src/routes/rentals.routes.ts
+ * Rental routes — all protected by authenticate middleware.
+ */
+
+import { Router } from 'express';
+import * as rentalsController from '../controllers/rentals.controller';
+import { authenticate } from '../middlewares/auth.middleware';
+
+const router = Router();
+
+// Create rental request
+router.post('/', authenticate, rentalsController.createRental);
+
+// My rentals as borrower (must be before /:id)
+router.get('/mine', authenticate, rentalsController.getMyRentals);
+
+// Incoming requests as item owner (must be before /:id)
+router.get('/incoming', authenticate, rentalsController.getIncomingRentals);
+
+// Single rental details
+router.get('/:id', authenticate, rentalsController.getRental);
+
+// Lifecycle transitions
+router.patch('/:id/approve', authenticate, rentalsController.approveRental);
+router.patch('/:id/reject', authenticate, rentalsController.rejectRental);
+router.patch('/:id/cancel', authenticate, rentalsController.cancelRental);
+router.patch('/:id/activate', authenticate, rentalsController.activateRental);
+router.patch('/:id/return', authenticate, rentalsController.returnRental);
+
+export default router;

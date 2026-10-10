@@ -185,6 +185,81 @@ async function main() {
     ],
   });
 
+  // ── Rentals ────────────────────────────────────────────────────────────────
+  const allItems = await prisma.item.findMany();
+  const drill = allItems.find((i) => i.title.includes('Drill'))!;
+  const mixer = allItems.find((i) => i.title.includes('Mixer'))!;
+  const bike = allItems.find((i) => i.title.includes('Bike'))!;
+  const tent = allItems.find((i) => i.title.includes('Tent'))!;
+  const camera = allItems.find((i) => i.title.includes('Camera'))!;
+  const washer = allItems.find((i) => i.title.includes('Washer'))!;
+
+  await prisma.rental.createMany({
+    data: [
+      {
+        itemId: drill.id,
+        borrowerId: bob.id,
+        startDate: new Date('2026-11-01'),
+        endDate: new Date('2026-11-03'),
+        totalPrice: 45, // 3 days x 15
+        depositAmount: 50,
+        borrowerNote: 'Need this for putting up some shelves in my garage!',
+        status: RentalStatus.PENDING,
+      },
+      {
+        itemId: washer.id,
+        borrowerId: carol.id,
+        startDate: new Date('2026-11-05'),
+        endDate: new Date('2026-11-07'),
+        totalPrice: 90, // 3 days x 30
+        depositAmount: 120,
+        borrowerNote: 'Cleaning our driveway before the holidays.',
+        status: RentalStatus.APPROVED,
+      },
+      {
+        itemId: mixer.id,
+        borrowerId: alice.id,
+        startDate: new Date('2026-10-15'),
+        endDate: new Date('2026-10-18'),
+        totalPrice: 100, // 4 days x 25
+        depositAmount: 100,
+        borrowerNote: 'Baking a wedding cake this weekend!',
+        status: RentalStatus.ACTIVE,
+      },
+      {
+        itemId: bike.id,
+        borrowerId: bob.id,
+        startDate: new Date('2026-10-01'),
+        endDate: new Date('2026-10-03'),
+        totalPrice: 54, // 3 days x 18
+        depositAmount: 60,
+        borrowerNote: 'Weekend trail ride in the park.',
+        status: RentalStatus.RETURNED,
+      },
+      {
+        itemId: camera.id,
+        borrowerId: carol.id,
+        startDate: new Date('2026-10-20'),
+        endDate: new Date('2026-10-22'),
+        totalPrice: 180, // 3 days x 60
+        depositAmount: 300,
+        borrowerNote: 'Taking portrait photos for family.',
+        ownerNote: 'Camera is reserved for a private photo shoot that weekend.',
+        status: RentalStatus.REJECTED,
+      },
+      {
+        itemId: tent.id,
+        borrowerId: bob.id,
+        startDate: new Date('2026-11-10'),
+        endDate: new Date('2026-11-12'),
+        totalPrice: 60, // 3 days x 20
+        depositAmount: 80,
+        borrowerNote: 'Planning a quick weekend trip.',
+        status: RentalStatus.CANCELLED,
+      },
+    ],
+  });
+
   console.log('✅  Seed complete!');
   console.log(`   Users: alice@example.com, bob@example.com, carol@example.com`);
   console.log(`   Password for all: password123`);

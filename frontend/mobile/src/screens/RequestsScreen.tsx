@@ -1,5 +1,7 @@
 /**
  * src/screens/RequestsScreen.tsx (mobile)
+ * Displays incoming borrow requests on items owned by the current user.
+ * Supports status chips filter, pull-to-refresh, Approve, Decline, Mark Active, Mark Returned.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -9,219 +11,361 @@ import {
   View,
   FlatList,
   TouchableOpacity,
+  Image,
+  RefreshControl,
   ActivityIndicator,
   Alert,
-  RefreshControl,
-  SafeAreaView,
+  Modal,
+  TextInput,
 } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/types';
-import { requestsService, BorrowRequest } from '../services/requests.service';
+import { rentalsService, Rental, RentalStatus } from '../services/rentals.service';
+import { StatusBadge } from '../components/StatusBadge';
 import { colors } from '../utils/colors';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'Requests'>;
+const TABS: { label: string; value: RentalStatus | '' }[] = [
+  { label: 'All', value: '' },
+  { label: 'Pending', value: 'PENDING' },
+  { label: 'Approved', value: 'APPROVED' },
+  { label: 'Active', value: 'ACTIVE' },
+  { label: 'Returned', value: 'RETURNED' },
+  { label: 'Declined', value: 'REJECTED' },
+  { label: 'Cancelled', value: 'CANCELLED' },
+];
 
-export default function RequestsScreen({ navigation }: Props) {
-  const [tab, setTab] = useState<'borrower' | 'lender'>('borrower');
-  const [requests, setRequests] = useState<BorrowRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+export default function RequestsScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+  const [activeTab, setActiveTab] = useState<RentalStatus | ''>('');
+  const [requests, setRequests] = useState<Rental[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState('');
 
-  const fetchRequests = useCallback(async () => {
+  // Reject modal
+  const [rejectingRental, setRejectingRental] = useState<Rental | null>(null);
+  const [rejectNote, setRejectNote] = useState('');
+  const [isRejecting, setIsRejecting] = useState(false);
+
+  const [busyRentalId, setBusyRentalId] = useState<string | null>(null);
+
+  const fetchRequests = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setIsRefreshing(true);
+    else setIsLoading(true);
+    setError('');
+
     try {
-      const data = await requestsService.getAll(tab);
-      setRequests(data);
-    } catch (err) {
-      console.error('Failed to fetch requests:', err);
+      const data = await rentalsService.getIncoming(activeTab);
+      setRequests(data.rentals);
+    } catch {
+      setError('Could not load incoming requests. Check connection and retry.');
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
-  }, [tab]);
+  }, [activeTab]);
 
   useEffect(() => {
-    setLoading(true);
     fetchRequests();
   }, [fetchRequests]);
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchRequests();
-  };
-
-  const handleUpdateStatus = async (
-    id: string,
-    status: 'ACCEPTED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED'
-  ) => {
+  const handleApprove = async (rental: Rental) => {
+    setBusyRentalId(rental.id);
     try {
-      await requestsService.updateStatus(id, status);
-      fetchRequests();
-      Alert.alert('Status Updated', `Request marked as ${status.toLowerCase()}.`);
+      await rentalsService.approve(rental.id);
+      Alert.alert('Approved! ✓', `Request for "${rental.item.title}" has been approved.`);
+      fetchRequests(true);
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.error || 'Failed to update request.');
+      const msg =
+        err?.response?.data?.message ??
+        'Failed to approve request. The dates may conflict with another booking.';
+      Alert.alert('Approval Conflict', msg);
+    } finally {
+      setBusyRentalId(null);
     }
   };
 
-  const getStatusBadgeStyle = (status: string) => {
-    switch (status) {
-      case 'ACCEPTED':
-        return { bg: '#dcfce7', text: '#15803d' };
-      case 'PENDING':
-        return { bg: '#fef3c7', text: '#b45309' };
-      case 'REJECTED':
-        return { bg: '#fee2e2', text: '#b91c1c' };
-      case 'COMPLETED':
-        return { bg: '#e0e7ff', text: '#3730a3' };
-      default:
-        return { bg: colors.gray[100], text: colors.gray[600] };
+  const handleActivate = async (rental: Rental) => {
+    setBusyRentalId(rental.id);
+    try {
+      await rentalsService.activate(rental.id);
+      Alert.alert('Active', `Item handed over to ${rental.borrower.name}.`);
+      fetchRequests(true);
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message ?? 'Failed to update status.');
+    } finally {
+      setBusyRentalId(null);
     }
   };
 
-  const renderRequestCard = ({ item }: { item: BorrowRequest }) => {
-    const statusStyle = getStatusBadgeStyle(item.status);
-    const startDateFormatted = new Date(item.startDate).toLocaleDateString();
-    const endDateFormatted = new Date(item.endDate).toLocaleDateString();
+  const handleReturn = async (rental: Rental) => {
+    setBusyRentalId(rental.id);
+    try {
+      await rentalsService.return(rental.id);
+      Alert.alert('Completed! 📦', `Item return confirmed for "${rental.item.title}".`);
+      fetchRequests(true);
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message ?? 'Failed to confirm return.');
+    } finally {
+      setBusyRentalId(null);
+    }
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectingRental) return;
+    setIsRejecting(true);
+    try {
+      await rentalsService.reject(rejectingRental.id, rejectNote);
+      setRejectingRental(null);
+      setRejectNote('');
+      fetchRequests(true);
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message ?? 'Failed to decline request.');
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
+  const renderItem = ({ item }: { item: Rental }) => {
+    const itemImage =
+      item.item.images?.[0] ??
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400';
+    const isBusy = busyRentalId === item.id;
 
     return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.itemTitle}>{item.item?.title || 'Borrowed Item'}</Text>
-          <Text
-            style={[
-              styles.statusBadge,
-              { backgroundColor: statusStyle.bg, color: statusStyle.text },
-            ]}
-          >
-            {item.status}
-          </Text>
-        </View>
-
-        <Text style={styles.dateText}>
-          📅 {startDateFormatted} → {endDateFormatted}
-        </Text>
-
-        <Text style={styles.userText}>
-          {tab === 'borrower'
-            ? `Lender: ${item.lender?.name || 'Neighbour'}`
-            : `Borrower: ${item.borrower?.name || 'Neighbour'}`}
-        </Text>
-
-        {item.notes ? (
-          <Text style={styles.notesText}>"{item.notes}"</Text>
-        ) : null}
-
-        <View style={styles.cardFooter}>
-          <Text style={styles.totalPrice}>${item.totalCost}</Text>
-
-          {/* Action buttons depending on tab and status */}
-          <View style={styles.actionsRow}>
-            {tab === 'lender' && item.status === 'PENDING' && (
-              <>
-                <TouchableOpacity
-                  style={[styles.actionBtn, styles.acceptBtn]}
-                  onPress={() => handleUpdateStatus(item.id, 'ACCEPTED')}
-                >
-                  <Text style={styles.acceptBtnText}>Accept</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionBtn, styles.rejectBtn]}
-                  onPress={() => handleUpdateStatus(item.id, 'REJECTED')}
-                >
-                  <Text style={styles.rejectBtnText}>Reject</Text>
-                </TouchableOpacity>
-              </>
-            )}
-
-            {tab === 'borrower' && item.status === 'PENDING' && (
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.rejectBtn]}
-                onPress={() => handleUpdateStatus(item.id, 'CANCELLED')}
-              >
-                <Text style={styles.rejectBtnText}>Cancel</Text>
-              </TouchableOpacity>
-            )}
-
-            {item.status === 'ACCEPTED' && (
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.completeBtn]}
-                onPress={() => handleUpdateStatus(item.id, 'COMPLETED')}
-              >
-                <Text style={styles.completeBtnText}>Mark Returned</Text>
-              </TouchableOpacity>
-            )}
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => navigation.navigate('RentalDetail', { rentalId: item.id })}
+        activeOpacity={0.85}
+      >
+        {/* Top: Item + Status */}
+        <View style={styles.topRow}>
+          <Image source={{ uri: itemImage }} style={styles.itemThumb} />
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={styles.categoryBadge}>{item.item.category}</Text>
+            <Text style={styles.itemTitle} numberOfLines={1}>
+              {item.item.title}
+            </Text>
           </View>
+          <StatusBadge status={item.status} size="sm" />
         </View>
-      </View>
+
+        {/* Borrower info */}
+        <View style={styles.borrowerSection}>
+          <View style={styles.borrowerRow}>
+            {item.borrower.avatarUrl ? (
+              <Image source={{ uri: item.borrower.avatarUrl }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarFallback}>
+                <Text style={styles.avatarFallbackText}>
+                  {item.borrower.name.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            <View style={{ flex: 1, marginLeft: 8 }}>
+              <Text style={styles.borrowerName}>{item.borrower.name}</Text>
+              {item.borrower.phone ? (
+                <Text style={styles.phoneText}>📞 {item.borrower.phone}</Text>
+              ) : null}
+            </View>
+          </View>
+
+          <Text style={styles.dates}>
+            📅 {item.startDate} → {item.endDate}
+          </Text>
+
+          <Text style={styles.earnings}>
+            Earnings: <Text style={styles.earningsValue}>${item.totalPrice.toFixed(2)}</Text>
+            {item.depositAmount > 0 ? ` (+${item.depositAmount} dep)` : ''}
+          </Text>
+
+          {item.borrowerNote ? (
+            <Text style={styles.noteText} numberOfLines={2}>
+              "{item.borrowerNote}"
+            </Text>
+          ) : null}
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionRow}>
+          {item.status === 'PENDING' && (
+            <>
+              <TouchableOpacity
+                style={styles.declineBtn}
+                onPress={() => setRejectingRental(item)}
+                disabled={isBusy}
+              >
+                <Text style={styles.declineBtnText}>Decline</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.approveBtn}
+                onPress={() => handleApprove(item)}
+                disabled={isBusy}
+              >
+                {isBusy ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.approveBtnText}>✓ Approve</Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
+
+          {item.status === 'APPROVED' && (
+            <TouchableOpacity
+              style={styles.activateBtn}
+              onPress={() => handleActivate(item)}
+              disabled={isBusy}
+            >
+              {isBusy ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.activateBtnText}>🤝 Hand Over Item</Text>
+              )}
+            </TouchableOpacity>
+          )}
+
+          {item.status === 'ACTIVE' && (
+            <TouchableOpacity
+              style={styles.returnBtn}
+              onPress={() => handleReturn(item)}
+              disabled={isBusy}
+            >
+              {isBusy ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.returnBtnText}>📦 Confirm Return</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+      </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Title */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Borrow Requests</Text>
-        
-        {/* Sub-tabs */}
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tabButton, tab === 'borrower' && styles.tabButtonActive]}
-            onPress={() => setTab('borrower')}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                tab === 'borrower' && styles.tabTextActive,
-              ]}
-            >
-              Borrowed by Me
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tabButton, tab === 'lender' && styles.tabButtonActive]}
-            onPress={() => setTab('lender')}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                tab === 'lender' && styles.tabTextActive,
-              ]}
-            >
-              Lent by Me
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.screenTitle}>Incoming Requests</Text>
+        <Text style={styles.screenSubtitle}>Requests on items you listed</Text>
       </View>
 
-      {loading ? (
-        <View style={styles.center}>
+      {/* Tabs */}
+      <View style={styles.tabsWrapper}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={TABS}
+          keyExtractor={(item) => item.value}
+          contentContainerStyle={styles.tabsContainer}
+          renderItem={({ item }) => {
+            const isSelected = activeTab === item.value;
+            return (
+              <TouchableOpacity
+                style={[styles.tabChip, isSelected && styles.tabChipActive]}
+                onPress={() => setActiveTab(item.value)}
+              >
+                <Text
+                  style={[styles.tabChipText, isSelected && styles.tabChipTextActive]}
+                >
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      </View>
+
+      {/* List */}
+      {isLoading ? (
+        <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary[600]} />
+        </View>
+      ) : error ? (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={() => fetchRequests()}>
+            <Text style={styles.retryBtnText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : requests.length === 0 ? (
+        <View style={styles.centered}>
+          <Text style={styles.emptyIcon}>📬</Text>
+          <Text style={styles.emptyTitle}>No requests found</Text>
+          <Text style={styles.emptyText}>
+            {activeTab
+              ? `No requests currently in "${activeTab}" status.`
+              : 'When neighbours request to borrow your items, they will appear here.'}
+          </Text>
         </View>
       ) : (
         <FlatList
           data={requests}
           keyExtractor={(item) => item.id}
-          renderItem={renderRequestCard}
-          contentContainerStyle={styles.listContent}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContainer}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
+              refreshing={isRefreshing}
+              onRefresh={() => fetchRequests(true)}
               colors={[colors.primary[600]]}
             />
           }
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>📋</Text>
-              <Text style={styles.emptyTitle}>No requests found</Text>
-              <Text style={styles.emptySubtitle}>
-                {tab === 'borrower'
-                  ? "You haven't requested any items to borrow yet."
-                  : "No neighbours have requested your items yet."}
-              </Text>
-            </View>
-          }
         />
       )}
+
+      {/* Reject Modal */}
+      <Modal
+        visible={Boolean(rejectingRental)}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRejectingRental(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Decline Borrow Request</Text>
+            <Text style={styles.modalSubtitle}>
+              You are declining {rejectingRental?.borrower.name}'s request for{' '}
+              {rejectingRental?.item.title}.
+            </Text>
+
+            <TextInput
+              style={styles.modalInput}
+              multiline
+              numberOfLines={3}
+              placeholder="Optional reason for declining…"
+              placeholderTextColor={colors.gray[400]}
+              value={rejectNote}
+              onChangeText={setRejectNote}
+              maxLength={500}
+            />
+
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setRejectingRental(null)}
+                disabled={isRejecting}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalRejectBtn}
+                onPress={handleConfirmReject}
+                disabled={isRejecting}
+              >
+                {isRejecting ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.modalRejectText}>Decline</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -229,170 +373,300 @@ export default function RequestsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
+    backgroundColor: '#ffffff',
   },
   header: {
-    padding: 16,
-    backgroundColor: '#ffffff',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 10,
+  },
+  screenTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: colors.gray[900],
+  },
+  screenSubtitle: {
+    fontSize: 13,
+    color: colors.gray[500],
+    marginTop: 2,
+  },
+  tabsWrapper: {
     borderBottomWidth: 1,
     borderBottomColor: colors.gray[200],
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.gray[900],
-    marginBottom: 12,
+  tabsContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
   },
-  tabContainer: {
-    flexDirection: 'row',
+  tabChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
     backgroundColor: colors.gray[100],
-    borderRadius: 10,
-    padding: 4,
+    marginRight: 6,
   },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 8,
+  tabChipActive: {
+    backgroundColor: colors.primary[600],
   },
-  tabButtonActive: {
-    backgroundColor: '#ffffff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  tabText: {
+  tabChipText: {
     fontSize: 13,
-    fontWeight: '500',
-    color: colors.gray[600],
+    fontWeight: '600',
+    color: colors.gray[700],
   },
-  tabTextActive: {
-    fontWeight: '700',
-    color: colors.primary[700],
+  tabChipTextActive: {
+    color: '#ffffff',
   },
-  listContent: {
+  listContainer: {
     padding: 16,
+    paddingBottom: 40,
+    gap: 12,
   },
   card: {
+    backgroundColor: colors.gray[50],
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    padding: 14,
+    marginBottom: 10,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  itemThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: colors.gray[200],
+  },
+  categoryBadge: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.gray[500],
+    textTransform: 'uppercase',
+  },
+  itemTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.gray[900],
+  },
+  borrowerSection: {
     backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 14,
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: colors.gray[200],
   },
-  cardHeader: {
+  borrowerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
-  itemTitle: {
-    fontSize: 16,
+  avatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+  },
+  avatarFallback: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.primary[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarFallbackText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary[700],
+  },
+  borrowerName: {
+    fontSize: 13,
     fontWeight: '700',
     color: colors.gray[900],
-    flex: 1,
-    marginRight: 8,
   },
-  statusBadge: {
+  phoneText: {
     fontSize: 11,
-    fontWeight: '700',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    overflow: 'hidden',
+    color: colors.primary[600],
+    fontWeight: '600',
   },
-  dateText: {
-    fontSize: 13,
+  dates: {
+    fontSize: 12,
+    color: colors.gray[700],
+    marginBottom: 4,
+  },
+  earnings: {
+    fontSize: 12,
     color: colors.gray[600],
     marginBottom: 4,
   },
-  userText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.gray[800],
-    marginBottom: 6,
-  },
-  notesText: {
-    fontSize: 12,
-    fontStyle: 'italic',
-    color: colors.gray[500],
-    marginBottom: 8,
-    backgroundColor: colors.gray[50],
-    padding: 8,
-    borderRadius: 6,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray[100],
-    marginTop: 6,
-  },
-  totalPrice: {
-    fontSize: 16,
+  earningsValue: {
     fontWeight: '800',
-    color: colors.primary[600],
+    color: '#166534',
   },
-  actionsRow: {
+  noteText: {
+    fontSize: 11,
+    color: colors.gray[500],
+    fontStyle: 'italic',
+  },
+  actionRow: {
     flexDirection: 'row',
+    justifyContent: 'flex-end',
     gap: 8,
   },
-  actionBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  acceptBtn: {
-    backgroundColor: colors.primary[600],
-  },
-  acceptBtnText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  rejectBtn: {
+  declineBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
     backgroundColor: '#fee2e2',
+    borderWidth: 1,
+    borderColor: '#fca5a5',
   },
-  rejectBtnText: {
-    color: colors.danger,
+  declineBtnText: {
     fontSize: 12,
     fontWeight: '700',
+    color: '#b91c1c',
   },
-  completeBtn: {
-    backgroundColor: '#e0e7ff',
+  approveBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#16a34a',
   },
-  completeBtnText: {
-    color: '#3730a3',
+  approveBtnText: {
     fontSize: 12,
     fontWeight: '700',
+    color: '#ffffff',
   },
-  center: {
+  activateBtn: {
     flex: 1,
-    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#16a34a',
     alignItems: 'center',
   },
-  emptyContainer: {
+  activateBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  returnBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#9333ea',
     alignItems: 'center',
-    paddingVertical: 60,
+  },
+  returnBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
   },
   emptyIcon: {
-    fontSize: 48,
-    marginBottom: 12,
+    fontSize: 40,
+    marginBottom: 10,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700',
-    color: colors.gray[800],
+    color: colors.gray[900],
+    marginBottom: 4,
   },
-  emptySubtitle: {
+  emptyText: {
     fontSize: 13,
     color: colors.gray[500],
     textAlign: 'center',
-    marginTop: 4,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#b91c1c',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  retryBtn: {
+    backgroundColor: colors.primary[600],
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  retryBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    width: '100%',
+    maxWidth: 340,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: colors.gray[900],
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    color: colors.gray[500],
+    marginBottom: 14,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: colors.gray[300],
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 13,
+    color: colors.gray[900],
+    backgroundColor: colors.gray[50],
+    height: 80,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+  },
+  modalBtnRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.gray[300],
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.gray[700],
+  },
+  modalRejectBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#dc2626',
+    alignItems: 'center',
+  },
+  modalRejectText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#ffffff',
   },
 });

@@ -115,6 +115,20 @@ export function HomePage() {
               />
             )}
             <button
+              onClick={() => navigate('/rentals')}
+              className="btn-ghost text-xs sm:text-sm px-2.5 sm:px-3 py-2 text-neutral-600 hover:text-neutral-900"
+              title="My Rentals"
+            >
+              <span>My Rentals</span>
+            </button>
+            <button
+              onClick={() => navigate('/requests')}
+              className="btn-ghost text-xs sm:text-sm px-2.5 sm:px-3 py-2 text-neutral-600 hover:text-neutral-900"
+              title="Incoming Requests"
+            >
+              <span>Requests</span>
+            </button>
+            <button
               id="add-item-btn"
               onClick={() => navigate('/items/new')}
               className="btn-primary text-sm gap-1.5 px-3 py-2"

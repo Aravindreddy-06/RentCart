@@ -16,6 +16,9 @@ router.get('/', authenticate, itemsController.listItems);
 // My items — must be before /:id
 router.get('/mine', authenticate, itemsController.getMyItems);
 
+// Booked dates for an item (APPROVED/ACTIVE) — must be before /:id
+router.get('/:id/booked-dates', authenticate, itemsController.getBookedDates);
+
 // Single item details
 router.get('/:id', authenticate, itemsController.getItem);
 

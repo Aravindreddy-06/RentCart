@@ -1,33 +1,33 @@
 /**
  * src/navigation/AppNavigator.tsx (mobile)
+ * Bottom tabs: Home, Requests (with pending badge), My Rentals, Profile
+ * Keep "+" Add Item button on Home.
+ * Stack screens: ItemDetail, RentalDetail, RequestBorrow, AddItem, CreateItem, MyItems, Profile.
  */
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, TouchableOpacity, View, StyleSheet } from 'react-native';
-import { AppStackParamList } from './types';
+import { AppStackParamList, MainTabParamList } from './types';
 import HomeScreen from '../screens/HomeScreen';
 import ItemDetailScreen from '../screens/ItemDetailScreen';
 import AddItemScreen from '../screens/AddItemScreen';
 import CreateItemScreen from '../screens/CreateItemScreen';
 import MyItemsScreen from '../screens/MyItemsScreen';
 import RequestsScreen from '../screens/RequestsScreen';
+import MyRentalsScreen from '../screens/MyRentalsScreen';
+import RentalDetailScreen from '../screens/RentalDetailScreen';
+import RequestBorrowScreen from '../screens/RequestBorrowScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import { rentalsService } from '../services/rentals.service';
 import { colors } from '../utils/colors';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
-export type MainTabParamList = {
-  Explore: undefined;
-  MyListings: undefined;
-  BorrowRequests: undefined;
-  UserProfile: undefined;
-};
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-// Floating "+" button rendered in the tab bar
+// Floating "+" button rendered over the tab bar
 function AddItemFab({ navigation }: { navigation: NativeStackNavigationProp<AppStackParamList> }) {
   return (
     <TouchableOpacity
@@ -41,6 +41,23 @@ function AddItemFab({ navigation }: { navigation: NativeStackNavigationProp<AppS
 }
 
 function MainTabs({ navigation }: { navigation: NativeStackNavigationProp<AppStackParamList> }) {
+  const [pendingCount, setPendingCount] = useState(0);
+
+  const refreshPendingCount = useCallback(async () => {
+    try {
+      const data = await rentalsService.getIncoming('PENDING', 1, 1);
+      setPendingCount(data.pagination.total || 0);
+    } catch {
+      // Ignore if not logged in or network error
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshPendingCount();
+    const interval = setInterval(refreshPendingCount, 15000);
+    return () => clearInterval(interval);
+  }, [refreshPendingCount]);
+
   return (
     <View style={{ flex: 1 }}>
       <Tab.Navigator
@@ -58,31 +75,37 @@ function MainTabs({ navigation }: { navigation: NativeStackNavigationProp<AppSta
         }}
       >
         <Tab.Screen
-          name="Explore"
+          name="HomeTab"
           component={HomeScreen as any}
           options={{
-            tabBarLabel: 'Explore',
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🔍</Text>,
+            tabBarLabel: 'Home',
+            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🏠</Text>,
           }}
         />
         <Tab.Screen
-          name="MyListings"
-          component={MyItemsScreen as any}
-          options={{
-            tabBarLabel: 'My Items',
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📦</Text>,
-          }}
-        />
-        <Tab.Screen
-          name="BorrowRequests"
+          name="RequestsTab"
           component={RequestsScreen as any}
           options={{
             tabBarLabel: 'Requests',
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📋</Text>,
+            tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
+            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📥</Text>,
+          }}
+          listeners={{
+            focus: () => {
+              refreshPendingCount();
+            },
           }}
         />
         <Tab.Screen
-          name="UserProfile"
+          name="MyRentalsTab"
+          component={MyRentalsScreen as any}
+          options={{
+            tabBarLabel: 'My Rentals',
+            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🤝</Text>,
+          }}
+        />
+        <Tab.Screen
+          name="ProfileTab"
           component={ProfileScreen as any}
           options={{
             tabBarLabel: 'Profile',
@@ -114,6 +137,16 @@ export default function AppNavigator() {
         name="ItemDetail"
         component={ItemDetailScreen}
         options={{ title: 'Item Details' }}
+      />
+      <Stack.Screen
+        name="RentalDetail"
+        component={RentalDetailScreen}
+        options={{ title: 'Rental Details' }}
+      />
+      <Stack.Screen
+        name="RequestBorrow"
+        component={RequestBorrowScreen}
+        options={{ title: 'Request to Borrow' }}
       />
       <Stack.Screen
         name="AddItem"

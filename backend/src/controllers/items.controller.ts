@@ -151,3 +151,17 @@ export async function toggleAvailability(req: Request, res: Response, next: Next
     next(err);
   }
 }
+
+export async function getBookedDates(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = getParamId(req);
+    const dates = await itemsService.getBookedDates(id);
+    return success(res, dates);
+  } catch (err: any) {
+    if (err?.name === 'NotFoundError' || err?.statusCode === 404) {
+      return failure(res, 'Item not found', 404);
+    }
+    next(err);
+  }
+}
+

@@ -12,6 +12,7 @@ import { env } from './config/env';
 import authRoutes from './routes/auth.routes';
 import itemsRoutes from './routes/items.routes';
 import uploadsRoutes from './routes/uploads.routes';
+import rentalsRoutes from './routes/rentals.routes';
 import { errorHandler } from './middlewares/error.middleware';
 
 export function createApp() {
@@ -54,6 +55,7 @@ export function createApp() {
   app.use('/api/auth', authRoutes);
   app.use('/api/items', itemsRoutes);
   app.use('/api/uploads', uploadsRoutes);
+  app.use('/api/rentals', rentalsRoutes);
 
   // ── 404 handler ───────────────────────────────────────────────────────────
   app.use((_req, res) => {

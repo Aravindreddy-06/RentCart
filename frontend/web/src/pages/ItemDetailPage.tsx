@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { itemsService, type Item } from '../services/items.service';
+import { RequestBorrowModal } from '../components/RequestBorrowModal';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,7 +33,7 @@ export function ItemDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isTogglingAvailability, setIsTogglingAvailability] = useState(false);
-  const [showComingSoon, setShowComingSoon] = useState(false);
+  const [isBorrowModalOpen, setIsBorrowModalOpen] = useState(false);
 
   const fetchItem = useCallback(async () => {
     if (!id) return;
@@ -305,27 +306,33 @@ export function ItemDetailPage() {
         ) : (
           /* Borrower action */
           <div className="card p-5">
-            <div className="relative inline-block w-full">
+            {item.isAvailable ? (
               <button
-                disabled
-                onMouseEnter={() => setShowComingSoon(true)}
-                onMouseLeave={() => setShowComingSoon(false)}
-                onFocus={() => setShowComingSoon(true)}
-                onBlur={() => setShowComingSoon(false)}
-                className="btn-primary w-full py-3.5 text-base opacity-60 cursor-not-allowed"
+                id="request-borrow-btn"
+                onClick={() => setIsBorrowModalOpen(true)}
+                className="btn-primary w-full py-3.5 text-base font-semibold shadow-md hover:shadow-lg"
               >
-                Request to Borrow
+                🤝 Request to Borrow
               </button>
-              {showComingSoon && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-neutral-900 text-white text-xs font-medium rounded-lg whitespace-nowrap">
-                  Coming soon
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-neutral-900" />
-                </div>
-              )}
-            </div>
+            ) : (
+              <div className="text-center py-2">
+                <p className="text-neutral-500 font-medium text-sm">
+                  This item is currently marked unavailable by the owner.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </main>
+
+      {/* Request to Borrow modal */}
+      {item && (
+        <RequestBorrowModal
+          item={item}
+          isOpen={isBorrowModalOpen}
+          onClose={() => setIsBorrowModalOpen(false)}
+        />
+      )}
 
       {/* Delete confirmation modal */}
       {showDeleteConfirm && (

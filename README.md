@@ -114,10 +114,75 @@ RentCart/
 - `GET /api/items` *(Protected)* — List items with query parameters: `search`, `category`, `page`, `limit`
 - `GET /api/items/mine` *(Protected)* — Fetch items owned by the authenticated user
 - `GET /api/items/:id` *(Protected)* — Get full details of an item (including owner info)
+- `GET /api/items/:id/booked-dates` *(Protected)* — List date ranges of `APPROVED` or `ACTIVE` rentals to block on calendars
 - `POST /api/items` *(Protected)* — Create a new item (`title`, `description`, `category`, `images[]`, `pricePerDay`, `deposit`, `latitude`, `longitude`)
 - `PATCH /api/items/:id` *(Protected, Owner only)* — Update item details
 - `DELETE /api/items/:id` *(Protected, Owner only)* — Delete an item
 - `PATCH /api/items/:id/availability` *(Protected, Owner only)* — Toggle `isAvailable` boolean
+
+### Rentals & Requests (`/api/rentals`)
+All endpoints require authentication, validate with Zod, and return consistent JSON (`{ success, data }` or `{ success, message }`).
+
+- `POST /api/rentals` *(Protected)* — Create a rental request (`itemId`, `startDate`, `endDate`, optional `borrowerNote`). Item must be available, user cannot rent their own item, dates cannot be in past, `endDate >= startDate`. Calculates `totalPrice = days * pricePerDay`. Status starts at `PENDING`.
+- `GET /api/rentals/mine` *(Protected)* — Rentals where the authenticated user is the borrower (`?status=` filter, `page`, `limit`).
+- `GET /api/rentals/incoming` *(Protected)* — Rental requests on items owned by the authenticated user (`?status=` filter, `page`, `limit`).
+- `GET /api/rentals/:id` *(Protected)* — Rental details (accessible only by borrower or owner).
+- `PATCH /api/rentals/:id/approve` *(Protected, Owner only)* — Owner approves a `PENDING` request. Re-checks conflicts inside transaction and returns 409 if overlapping with an existing approved/active rental.
+- `PATCH /api/rentals/:id/reject` *(Protected, Owner only)* — Owner rejects a `PENDING` request with optional `ownerNote`. Status becomes `REJECTED`.
+- `PATCH /api/rentals/:id/cancel` *(Protected, Borrower only)* — Borrower cancels a `PENDING` or `APPROVED` rental. Status becomes `CANCELLED`.
+- `PATCH /api/rentals/:id/activate` *(Protected, Owner only)* — Owner marks an `APPROVED` rental as `ACTIVE` (item handed over).
+- `PATCH /api/rentals/:id/return` *(Protected, Owner only)* — Owner marks an `ACTIVE` rental as `RETURNED` (item returned).
+
+---
+
+## 🔄 Rental Lifecycle & Business Rules
+
+```text
+                  ┌───────────────┐
+                  │    PENDING    │
+                  └──────┬──┬─────┘
+          Owner Approves │  │ Owner Rejects
+                         │  └───────────────► [ REJECTED ]
+                         ▼
+                  ┌───────────────┐
+                  │   APPROVED    │
+                  └──────┬────────┘
+     Owner Hands Over    │
+     (Marks Active)      ▼
+                  ┌───────────────┐
+                  │    ACTIVE     │
+                  └──────┬────────┘
+     Owner Item Return   │
+     (Marks Returned)    ▼
+                  ┌───────────────┐
+                  │   RETURNED    │
+                  └───────────────┘
+
+  * Borrower can cancel anytime during PENDING or APPROVED ──► [ CANCELLED ]
+```
+
+### Double-Booking Prevention
+1. **Concurrent Requests:** Multiple borrowers can request overlapping dates for the same item while requests are `PENDING` (giving the owner freedom of choice).
+2. **Exclusion Enforcement:** Once an owner approves a request (`APPROVED`), or while it is `ACTIVE`, no other rental for the same item may overlap in date range.
+3. **Database Transaction & PostgreSQL Exclusion Constraint:**
+   - On approval, the system locks the item record (`FOR UPDATE`) inside a database transaction and verifies no conflicting `APPROVED` or `ACTIVE` rentals exist before updating.
+   - Enforced at the database level via a PostgreSQL exclusion constraint:
+     ```sql
+     CREATE EXTENSION IF NOT EXISTS btree_gist;
+     ALTER TABLE "Rental"
+       ADD CONSTRAINT "no_overlapping_approved_active_rentals"
+       EXCLUDE USING gist (
+         "itemId" WITH =,
+         daterange("startDate", "endDate", '[]') WITH &&
+       )
+       WHERE ("status" = 'APPROVED' OR "status" = 'ACTIVE');
+     ```
+   - Conflicting approvals return HTTP **409 Conflict**.
+
+### Privacy Gating
+- The owner's phone number is visible to the borrower **ONLY** when the rental status is `APPROVED` or `ACTIVE`.
+- The borrower's phone number is visible to the owner **ONLY** when the rental status is `APPROVED` or `ACTIVE`.
+- In `PENDING`, `REJECTED`, or `CANCELLED` states, phone numbers are stripped from API responses (`null`).
 
 ---
 
@@ -193,6 +258,7 @@ After running `npm run seed` in backend:
 |---|---|---|
 | **User 1 (Alice)** | `alice@example.com` | `password123` |
 | **User 2 (Bob)** | `bob@example.com` | `password123` |
+| **User 3 (Carol)** | `carol@example.com` | `password123` |
 
 ---
 

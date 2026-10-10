@@ -307,9 +307,30 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity style={styles.borrowButton} disabled>
-            <Text style={styles.borrowButtonText}>Request to Borrow</Text>
-            <Text style={styles.comingSoonBadge}>Coming soon</Text>
+          <TouchableOpacity
+            style={[
+              styles.borrowButton,
+              !item.isAvailable && styles.borrowButtonDisabled,
+            ]}
+            disabled={!item.isAvailable}
+            onPress={() => {
+              navigation.navigate('RequestBorrow', {
+                itemId: item.id,
+                title: item.title,
+                pricePerDay: item.pricePerDay,
+                deposit: item.deposit,
+                ownerName: item.owner.name,
+              });
+            }}
+          >
+            <Text
+              style={[
+                styles.borrowButtonText,
+                !item.isAvailable && styles.borrowButtonTextDisabled,
+              ]}
+            >
+              {item.isAvailable ? 'Request to Borrow' : 'Currently Unavailable'}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -527,24 +548,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: colors.gray[300],
+    backgroundColor: colors.primary[600],
     borderRadius: 14,
     paddingVertical: 16,
   },
+  borrowButtonDisabled: {
+    backgroundColor: colors.gray[200],
+  },
   borrowButtonText: {
-    color: colors.gray[600],
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: '700',
   },
-  comingSoonBadge: {
-    backgroundColor: colors.gray[200],
-    color: colors.gray[600],
-    fontSize: 11,
-    fontWeight: '600',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-    overflow: 'hidden',
+  borrowButtonTextDisabled: {
+    color: colors.gray[400],
   },
 
   // ── Error state ───────────────────────────────────────────────────────────────
