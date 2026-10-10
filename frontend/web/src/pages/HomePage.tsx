@@ -105,7 +105,7 @@ export function HomePage() {
             </h2>
           </div>
 
-          {/* User + Logout */}
+          {/* User + Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
             {user?.avatarUrl && (
               <img
@@ -114,6 +114,17 @@ export function HomePage() {
                 className="w-9 h-9 rounded-full border-2 border-neutral-100 hidden sm:block"
               />
             )}
+            <button
+              id="add-item-btn"
+              onClick={() => navigate('/items/new')}
+              className="btn-primary text-sm gap-1.5 px-3 py-2"
+              title="Add Item"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <span className="hidden sm:inline">Add Item</span>
+            </button>
             <button
               id="logout-btn"
               onClick={handleLogout}

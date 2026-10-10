@@ -60,9 +60,7 @@ export default function CreateItemScreen({ navigation }: Props) {
         title,
         description,
         category,
-        dailyRate: rate,
-        location,
-        locationName: location,
+        pricePerDay: rate,
         images: imageUrl ? [imageUrl] : [],
       });
 

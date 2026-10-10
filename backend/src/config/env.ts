@@ -22,4 +22,5 @@ export const env = {
   JWT_REFRESH_SECRET: requireEnv('JWT_REFRESH_SECRET'),
   CLIENT_ORIGINS: (process.env.CLIENT_ORIGINS ?? 'http://localhost:5173').split(','),
   NODE_ENV: process.env.NODE_ENV ?? 'development',
+  PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL ?? 'http://localhost:4000',
 } as const;

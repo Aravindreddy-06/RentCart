@@ -7,16 +7,23 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
 import { env } from './config/env';
 import authRoutes from './routes/auth.routes';
 import itemsRoutes from './routes/items.routes';
+import uploadsRoutes from './routes/uploads.routes';
 import { errorHandler } from './middlewares/error.middleware';
 
 export function createApp() {
   const app = express();
 
   // ── Security headers ──────────────────────────────────────────────────────
-  app.use(helmet());
+  // Allow images to be served from /uploads without CSP interference
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
 
   // ── CORS — allow configured origins ──────────────────────────────────────
   app.use(
@@ -35,6 +42,9 @@ export function createApp() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
+  // ── Static file serving — uploaded images ─────────────────────────────────
+  app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
   // ── Health check ──────────────────────────────────────────────────────────
   app.get('/api/health', (_req, res) => {
     res.json({ success: true, data: { status: 'ok', timestamp: new Date().toISOString() } });
@@ -43,6 +53,7 @@ export function createApp() {
   // ── Feature routes ────────────────────────────────────────────────────────
   app.use('/api/auth', authRoutes);
   app.use('/api/items', itemsRoutes);
+  app.use('/api/uploads', uploadsRoutes);
 
   // ── 404 handler ───────────────────────────────────────────────────────────
   app.use((_req, res) => {

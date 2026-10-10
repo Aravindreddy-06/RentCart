@@ -3,12 +3,13 @@
  * Items API calls matching backend JSON response structure.
  */
 
-import api from './api';
+import api, { BASE_URL } from './api';
 
 export interface ItemOwner {
   id: string;
   name: string;
   avatarUrl?: string;
+  address?: string;
 }
 
 export interface Item {
@@ -18,17 +19,14 @@ export interface Item {
   description: string;
   category: string;
   images: string[];
-  pricePerDay?: number;
-  dailyRate?: number;
-  deposit?: number;
+  pricePerDay: number;
+  deposit: number;
   isAvailable: boolean;
   latitude?: number;
   longitude?: number;
-  location?: string;
-  locationName?: string;
   createdAt: string;
   updatedAt: string;
-  owner?: ItemOwner;
+  owner: ItemOwner;
 }
 
 export interface ItemsResponse {
@@ -52,11 +50,22 @@ export interface CreateItemInput {
   title: string;
   description: string;
   category: string;
-  pricePerDay?: number;
-  dailyRate?: number;
-  location?: string;
-  locationName?: string;
+  pricePerDay: number;
+  deposit?: number;
   images?: string[];
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface UpdateItemInput {
+  title?: string;
+  description?: string;
+  category?: string;
+  pricePerDay?: number;
+  deposit?: number;
+  images?: string[];
+  latitude?: number;
+  longitude?: number;
 }
 
 export const itemsService = {
@@ -68,12 +77,7 @@ export const itemsService = {
     if (query.limit) params.set('limit', String(query.limit));
 
     const url = `/items?${params.toString()}`;
-    console.log('📱 Mobile Items Request URL:', url);
-
     const res = await api.get(url);
-    console.log('📱 Mobile Items Response Status:', res.status);
-    console.log('📱 Mobile Items Response Data:', JSON.stringify(res.data, null, 2));
-
     return res.data.data;
   },
 
@@ -83,20 +87,46 @@ export const itemsService = {
   },
 
   async getMyItems(): Promise<Item[]> {
-    const res = await api.get('/items/user/my-items');
-    return res.data.data || res.data;
+    const res = await api.get('/items/mine');
+    return res.data.data;
   },
 
   async create(data: CreateItemInput): Promise<Item> {
-    const payload = {
-      ...data,
-      pricePerDay: data.pricePerDay || data.dailyRate || 0,
-    };
-    const res = await api.post('/items', payload);
+    const res = await api.post('/items', data);
+    return res.data.data;
+  },
+
+  async update(id: string, data: UpdateItemInput): Promise<Item> {
+    const res = await api.patch(`/items/${id}`, data);
     return res.data.data;
   },
 
   async delete(id: string): Promise<void> {
     await api.delete(`/items/${id}`);
+  },
+
+  async toggleAvailability(id: string, isAvailable: boolean): Promise<Item> {
+    const res = await api.patch(`/items/${id}/availability`, { isAvailable });
+    return res.data.data;
+  },
+
+  /**
+   * Upload images as multipart/form-data.
+   * Each uri is a local file URI from expo-image-picker.
+   */
+  async uploadImages(uris: string[]): Promise<string[]> {
+    const formData = new FormData();
+    uris.forEach((uri, index) => {
+      const filename = uri.split('/').pop() ?? `image_${index}.jpg`;
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+      // React Native FormData accepts { uri, name, type }
+      formData.append('images', { uri, name: filename, type } as unknown as Blob);
+    });
+
+    const res = await api.post('/uploads/images', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data.data.urls as string[];
   },
 };

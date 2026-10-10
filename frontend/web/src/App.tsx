@@ -10,6 +10,8 @@ import { SplashPage } from './pages/SplashPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { HomePage } from './pages/HomePage';
+import { AddItemPage } from './pages/AddItemPage';
+import { ItemDetailPage } from './pages/ItemDetailPage';
 
 export default function App() {
   return (
@@ -24,6 +26,8 @@ export default function App() {
           {/* Protected */}
           <Route element={<ProtectedRoute />}>
             <Route path="/home" element={<HomePage />} />
+            <Route path="/items/new" element={<AddItemPage />} />
+            <Route path="/items/:id" element={<ItemDetailPage />} />
           </Route>
 
           {/* Catch-all */}

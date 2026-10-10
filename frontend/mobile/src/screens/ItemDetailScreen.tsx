@@ -1,8 +1,11 @@
 /**
  * src/screens/ItemDetailScreen.tsx (mobile)
+ * Item Details — swipeable image gallery, owner card, availability badge,
+ * owner management (edit, delete, availability toggle), and borrower action.
+ * Uses react-native-safe-area-context and pull-to-refresh.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,19 +14,62 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
-  Modal,
-  TextInput,
   Alert,
-  SafeAreaView,
+  FlatList,
+  RefreshControl,
+  Dimensions,
+  ViewToken,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/types';
 import { itemsService, Item } from '../services/items.service';
-import { requestsService } from '../services/requests.service';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../utils/colors';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'ItemDetail'>;
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const PLACEHOLDER = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop';
+
+// ─── Image Gallery ────────────────────────────────────────────────────────────
+
+interface GalleryProps {
+  images: string[];
+  onIndexChange: (index: number) => void;
+}
+
+function ImageGallery({ images, onIndexChange }: GalleryProps) {
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current;
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems.length > 0 && viewableItems[0].index != null) {
+        onIndexChange(viewableItems[0].index);
+      }
+    }
+  ).current;
+
+  return (
+    <FlatList
+      data={images}
+      horizontal
+      pagingEnabled
+      showsHorizontalScrollIndicator={false}
+      keyExtractor={(_, i) => String(i)}
+      renderItem={({ item: uri }) => (
+        <Image
+          source={{ uri }}
+          style={{ width: SCREEN_WIDTH, height: 280 }}
+          resizeMode="cover"
+        />
+      )}
+      viewabilityConfig={viewabilityConfig}
+      onViewableItemsChanged={onViewableItemsChanged}
+    />
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ItemDetailScreen({ route, navigation }: Props) {
   const { itemId } = route.params;
@@ -31,85 +77,72 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
 
   const [item, setItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isTogglingAvailability, setIsTogglingAvailability] = useState(false);
 
-  // Borrow form state
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [notes, setNotes] = useState('');
-  const [requestLoading, setRequestLoading] = useState(false);
-
-  useEffect(() => {
-    async function loadItem() {
-      try {
-        const data = await itemsService.getById(itemId);
-        setItem(data);
-
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const in3Days = new Date();
-        in3Days.setDate(in3Days.getDate() + 3);
-
-        setStartDate(tomorrow.toISOString().split('T')[0]);
-        setEndDate(in3Days.toISOString().split('T')[0]);
-      } catch (err) {
-        console.error('Failed to load item:', err);
-        Alert.alert('Error', 'Could not load item details.');
-        navigation.goBack();
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadItem();
-  }, [itemId]);
-
-  const calculateDays = () => {
-    if (!startDate || !endDate) return 1;
-    const start = new Date(startDate).getTime();
-    const end = new Date(endDate).getTime();
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? diffDays : 1;
-  };
-
-  const itemPrice = item ? item.pricePerDay ?? item.dailyRate ?? 0 : 0;
-  const days = calculateDays();
-  const totalCost = itemPrice * days;
-
-  const handleRequestBorrow = async () => {
-    if (!startDate || !endDate) {
-      Alert.alert('Missing dates', 'Please specify both start and end dates.');
-      return;
-    }
-
-    setRequestLoading(true);
+  const fetchItem = useCallback(async (isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
+    setError('');
     try {
-      await requestsService.create({
-        itemId,
-        startDate: new Date(startDate).toISOString(),
-        endDate: new Date(endDate).toISOString(),
-        notes: notes || undefined,
-      });
-
-      setModalVisible(false);
-      Alert.alert('Request Sent! 🎉', 'Your borrow request has been sent to the owner.', [
-        {
-          text: 'View My Requests',
-          onPress: () => navigation.navigate('Requests'),
-        },
-        { text: 'OK' },
-      ]);
-    } catch (err: any) {
-      Alert.alert(
-        'Request Failed',
-        err.response?.data?.error || 'Failed to send borrow request.'
-      );
+      const data = await itemsService.getById(itemId);
+      setItem(data);
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 404) setError('Item not found.');
+      else if (status === 401) navigation.replace('Home');
+      else setError('Failed to load item details.');
     } finally {
-      setRequestLoading(false);
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [itemId, navigation]);
+
+  useEffect(() => { fetchItem(); }, [fetchItem]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchItem(true);
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Item',
+      `Are you sure you want to delete "${item?.title}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await itemsService.delete(itemId);
+              navigation.goBack();
+            } catch {
+              Alert.alert('Error', 'Failed to delete item.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleToggleAvailability = async () => {
+    if (!item) return;
+    setIsTogglingAvailability(true);
+    try {
+      const updated = await itemsService.toggleAvailability(item.id, !item.isAvailable);
+      setItem(updated);
+    } catch {
+      Alert.alert('Error', 'Failed to update availability.');
+    } finally {
+      setIsTogglingAvailability(false);
     }
   };
 
-  if (loading || !item) {
+  // ── Loading ─────────────────────────────────────────────────────────────────
+  if (loading) {
     return (
       <SafeAreaView style={styles.centerContainer}>
         <ActivityIndicator size="large" color={colors.primary[600]} />
@@ -117,160 +150,169 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
     );
   }
 
+  // ── Error ───────────────────────────────────────────────────────────────────
+  if (error || !item) {
+    return (
+      <SafeAreaView style={styles.centerContainer}>
+        <Text style={styles.errorEmoji}>⚠️</Text>
+        <Text style={styles.errorTitle}>{error || 'Something went wrong'}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={() => fetchItem()}>
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
   const isOwner = user?.id === item.ownerId;
-  const imageUrl =
-    item.images && item.images.length > 0 && item.images[0].startsWith('http')
-      ? item.images[0]
-      : 'https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?auto=format&fit=crop&w=600&q=80';
+  const images = item.images.length > 0 ? item.images : [PLACEHOLDER];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[colors.primary[600]]}
+            tintColor={colors.primary[600]}
+          />
+        }
+      >
+        {/* ── Image Gallery ─────────────────────────────────────────────────── */}
+        <View style={styles.galleryContainer}>
+          <ImageGallery images={images} onIndexChange={setActiveImageIndex} />
 
-        <View style={styles.content}>
-          <View style={styles.tagRow}>
-            <Text style={styles.categoryBadge}>{item.category}</Text>
-            <Text
+          {/* Availability badge */}
+          <View style={styles.availabilityBadgeContainer}>
+            <View
               style={[
                 styles.availabilityBadge,
-                {
-                  backgroundColor: item.isAvailable ? '#dcfce7' : '#fef3c7',
-                  color: item.isAvailable ? '#15803d' : '#b45309',
-                },
+                { backgroundColor: item.isAvailable ? '#22c55e' : '#6b7280' },
               ]}
             >
-              {item.isAvailable ? 'Available Now' : 'Currently Borrowed'}
-            </Text>
-          </View>
-
-          <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.price}>
-            ${itemPrice} <Text style={styles.priceUnit}>/ day</Text>
-          </Text>
-
-          <View style={styles.divider} />
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoIcon}>📍</Text>
-            <View>
-              <Text style={styles.infoLabel}>Location</Text>
-              <Text style={styles.infoVal}>
-                {item.locationName || item.location || 'Neighbourhood'}
+              <View
+                style={[
+                  styles.availabilityDot,
+                  { backgroundColor: item.isAvailable ? '#fff' : '#d1d5db' },
+                ]}
+              />
+              <Text style={styles.availabilityText}>
+                {item.isAvailable ? 'Available' : 'Unavailable'}
               </Text>
             </View>
           </View>
 
-          {item.owner && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoIcon}>👤</Text>
-              <View>
-                <Text style={styles.infoLabel}>Lender</Text>
-                <Text style={styles.infoVal}>{item.owner.name}</Text>
-              </View>
+          {/* Dots indicator */}
+          {images.length > 1 && (
+            <View style={styles.dotsContainer}>
+              {images.map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.dot,
+                    i === activeImageIndex && styles.dotActive,
+                  ]}
+                />
+              ))}
             </View>
           )}
+        </View>
+
+        {/* ── Content ───────────────────────────────────────────────────────── */}
+        <View style={styles.content}>
+          {/* Category + title */}
+          <View style={styles.tagRow}>
+            <Text style={styles.categoryBadge}>{item.category}</Text>
+          </View>
+          <Text style={styles.title}>{item.title}</Text>
+
+          {/* Pricing */}
+          <View style={styles.priceRow}>
+            <Text style={styles.price}>${item.pricePerDay}</Text>
+            <Text style={styles.priceUnit}> / day</Text>
+            {item.deposit > 0 && (
+              <Text style={styles.deposit}> + ${item.deposit} deposit</Text>
+            )}
+          </View>
 
           <View style={styles.divider} />
 
-          <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.descriptionText}>{item.description}</Text>
+          {/* Description */}
+          <Text style={styles.sectionLabel}>Description</Text>
+          <Text style={styles.description}>{item.description}</Text>
+
+          <View style={styles.divider} />
+
+          {/* Owner card */}
+          <Text style={styles.sectionLabel}>Owner</Text>
+          <View style={styles.ownerCard}>
+            {item.owner.avatarUrl ? (
+              <Image
+                source={{ uri: item.owner.avatarUrl }}
+                style={styles.ownerAvatar}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.ownerAvatar, styles.ownerAvatarFallback]}>
+                <Text style={styles.ownerAvatarText}>
+                  {item.owner.name.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.ownerName}>{item.owner.name}</Text>
+              {item.owner.address ? (
+                <Text style={styles.ownerAddress}>📍 {item.owner.address}</Text>
+              ) : null}
+            </View>
+          </View>
         </View>
       </ScrollView>
 
-      {/* Bottom Sticky Action Bar */}
+      {/* ── Bottom Action Bar ─────────────────────────────────────────────────── */}
       <View style={styles.bottomBar}>
-        <View>
-          <Text style={styles.bottomPriceLabel}>Total for 1 day</Text>
-          <Text style={styles.bottomPriceVal}>${itemPrice}</Text>
-        </View>
-
         {isOwner ? (
-          <TouchableOpacity style={[styles.actionButton, styles.disabledButton]} disabled>
-            <Text style={styles.actionButtonText}>Your Listing</Text>
-          </TouchableOpacity>
+          <View style={styles.ownerActions}>
+            {/* Toggle availability */}
+            <TouchableOpacity
+              style={[
+                styles.toggleButton,
+                item.isAvailable ? styles.toggleButtonUnavailable : styles.toggleButtonAvailable,
+              ]}
+              onPress={handleToggleAvailability}
+              disabled={isTogglingAvailability}
+            >
+              {isTogglingAvailability ? (
+                <ActivityIndicator color={item.isAvailable ? '#b45309' : '#15803d'} size="small" />
+              ) : (
+                <Text
+                  style={[
+                    styles.toggleButtonText,
+                    { color: item.isAvailable ? '#b45309' : '#15803d' },
+                  ]}
+                >
+                  {item.isAvailable ? 'Mark Unavailable' : 'Mark Available'}
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Delete */}
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+              <Text style={styles.deleteButtonText}>🗑 Delete</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
-          <TouchableOpacity
-            style={[styles.actionButton, !item.isAvailable && styles.disabledButton]}
-            disabled={!item.isAvailable}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.actionButtonText}>Request to Borrow</Text>
+          <TouchableOpacity style={styles.borrowButton} disabled>
+            <Text style={styles.borrowButtonText}>Request to Borrow</Text>
+            <Text style={styles.comingSoonBadge}>Coming soon</Text>
           </TouchableOpacity>
         )}
       </View>
-
-      {/* Borrow Request Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Request Item</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Text style={styles.closeIcon}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.modalItemTitle}>{item.title}</Text>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Start Date (YYYY-MM-DD)</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={startDate}
-                onChangeText={setStartDate}
-                placeholder="2026-10-10"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>End Date (YYYY-MM-DD)</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={endDate}
-                onChangeText={setEndDate}
-                placeholder="2026-10-13"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Note for Lender (Optional)</Text>
-              <TextInput
-                style={[styles.modalInput, { height: 70, textAlignVertical: 'top' }]}
-                value={notes}
-                onChangeText={setNotes}
-                placeholder="Let the lender know how/when you'd like to pick it up..."
-                multiline
-              />
-            </View>
-
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>
-                  ${itemPrice} × {days} day{days > 1 ? 's' : ''}
-                </Text>
-                <Text style={styles.summaryVal}>${totalCost}</Text>
-              </View>
-              <View style={[styles.summaryRow, { marginTop: 4 }]}>
-                <Text style={styles.summaryTotalLabel}>Total Amount</Text>
-                <Text style={styles.summaryTotalVal}>${totalCost}</Text>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={styles.modalSubmitButton}
-              onPress={handleRequestBorrow}
-              disabled={requestLoading}
-            >
-              {requestLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.modalSubmitText}>Confirm & Send Request</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -284,37 +326,72 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.gray[50],
+    padding: 24,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 12,
   },
-  image: {
-    width: '100%',
-    height: 250,
-    backgroundColor: colors.gray[200],
+
+  // ── Gallery ──────────────────────────────────────────────────────────────────
+  galleryContainer: {
+    position: 'relative',
   },
+  availabilityBadgeContainer: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+  },
+  availabilityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  availabilityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  availabilityText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    backgroundColor: '#ffffff',
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.gray[300],
+  },
+  dotActive: {
+    backgroundColor: colors.primary[600],
+    width: 18,
+  },
+
+  // ── Content ──────────────────────────────────────────────────────────────────
   content: {
     padding: 20,
   },
   tagRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   categoryBadge: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.primary[700],
     backgroundColor: colors.primary[50],
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginRight: 8,
-    overflow: 'hidden',
-  },
-  availabilityBadge: {
-    fontSize: 12,
-    fontWeight: '600',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
@@ -325,9 +402,15 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.gray[900],
     marginBottom: 8,
+    lineHeight: 30,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 16,
   },
   price: {
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: '800',
     color: colors.primary[600],
   },
@@ -336,159 +419,164 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: colors.gray[500],
   },
+  deposit: {
+    fontSize: 13,
+    color: colors.gray[500],
+    marginLeft: 4,
+  },
   divider: {
     height: 1,
     backgroundColor: colors.gray[200],
     marginVertical: 16,
   },
-  infoRow: {
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.gray[500],
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: colors.gray[700],
+  },
+
+  // ── Owner ─────────────────────────────────────────────────────────────────────
+  ownerCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    gap: 12,
   },
-  infoIcon: {
+  ownerAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.gray[200],
+  },
+  ownerAvatarFallback: {
+    backgroundColor: colors.primary[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ownerAvatarText: {
     fontSize: 20,
-    marginRight: 12,
+    fontWeight: '700',
+    color: colors.primary[700],
   },
-  infoLabel: {
-    fontSize: 12,
-    color: colors.gray[500],
-  },
-  infoVal: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.gray[800],
-  },
-  sectionTitle: {
+  ownerName: {
     fontSize: 16,
     fontWeight: '700',
     color: colors.gray[900],
-    marginBottom: 8,
   },
-  descriptionText: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.gray[700],
+  ownerAddress: {
+    fontSize: 13,
+    color: colors.gray[500],
+    marginTop: 2,
   },
+
+  // ── Bottom bar ────────────────────────────────────────────────────────────────
   bottomBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     padding: 16,
-    backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: colors.gray[200],
+    backgroundColor: '#ffffff',
   },
-  bottomPriceLabel: {
-    fontSize: 12,
-    color: colors.gray[500],
+  ownerActions: {
+    flexDirection: 'row',
+    gap: 10,
   },
-  bottomPriceVal: {
-    fontSize: 20,
-    fontWeight: '800',
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  toggleButtonAvailable: {
+    backgroundColor: '#f0fdf4',
+    borderColor: '#86efac',
+  },
+  toggleButtonUnavailable: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#fcd34d',
+  },
+  toggleButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  deleteButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  deleteButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ef4444',
+  },
+  borrowButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: colors.gray[300],
+    borderRadius: 14,
+    paddingVertical: 16,
+  },
+  borrowButtonText: {
+    color: colors.gray[600],
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  comingSoonBadge: {
+    backgroundColor: colors.gray[200],
+    color: colors.gray[600],
+    fontSize: 11,
+    fontWeight: '600',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+
+  // ── Error state ───────────────────────────────────────────────────────────────
+  errorEmoji: {
+    fontSize: 40,
+    marginBottom: 12,
+  },
+  errorTitle: {
+    fontSize: 17,
+    fontWeight: '700',
     color: colors.gray[900],
+    marginBottom: 20,
+    textAlign: 'center',
   },
-  actionButton: {
+  retryButton: {
     backgroundColor: colors.primary[600],
     paddingHorizontal: 24,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 12,
+    marginBottom: 10,
   },
-  disabledButton: {
-    backgroundColor: colors.gray[400],
-  },
-  actionButtonText: {
+  retryButtonText: {
     color: '#ffffff',
     fontSize: 15,
     fontWeight: '700',
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+  backButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
   },
-  modalCard: {
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.gray[900],
-  },
-  closeIcon: {
-    fontSize: 20,
+  backButtonText: {
     color: colors.gray[500],
-  },
-  modalItemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary[700],
-    marginBottom: 16,
-  },
-  inputGroup: {
-    marginBottom: 14,
-  },
-  inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.gray[700],
-    marginBottom: 4,
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: colors.gray[300],
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
     fontSize: 14,
-    color: colors.gray[900],
-  },
-  summaryCard: {
-    backgroundColor: colors.gray[50],
-    borderRadius: 10,
-    padding: 12,
-    marginVertical: 14,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  summaryLabel: {
-    fontSize: 13,
-    color: colors.gray[600],
-  },
-  summaryVal: {
-    fontSize: 13,
-    color: colors.gray[900],
-  },
-  summaryTotalLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.gray[900],
-  },
-  summaryTotalVal: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.primary[600],
-  },
-  modalSubmitButton: {
-    backgroundColor: colors.primary[600],
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  modalSubmitText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
   },
 });

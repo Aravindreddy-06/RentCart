@@ -20,8 +20,8 @@ import {
   FlatList,
   Image,
   RefreshControl,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
@@ -99,7 +99,7 @@ export default function HomeScreen({ navigation }: Props) {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   const renderItemCard = ({ item }: { item: Item }) => {
-    const price = item.pricePerDay ?? item.dailyRate ?? 0;
+    const price = item.pricePerDay ?? 0;
     const imageUrl =
       item.images && item.images.length > 0 && item.images[0].startsWith('http')
         ? item.images[0]

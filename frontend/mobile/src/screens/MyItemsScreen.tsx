@@ -92,7 +92,7 @@ export default function MyItemsScreen({ navigation }: Props) {
         </View>
 
         <Text style={styles.itemTitle}>{item.title}</Text>
-        <Text style={styles.price}>${item.dailyRate} / day</Text>
+        <Text style={styles.price}>${item.pricePerDay} / day</Text>
 
         <View style={styles.actionRow}>
           <TouchableOpacity

@@ -1,8 +1,10 @@
 /**
  * src/components/ItemCard.tsx
  * Displays a single item in a card — image, title, price, owner, availability badge.
+ * Clicking the card navigates to the item's detail page.
  */
 
+import { useNavigate } from 'react-router-dom';
 import type { Item } from '../services/items.service';
 
 interface ItemCardProps {
@@ -10,10 +12,18 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ item }: ItemCardProps) {
+  const navigate = useNavigate();
   const imageUrl = item.images[0] ?? 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400';
 
   return (
-    <article className="card overflow-hidden group cursor-pointer transition-all duration-300 hover:shadow-card-hover hover:-translate-y-0.5">
+    <article
+      className="card overflow-hidden group cursor-pointer transition-all duration-300 hover:shadow-card-hover hover:-translate-y-0.5"
+      onClick={() => navigate(`/items/${item.id}`)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && navigate(`/items/${item.id}`)}
+      aria-label={`View details for ${item.title}`}
+    >
       {/* Image */}
       <div className="relative h-44 overflow-hidden bg-neutral-100">
         <img

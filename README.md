@@ -73,7 +73,12 @@ RentCart/
    JWT_REFRESH_SECRET="your-super-secret-refresh-jwt-key"
    JWT_EXPIRES_IN="15m"
    JWT_REFRESH_EXPIRES_IN="7d"
+   CLIENT_ORIGINS="http://localhost:5173,http://localhost:19006"
+   PUBLIC_BASE_URL="http://10.221.161.232:4000"
    ```
+
+   > **Note on `PUBLIC_BASE_URL`:**
+   > `PUBLIC_BASE_URL` is used to build absolute URLs for uploaded static images served at `/uploads`. When running on a local network for mobile device access, replace the IP with your machine's LAN IP so phones can load images.
 
 4. Run Prisma database migrations & seed sample data:
    ```bash
@@ -92,6 +97,27 @@ RentCart/
    npm run dev
    ```
    The API will be available at `http://localhost:4000`.
+
+---
+
+## 📡 API Endpoints
+
+### Authentication (`/api/auth`)
+- `POST /api/auth/register` — Register a new user account
+- `POST /api/auth/login` — Sign in and receive access + refresh tokens
+- `POST /api/auth/refresh` — Refresh access token using refresh token
+
+### Image Uploads (`/api/uploads`)
+- `POST /api/uploads/images` *(Protected)* — Upload up to 5 images (`multipart/form-data`, max 5 MB each, JPG/PNG/WebP). Returns `{ urls: string[] }` containing absolute URLs constructed with `PUBLIC_BASE_URL`.
+
+### Items (`/api/items`)
+- `GET /api/items` *(Protected)* — List items with query parameters: `search`, `category`, `page`, `limit`
+- `GET /api/items/mine` *(Protected)* — Fetch items owned by the authenticated user
+- `GET /api/items/:id` *(Protected)* — Get full details of an item (including owner info)
+- `POST /api/items` *(Protected)* — Create a new item (`title`, `description`, `category`, `images[]`, `pricePerDay`, `deposit`, `latitude`, `longitude`)
+- `PATCH /api/items/:id` *(Protected, Owner only)* — Update item details
+- `DELETE /api/items/:id` *(Protected, Owner only)* — Delete an item
+- `PATCH /api/items/:id/availability` *(Protected, Owner only)* — Toggle `isAvailable` boolean
 
 ---
 

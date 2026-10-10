@@ -11,6 +11,7 @@ export type AuthStackParamList = {
 export type AppStackParamList = {
   Home: undefined;
   ItemDetail: { itemId: string };
+  AddItem: undefined;
   CreateItem: undefined;
   MyItems: undefined;
   Requests: undefined;
