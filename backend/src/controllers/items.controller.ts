@@ -48,13 +48,26 @@ function getParamId(req: Request): string {
 
 export async function listItems(req: Request, res: Response, next: NextFunction) {
   try {
-    const { search, category, page, limit } = req.query;
+    const { search, category, page, limit, lat, lng, radiusKm } = req.query;
+
+    const parsedLat =
+      lat !== undefined && lat !== '' ? parseFloat(lat as string) : undefined;
+    const parsedLng =
+      lng !== undefined && lng !== '' ? parseFloat(lng as string) : undefined;
+    const parsedRadius =
+      radiusKm !== undefined && radiusKm !== ''
+        ? Math.min(50, Math.max(0.1, parseFloat(radiusKm as string)))
+        : 5;
 
     const result = await itemsService.getItems({
       search: typeof search === 'string' ? search : undefined,
       category: typeof category === 'string' ? category : undefined,
       page: page ? parseInt(page as string, 10) : undefined,
       limit: limit ? parseInt(limit as string, 10) : undefined,
+      lat: parsedLat !== undefined && !isNaN(parsedLat) ? parsedLat : undefined,
+      lng: parsedLng !== undefined && !isNaN(parsedLng) ? parsedLng : undefined,
+      radiusKm: !isNaN(parsedRadius) ? parsedRadius : 5,
+      currentUserId: req.user?.userId,
     });
 
     return success(res, result);
@@ -65,7 +78,7 @@ export async function listItems(req: Request, res: Response, next: NextFunction)
 
 export async function getItem(req: Request, res: Response, next: NextFunction) {
   try {
-    const item = await itemsService.getItemById(getParamId(req));
+    const item = await itemsService.getItemById(getParamId(req), req.user?.userId);
     if (!item) return failure(res, 'Item not found', 404);
     return success(res, item);
   } catch (err) {

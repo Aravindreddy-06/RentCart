@@ -85,6 +85,9 @@ export function Navbar() {
                 </span>
               )}
             </NavLink>
+            <NavLink to="/profile" className={navLinkClass}>
+              Profile
+            </NavLink>
           </nav>
         </div>
 
@@ -109,7 +112,11 @@ export function Navbar() {
 
           {/* User info */}
           {user && (
-            <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-neutral-200">
+            <NavLink
+              to="/profile"
+              className="hidden sm:flex items-center gap-2 pl-2 border-l border-neutral-200 hover:opacity-85 transition-opacity"
+              title="My Profile"
+            >
               {user.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
@@ -124,7 +131,7 @@ export function Navbar() {
               <span className="text-sm font-medium text-neutral-800 max-w-[120px] truncate">
                 {user.name.split(' ')[0]}
               </span>
-            </div>
+            </NavLink>
           )}
 
           <button
@@ -165,6 +172,9 @@ export function Navbar() {
               {pendingCount}
             </span>
           )}
+        </NavLink>
+        <NavLink to="/profile" className={navLinkClass}>
+          Profile
         </NavLink>
       </div>
     </header>

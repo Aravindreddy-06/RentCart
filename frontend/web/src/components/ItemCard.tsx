@@ -46,6 +46,14 @@ export function ItemCard({ item }: ItemCardProps) {
             </span>
           )}
         </div>
+        {/* Distance badge if available */}
+        {item.distanceKm != null && (
+          <div className="absolute top-3 left-3">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/95 text-primary-700 shadow-sm backdrop-blur-sm">
+              📍 {item.distanceKm} km away
+            </span>
+          </div>
+        )}
         {/* Category label */}
         <div className="absolute bottom-3 left-3">
           <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-black/50 text-white backdrop-blur-sm">
@@ -56,9 +64,16 @@ export function ItemCard({ item }: ItemCardProps) {
 
       {/* Content */}
       <div className="p-4">
-        <h3 className="font-semibold text-neutral-900 text-sm leading-snug line-clamp-1 mb-1">
-          {item.title}
-        </h3>
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <h3 className="font-semibold text-neutral-900 text-sm leading-snug line-clamp-1">
+            {item.title}
+          </h3>
+          {item.distanceKm != null && (
+            <span className="flex-shrink-0 text-[11px] font-semibold text-primary-700 bg-primary-50 border border-primary-100 px-1.5 py-0.5 rounded-md">
+              {item.distanceKm} km
+            </span>
+          )}
+        </div>
         <p className="text-neutral-500 text-xs line-clamp-2 mb-3 leading-relaxed">
           {item.description}
         </p>

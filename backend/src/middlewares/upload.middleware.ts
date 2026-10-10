@@ -37,3 +37,13 @@ export const uploadImages = multer({
     files: 5,
   },
 }).array('images', 5);
+
+export const uploadAvatar = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5 MB per file
+    files: 1,
+  },
+}).single('avatar');
+

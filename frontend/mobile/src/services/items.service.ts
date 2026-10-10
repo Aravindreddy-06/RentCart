@@ -24,6 +24,7 @@ export interface Item {
   isAvailable: boolean;
   latitude?: number;
   longitude?: number;
+  distanceKm?: number;
   createdAt: string;
   updatedAt: string;
   owner: ItemOwner;
@@ -44,6 +45,9 @@ export interface ItemsQuery {
   category?: string;
   page?: number;
   limit?: number;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
 }
 
 export interface CreateItemInput {
@@ -75,6 +79,9 @@ export const itemsService = {
     if (query.category) params.set('category', query.category);
     if (query.page) params.set('page', String(query.page));
     if (query.limit) params.set('limit', String(query.limit));
+    if (query.lat != null) params.set('lat', String(query.lat));
+    if (query.lng != null) params.set('lng', String(query.lng));
+    if (query.radiusKm != null) params.set('radiusKm', String(query.radiusKm));
 
     const url = `/items?${params.toString()}`;
     const res = await api.get(url);

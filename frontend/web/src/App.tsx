@@ -15,6 +15,8 @@ import { ItemDetailPage } from './pages/ItemDetailPage';
 import { MyRentalsPage } from './pages/MyRentalsPage';
 import { RequestsPage } from './pages/RequestsPage';
 import { RentalDetailPage } from './pages/RentalDetailPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { PublicProfilePage } from './pages/PublicProfilePage';
 
 export default function App() {
   return (
@@ -29,6 +31,8 @@ export default function App() {
           {/* Protected */}
           <Route element={<ProtectedRoute />}>
             <Route path="/home" element={<HomePage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/users/:id" element={<PublicProfilePage />} />
             <Route path="/items/new" element={<AddItemPage />} />
             <Route path="/items/:id" element={<ItemDetailPage />} />
             <Route path="/rentals" element={<MyRentalsPage />} />

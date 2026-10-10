@@ -8,9 +8,11 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  phone?: string;
-  avatarUrl?: string;
-  address?: string;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   createdAt: string;
   updatedAt: string;
 }

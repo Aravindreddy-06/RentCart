@@ -230,24 +230,37 @@ export function ItemDetailPage() {
         </div>
 
         {/* Owner card */}
-        <div className="card p-5">
-          <h3 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">Owner</h3>
+        <div
+          onClick={() => navigate(`/users/${item.owner.id}`)}
+          className="card p-5 cursor-pointer hover:border-primary-300 hover:shadow-md transition-all group"
+          role="button"
+          tabIndex={0}
+          title="View public profile"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide">Owner</h3>
+            <span className="text-xs font-semibold text-primary-600 group-hover:underline flex items-center gap-1">
+              View Profile →
+            </span>
+          </div>
           <div className="flex items-center gap-3">
             {item.owner.avatarUrl ? (
               <img
                 src={item.owner.avatarUrl}
                 alt={item.owner.name}
-                className="w-12 h-12 rounded-full object-cover border-2 border-neutral-100"
+                className="w-12 h-12 rounded-full object-cover border-2 border-neutral-100 group-hover:scale-105 transition-transform"
               />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <span className="text-primary-700 font-bold text-lg">
                   {item.owner.name.charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
             <div>
-              <p className="font-semibold text-neutral-900">{item.owner.name}</p>
+              <p className="font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
+                {item.owner.name}
+              </p>
               {item.owner.address && (
                 <p className="text-neutral-500 text-sm flex items-center gap-1">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

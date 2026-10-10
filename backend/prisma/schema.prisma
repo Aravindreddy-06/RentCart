@@ -62,6 +62,7 @@ model Item {
   owner   User     @relation("OwnerItems", fields: [ownerId], references: [id], onDelete: Cascade)
   rentals Rental[]
 
+  @@index([latitude, longitude])
   @@map("items")
 }
 

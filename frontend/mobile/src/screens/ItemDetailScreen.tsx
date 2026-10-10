@@ -249,8 +249,17 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
           <View style={styles.divider} />
 
           {/* Owner card */}
-          <Text style={styles.sectionLabel}>Owner</Text>
-          <View style={styles.ownerCard}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <Text style={styles.sectionLabel}>Owner</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('PublicProfile', { userId: item.owner.id })}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary[600] }}>View Profile →</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            style={styles.ownerCard}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('PublicProfile', { userId: item.owner.id })}
+          >
             {item.owner.avatarUrl ? (
               <Image
                 source={{ uri: item.owner.avatarUrl }}
@@ -270,7 +279,8 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
                 <Text style={styles.ownerAddress}>📍 {item.owner.address}</Text>
               ) : null}
             </View>
-          </View>
+            <Text style={{ color: colors.gray[400], fontSize: 16 }}>›</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 

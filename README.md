@@ -110,8 +110,24 @@ RentCart/
 ### Image Uploads (`/api/uploads`)
 - `POST /api/uploads/images` *(Protected)* — Upload up to 5 images (`multipart/form-data`, max 5 MB each, JPG/PNG/WebP). Returns `{ urls: string[] }` containing absolute URLs constructed with `PUBLIC_BASE_URL`.
 
-### Items (`/api/items`)
-- `GET /api/items` *(Protected)* — List items with query parameters: `search`, `category`, `page`, `limit`
+### User Profile (`/api/users`)
+All endpoints are protected by JWT authentication and validate payloads with Zod.
+
+- `GET /api/users/me` *(Protected)* — Current user's full profile (`id`, `name`, `email`, `phone`, `address`, `latitude`, `longitude`, `avatarUrl`, `createdAt`, `updatedAt`).
+- `PATCH /api/users/me` *(Protected)* — Update profile details (`name`, `phone`, `address`, `latitude`, `longitude`, `avatarUrl`).
+- `POST /api/users/me/avatar` *(Protected)* — Upload profile avatar (single image, max 5 MB, JPG/PNG/WebP). Returns `{ avatarUrl: string, user: User }`.
+- `PATCH /api/users/me/password` *(Protected)* — Change password (`currentPassword`, `newPassword` min 8 chars). Returns HTTP 400 if current password is incorrect.
+- `GET /api/users/:id` *(Protected)* — Public profile of a community member (`name`, `avatarUrl`, `addressArea`, `memberSince`, `itemCount`, `items`). **Never exposes email, phone, or exact coordinates.**
+
+### Items & Nearby Search (`/api/items`)
+- `GET /api/items` *(Protected)* — List items with query parameters:
+  - `search` — Full-text keyword search across title and description
+  - `category` — Filter by category (`Tools`, `Electronics`, `Kitchen`, `Sports`, `Books`, `Other`)
+  - `page`, `limit` — Pagination
+  - `lat`, `lng` *(Optional)* — User's latitude and longitude for nearby search
+  - `radiusKm` *(Optional, default 5, max 50)* — Distance radius in kilometers
+  - *Nearby search implementation:* When `lat` and `lng` are provided, items are pre-filtered via a bounding box on the `(latitude, longitude)` composite index, calculated with the Haversine formula in PostgreSQL via Prisma `$queryRaw`, return `distanceKm` on each item, and sort nearest first.
+  - *Location privacy:* Returned item coordinates are rounded to ~3 decimals (~110 m resolution) for non-owners to protect homeowners' exact locations.
 - `GET /api/items/mine` *(Protected)* — Fetch items owned by the authenticated user
 - `GET /api/items/:id` *(Protected)* — Get full details of an item (including owner info)
 - `GET /api/items/:id/booked-dates` *(Protected)* — List date ranges of `APPROVED` or `ACTIVE` rentals to block on calendars
