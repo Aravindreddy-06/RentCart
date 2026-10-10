@@ -21,6 +21,7 @@ import RentalDetailScreen from '../screens/RentalDetailScreen';
 import RequestBorrowScreen from '../screens/RequestBorrowScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import PublicProfileScreen from '../screens/PublicProfileScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 import { rentalsService } from '../services/rentals.service';
 import { colors } from '../utils/colors';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -178,6 +179,11 @@ export default function AppNavigator() {
         name="PublicProfile"
         component={PublicProfileScreen}
         options={{ title: 'Neighbour Profile' }}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{ title: 'Notifications' }}
       />
     </Stack.Navigator>
   );

@@ -5,7 +5,8 @@
  */
 
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../utils/colors';
 
 export default function SplashScreen() {

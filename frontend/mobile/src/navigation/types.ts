@@ -26,6 +26,7 @@ export type AppStackParamList = {
   Requests: undefined;
   Profile: undefined;
   PublicProfile: { userId: string };
+  Notifications: undefined;
 };
 
 export type MainTabParamList = {

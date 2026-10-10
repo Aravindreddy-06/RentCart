@@ -7,7 +7,7 @@
  * (0 km, 0.8 km, 1.8 km, 4.2 km, 8.5 km) to thoroughly test the Nearby search radius filters.
  */
 
-import { PrismaClient, RentalStatus } from '@prisma/client';
+import { PrismaClient, RentalStatus, NotificationType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -16,6 +16,8 @@ async function main() {
   console.log('🌱  Seeding database…');
 
   // ── Clear existing data ────────────────────────────────────────────────────
+  await prisma.notification.deleteMany();
+  await prisma.pushToken.deleteMany();
   await prisma.rental.deleteMany();
   await prisma.item.deleteMany();
   await prisma.user.deleteMany();
@@ -341,6 +343,66 @@ async function main() {
         depositAmount: 80,
         borrowerNote: 'Planning a quick weekend trip.',
         status: RentalStatus.CANCELLED,
+      },
+    ],
+  });
+
+  // ── Sample Notifications ──────────────────────────────────────────────────
+  const allRentals = await prisma.rental.findMany();
+  const pendingDrillRental = allRentals.find((r) => r.itemId === drill.id && r.borrowerId === bob.id)!;
+  const approvedWasherRental = allRentals.find((r) => r.itemId === washer.id && r.borrowerId === carol.id)!;
+  const activeMixerRental = allRentals.find((r) => r.itemId === mixer.id && r.borrowerId === alice.id)!;
+  const returnedBikeRental = allRentals.find((r) => r.itemId === bike.id && r.borrowerId === bob.id)!;
+
+  await prisma.notification.createMany({
+    data: [
+      // Alice's notifications (owner of drill & washer; borrower of mixer)
+      {
+        userId: alice.id,
+        type: NotificationType.RENTAL_REQUESTED,
+        title: 'Rental Requested',
+        body: 'Bob Martinez requested to rent "DeWalt Power Drill".',
+        data: { rentalId: pendingDrillRental.id, itemId: drill.id },
+        isRead: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 mins ago
+      },
+      {
+        userId: alice.id,
+        type: NotificationType.RENTAL_ACTIVATED,
+        title: 'Rental Active',
+        body: 'Your rental of "KitchenAid Stand Mixer" is now active.',
+        data: { rentalId: activeMixerRental.id, itemId: mixer.id },
+        isRead: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 120), // 2 hours ago
+      },
+      {
+        userId: alice.id,
+        type: NotificationType.RENTAL_CANCELLED,
+        title: 'Rental Cancelled',
+        body: 'Rental request for "Camping Tent (4-person)" was cancelled by the borrower.',
+        data: { rentalId: allRentals.find((r) => r.itemId === tent.id)!.id, itemId: tent.id },
+        isRead: true,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+      },
+
+      // Bob's notifications (borrower of drill & bike)
+      {
+        userId: bob.id,
+        type: NotificationType.RENTAL_RETURNED,
+        title: 'Rental Returned',
+        body: 'Your rental of "Trek Mountain Bike" was marked as returned.',
+        data: { rentalId: returnedBikeRental.id, itemId: bike.id },
+        isRead: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 45), // 45 mins ago
+      },
+      {
+        userId: bob.id,
+        type: NotificationType.RENTAL_APPROVED,
+        title: 'Rental Approved',
+        body: 'Your request to rent "Pressure Washer" was approved!',
+        data: { rentalId: approvedWasherRental.id, itemId: washer.id },
+        isRead: true,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12), // 12 hours ago
       },
     ],
   });

@@ -5,7 +5,8 @@
  */
 
 import prisma from '../prisma/client';
-import { Prisma, RentalStatus } from '@prisma/client';
+import { Prisma, RentalStatus, NotificationType } from '@prisma/client';
+import { createNotification } from './notifications.service';
 
 export class ValidationError extends Error {
   statusCode = 400;
@@ -196,6 +197,19 @@ export async function createRental(input: CreateRentalInput) {
     include: rentalInclude,
   });
 
+  try {
+    await createNotification(
+      item.ownerId,
+      NotificationType.RENTAL_REQUESTED,
+      'Rental Requested',
+      `${rental.borrower.name} requested to rent "${item.title}".`,
+      { rentalId: rental.id, itemId: item.id },
+      input.borrowerId,
+    );
+  } catch (notifErr) {
+    console.error('Failed to create rental requested notification:', notifErr);
+  }
+
   return sanitizeRentalForUser(rental, input.borrowerId);
 }
 
@@ -338,6 +352,19 @@ export async function approveRental(rentalId: string, ownerId: string) {
       },
     );
 
+    try {
+      await createNotification(
+        updated.borrowerId,
+        NotificationType.RENTAL_APPROVED,
+        'Rental Approved',
+        `Your request to rent "${updated.item.title}" was approved!`,
+        { rentalId: updated.id, itemId: updated.itemId },
+        ownerId,
+      );
+    } catch (notifErr) {
+      console.error('Failed to create rental approved notification:', notifErr);
+    }
+
     return sanitizeRentalForUser(updated, ownerId);
   } catch (err: any) {
     if (err instanceof ConflictError) throw err;
@@ -378,6 +405,20 @@ export async function rejectRental(rentalId: string, ownerId: string, ownerNote?
     include: rentalInclude,
   });
 
+  try {
+    const noteText = ownerNote?.trim() ? `: "${ownerNote.trim()}"` : '.';
+    await createNotification(
+      updated.borrowerId,
+      NotificationType.RENTAL_REJECTED,
+      'Rental Rejected',
+      `Your request to rent "${updated.item.title}" was declined${noteText}`,
+      { rentalId: updated.id, itemId: updated.itemId },
+      ownerId,
+    );
+  } catch (notifErr) {
+    console.error('Failed to create rental rejected notification:', notifErr);
+  }
+
   return sanitizeRentalForUser(updated, ownerId);
 }
 
@@ -403,6 +444,19 @@ export async function cancelRental(rentalId: string, borrowerId: string) {
     data: { status: RentalStatus.CANCELLED },
     include: rentalInclude,
   });
+
+  try {
+    await createNotification(
+      updated.item.ownerId,
+      NotificationType.RENTAL_CANCELLED,
+      'Rental Cancelled',
+      `Rental request for "${updated.item.title}" was cancelled by the borrower.`,
+      { rentalId: updated.id, itemId: updated.itemId },
+      borrowerId,
+    );
+  } catch (notifErr) {
+    console.error('Failed to create rental cancelled notification:', notifErr);
+  }
 
   return sanitizeRentalForUser(updated, borrowerId);
 }
@@ -430,6 +484,19 @@ export async function activateRental(rentalId: string, ownerId: string) {
     include: rentalInclude,
   });
 
+  try {
+    await createNotification(
+      updated.borrowerId,
+      NotificationType.RENTAL_ACTIVATED,
+      'Rental Active',
+      `Your rental of "${updated.item.title}" is now active.`,
+      { rentalId: updated.id, itemId: updated.itemId },
+      ownerId,
+    );
+  } catch (notifErr) {
+    console.error('Failed to create rental activated notification:', notifErr);
+  }
+
   return sanitizeRentalForUser(updated, ownerId);
 }
 
@@ -455,6 +522,19 @@ export async function returnRental(rentalId: string, ownerId: string) {
     data: { status: RentalStatus.RETURNED },
     include: rentalInclude,
   });
+
+  try {
+    await createNotification(
+      updated.borrowerId,
+      NotificationType.RENTAL_RETURNED,
+      'Rental Returned',
+      `Your rental of "${updated.item.title}" was marked as returned.`,
+      { rentalId: updated.id, itemId: updated.itemId },
+      ownerId,
+    );
+  } catch (notifErr) {
+    console.error('Failed to create rental returned notification:', notifErr);
+  }
 
   return sanitizeRentalForUser(updated, ownerId);
 }

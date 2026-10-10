@@ -1,37 +1,170 @@
 /**
  * src/components/Navbar.tsx (web)
  * Universal navigation bar across RentCart web.
+ * Includes notification bell with unread badge, interactive dropdown (latest 10),
+ * mark all as read, and 30s polling / tab focus refresh.
  */
 
-import { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { rentalsService } from '../services/rentals.service';
+import { notificationsService } from '../services/notifications.service';
+import type { NotificationItem, NotificationType } from '../services/notifications.service';
+
+function formatTimeAgo(isoString: string): string {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return 'Just now';
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) return `${diffInDays}d ago`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function getBadgeIcon(type: NotificationType): { icon: string; bg: string } {
+  switch (type) {
+    case 'RENTAL_REQUESTED':
+      return { icon: '📋', bg: 'bg-amber-100 text-amber-800' };
+    case 'RENTAL_APPROVED':
+      return { icon: '✅', bg: 'bg-emerald-100 text-emerald-800' };
+    case 'RENTAL_REJECTED':
+      return { icon: '❌', bg: 'bg-rose-100 text-rose-800' };
+    case 'RENTAL_CANCELLED':
+      return { icon: '🚫', bg: 'bg-neutral-100 text-neutral-700' };
+    case 'RENTAL_ACTIVATED':
+      return { icon: '🚀', bg: 'bg-blue-100 text-blue-800' };
+    case 'RENTAL_RETURNED':
+      return { icon: '📦', bg: 'bg-teal-100 text-teal-800' };
+    default:
+      return { icon: '🔔', bg: 'bg-neutral-100 text-neutral-700' };
+  }
+}
 
 export function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [pendingCount, setPendingCount] = useState<number>(0);
 
+  const [pendingCount, setPendingCount] = useState<number>(0);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
+  const [dropdownNotifications, setDropdownNotifications] = useState<NotificationItem[]>([]);
+  const [dropdownLoading, setDropdownLoading] = useState<boolean>(false);
+  const [markingAll, setMarkingAll] = useState<boolean>(false);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Poll unread count & incoming requests every 30s + refresh on tab focus
   useEffect(() => {
     let mounted = true;
-    const fetchPending = async () => {
+
+    const fetchCounts = async () => {
+      if (!user) return;
       try {
-        const data = await rentalsService.getIncoming({ status: 'PENDING', limit: 50 });
+        const [incomingData, unreadData] = await Promise.all([
+          rentalsService.getIncoming({ status: 'PENDING', limit: 50 }).catch(() => null),
+          notificationsService.getUnreadCount().catch(() => null),
+        ]);
+
         if (mounted) {
-          setPendingCount(data.pagination.total);
+          if (incomingData) setPendingCount(incomingData.pagination.total);
+          if (unreadData !== null) setUnreadCount(unreadData);
         }
       } catch {
-        // silently ignore background badge errors
+        // Silently ignore background polling errors
       }
     };
-    fetchPending();
-    const interval = setInterval(fetchPending, 30000);
+
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 30000);
+
+    const handleFocus = () => {
+      fetchCounts();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchCounts();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       mounted = false;
       clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [user]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
+  const loadDropdownNotifications = async () => {
+    setDropdownLoading(true);
+    try {
+      const data = await notificationsService.getNotifications({ limit: 10 });
+      setDropdownNotifications(data.notifications);
+    } catch {
+      // Silently ignore
+    } finally {
+      setDropdownLoading(false);
+    }
+  };
+
+  const handleToggleDropdown = () => {
+    if (!dropdownOpen) {
+      loadDropdownNotifications();
+    }
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const handleMarkAllRead = async () => {
+    if (markingAll) return;
+    setMarkingAll(true);
+    try {
+      await notificationsService.markAllAsRead();
+      setDropdownNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch {
+      // Ignore
+    } finally {
+      setMarkingAll(false);
+    }
+  };
+
+  const handleNotificationClick = async (notif: NotificationItem) => {
+    if (!notif.isRead) {
+      notificationsService.markAsRead(notif.id).catch(() => {});
+      setDropdownNotifications((prev) =>
+        prev.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n)),
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+    setDropdownOpen(false);
+    if (notif.data?.rentalId) {
+      navigate(`/rentals/${notif.data.rentalId}`);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -92,7 +225,7 @@ export function Navbar() {
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <button
             onClick={() => navigate('/items/new')}
             className="btn-primary text-xs sm:text-sm px-3.5 py-2 shadow-sm"
@@ -109,6 +242,153 @@ export function Navbar() {
             </svg>
             <span>Add Item</span>
           </button>
+
+          {/* Notification Bell Dropdown Container */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={handleToggleDropdown}
+              aria-label="Notifications"
+              className={`relative p-2 rounded-xl transition-all ${
+                dropdownOpen
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+              }`}
+              title="Notifications"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.75}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+                />
+              </svg>
+
+              {/* Unread Badge */}
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white animate-pulse shadow-xs">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Dropdown Menu */}
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-neutral-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                {/* Dropdown Header */}
+                <div className="p-3.5 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/70">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-neutral-900 text-sm">Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-primary-100 text-primary-800">
+                        {unreadCount} new
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      disabled={markingAll}
+                      className="text-xs font-semibold text-primary-600 hover:text-primary-700 disabled:opacity-50"
+                    >
+                      {markingAll ? 'Marking…' : 'Mark all as read'}
+                    </button>
+                  )}
+                </div>
+
+                {/* Dropdown Body */}
+                <div className="max-h-[360px] overflow-y-auto divide-y divide-neutral-100">
+                  {dropdownLoading ? (
+                    <div className="p-4 space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="animate-pulse flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-neutral-200" />
+                          <div className="flex-1 space-y-1.5">
+                            <div className="h-3.5 bg-neutral-200 rounded w-1/2" />
+                            <div className="h-3 bg-neutral-100 rounded w-3/4" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : dropdownNotifications.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <div className="text-2xl mb-1">🔔</div>
+                      <p className="text-xs font-semibold text-neutral-800">No notifications yet</p>
+                      <p className="text-[11px] text-neutral-500 mt-0.5">
+                        You will be notified when someone rents your items.
+                      </p>
+                    </div>
+                  ) : (
+                    dropdownNotifications.map((n) => {
+                      const badge = getBadgeIcon(n.type);
+                      return (
+                        <div
+                          key={n.id}
+                          onClick={() => handleNotificationClick(n)}
+                          className={`p-3.5 transition-colors cursor-pointer flex items-start gap-3 hover:bg-neutral-50 ${
+                            !n.isRead ? 'bg-primary-50/40' : 'bg-white'
+                          }`}
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm border ${badge.bg}`}
+                          >
+                            {badge.icon}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <span
+                                className={`text-xs truncate ${
+                                  !n.isRead
+                                    ? 'font-bold text-neutral-900'
+                                    : 'font-semibold text-neutral-700'
+                                }`}
+                              >
+                                {n.title}
+                              </span>
+                              <span className="text-[10px] text-neutral-400 flex-shrink-0">
+                                {formatTimeAgo(n.createdAt)}
+                              </span>
+                            </div>
+                            <p
+                              className={`text-xs mt-0.5 line-clamp-2 ${
+                                !n.isRead ? 'text-neutral-800 font-medium' : 'text-neutral-500'
+                              }`}
+                            >
+                              {n.body}
+                            </p>
+                          </div>
+
+                          {!n.isRead && (
+                            <div className="w-2 h-2 rounded-full bg-primary-600 flex-shrink-0 mt-1.5" />
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Dropdown Footer */}
+                <div className="p-2.5 bg-neutral-50/80 border-t border-neutral-100 text-center">
+                  <Link
+                    to="/notifications"
+                    onClick={() => setDropdownOpen(false)}
+                    className="text-xs font-bold text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
+                  >
+                    <span>View all notifications</span>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* User info */}
           {user && (
@@ -170,6 +450,14 @@ export function Navbar() {
           {pendingCount > 0 && (
             <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white">
               {pendingCount}
+            </span>
+          )}
+        </NavLink>
+        <NavLink to="/notifications" className={navLinkClass}>
+          <span>Alerts</span>
+          {unreadCount > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white">
+              {unreadCount}
             </span>
           )}
         </NavLink>

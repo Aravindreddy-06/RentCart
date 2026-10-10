@@ -24,6 +24,7 @@ import {
   RefreshControl,
   Alert,
   ActivityIndicator,
+  AppState,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -31,6 +32,7 @@ import * as Location from 'expo-location';
 import { AppStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { itemsService, Item } from '../services/items.service';
+import { notificationsService } from '../services/notifications.service';
 import { colors } from '../utils/colors';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
@@ -74,6 +76,40 @@ export default function HomeScreen({ navigation }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  // Poll unread count every 30s + refresh on AppState active or screen focus
+  useEffect(() => {
+    let mounted = true;
+    const fetchUnread = async () => {
+      try {
+        const count = await notificationsService.getUnreadCount();
+        if (mounted) setUnreadCount(count);
+      } catch {
+        // Silently ignore background polling errors
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        fetchUnread();
+      }
+    });
+
+    const unsubscribeFocus = navigation.addListener('focus', () => {
+      fetchUnread();
+    });
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+      subscription.remove();
+      unsubscribeFocus();
+    };
+  }, [navigation]);
 
   // ── Geolocation & Radius Handler ───────────────────────────────────────────
   const handleRadiusSelect = async (radius: number | null) => {
@@ -251,9 +287,27 @@ export default function HomeScreen({ navigation }: Props) {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+          <View style={styles.headerRightActions}>
+            <TouchableOpacity
+              style={styles.bellButton}
+              onPress={() => navigation.navigate('Notifications')}
+              activeOpacity={0.8}
+              accessibilityLabel="Notifications"
+            >
+              <Text style={styles.bellIcon}>🔔</Text>
+              {unreadCount > 0 && (
+                <View style={styles.bellBadge}>
+                  <Text style={styles.bellBadgeText}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+              <Text style={styles.logoutText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Search Input */}
@@ -465,6 +519,42 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: colors.gray[900],
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  bellButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.gray[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  bellIcon: {
+    fontSize: 16,
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: '#ffffff',
+  },
+  bellBadgeText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: '800',
   },
   logoutButton: {
     paddingHorizontal: 10,

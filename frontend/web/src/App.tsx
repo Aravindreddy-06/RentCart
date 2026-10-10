@@ -17,6 +17,7 @@ import { RequestsPage } from './pages/RequestsPage';
 import { RentalDetailPage } from './pages/RentalDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { PublicProfilePage } from './pages/PublicProfilePage';
+import { NotificationsPage } from './pages/NotificationsPage';
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="/home" element={<HomePage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/users/:id" element={<PublicProfilePage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/items/new" element={<AddItemPage />} />
             <Route path="/items/:id" element={<ItemDetailPage />} />
             <Route path="/rentals" element={<MyRentalsPage />} />

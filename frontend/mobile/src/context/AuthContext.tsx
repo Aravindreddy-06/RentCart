@@ -8,6 +8,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import type { ReactNode } from 'react';
 import { authService, type User, type RegisterData } from '../services/auth.service';
 import { tokenStorage } from '../services/api';
+import { registerForPush, unregisterPush } from '../services/push';
 
 interface AuthState {
   user: User | null;
@@ -39,6 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await tokenStorage.setRefresh(refreshToken);
       await tokenStorage.setUser(user);
       setState({ user, isLoading: false, loading: false, isAuthenticated: true });
+      try {
+        await registerForPush();
+      } catch {
+        // Never block login or crash on push registration failure
+      }
     },
     []
   );
@@ -61,11 +67,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await tokenStorage.setUser(user);
           await minDelayPromise;
           setState({ user, isLoading: false, loading: false, isAuthenticated: true });
+          try {
+            await registerForPush();
+          } catch {
+            // Non-blocking
+          }
         } catch {
           const cachedUser = await tokenStorage.getUser();
           await minDelayPromise;
           if (cachedUser) {
             setState({ user: cachedUser, isLoading: false, loading: false, isAuthenticated: true });
+            try {
+              await registerForPush();
+            } catch {
+              // Non-blocking
+            }
           } else {
             await tokenStorage.clear();
             setState({ user: null, isLoading: false, loading: false, isAuthenticated: false });
@@ -98,6 +114,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    try {
+      await unregisterPush();
+    } catch {
+      // Best effort
+    }
     await tokenStorage.clear();
     setState({ user: null, isLoading: false, loading: false, isAuthenticated: false });
   }, []);

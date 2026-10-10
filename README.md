@@ -149,6 +149,33 @@ All endpoints require authentication, validate with Zod, and return consistent J
 - `PATCH /api/rentals/:id/activate` *(Protected, Owner only)* — Owner marks an `APPROVED` rental as `ACTIVE` (item handed over).
 - `PATCH /api/rentals/:id/return` *(Protected, Owner only)* — Owner marks an `ACTIVE` rental as `RETURNED` (item returned).
 
+### Notifications & Push Tokens (`/api/notifications`, `/api/push-tokens`)
+All endpoints require authentication and return consistent JSON format.
+
+- `GET /api/notifications` *(Protected)* — List notifications for the authenticated user (newest first). Supports query params `unread=true`, `page`, and `limit`.
+- `GET /api/notifications/unread-count` *(Protected)* — Returns `{ unreadCount: number }`.
+- `PATCH /api/notifications/:id/read` *(Protected)* — Mark single notification as read (returns 403/404 if touching someone else's notification).
+- `PATCH /api/notifications/read-all` *(Protected)* — Mark all notifications for the authenticated user as read.
+- `DELETE /api/notifications/:id` *(Protected)* — Delete a notification (owner of notification only, returns 403/404 otherwise).
+- `POST /api/push-tokens` *(Protected)* — Register or upsert an Expo push token (`{ token: string, platform: string }`).
+- `DELETE /api/push-tokens` *(Protected)* — Remove push token on logout (`{ token?: string }`).
+
+#### Notification Lifecycle Events
+| Event | Recipient | Type | Title | Description |
+|---|---|---|---|---|
+| **Rental requested** | Item owner | `RENTAL_REQUESTED` | `Rental Requested` | Borrower requested to rent item |
+| **Rental approved** | Borrower | `RENTAL_APPROVED` | `Rental Approved` | Owner approved the request |
+| **Rental rejected** | Borrower | `RENTAL_REJECTED` | `Rental Rejected` | Owner declined (includes owner's note) |
+| **Rental cancelled** | Item owner | `RENTAL_CANCELLED` | `Rental Cancelled` | Borrower cancelled request |
+| **Rental marked ACTIVE** | Borrower | `RENTAL_ACTIVATED` | `Rental Active` | Item handed over and active |
+| **Rental marked RETURNED** | Borrower | `RENTAL_RETURNED` | `Rental Returned` | Item returned to owner |
+
+Each notification includes `{ rentalId, itemId }` in `data` so the client can navigate directly to the rental detail view. Notifications fail-safe: failures never roll back or abort rental lifecycle operations. Users are never notified of their own actions.
+
+> [!NOTE]
+> **Push Notifications & Expo Go:**
+> Remote push notifications require an Expo development build (`npx expo run:android` / `npx expo run:ios` or EAS build) with native credentials. In **Expo Go** (`Constants.executionEnvironment === 'storeClient'`), the mobile app automatically detects the environment and skips push token registration gracefully without throwing errors or warnings to the user. In-app notifications continue to work seamlessly via polling and API synchronization.
+
 ---
 
 ## 🔄 Rental Lifecycle & Business Rules

@@ -13,8 +13,8 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/types';
 import { itemsService, Item } from '../services/items.service';
