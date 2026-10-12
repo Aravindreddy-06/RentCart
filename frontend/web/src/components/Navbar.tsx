@@ -10,6 +10,7 @@ import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { rentalsService } from '../services/rentals.service';
 import { notificationsService } from '../services/notifications.service';
+import { chatsService } from '../services/chats.service';
 import type { NotificationItem, NotificationType } from '../services/notifications.service';
 
 function formatTimeAgo(isoString: string): string {
@@ -41,6 +42,10 @@ function getBadgeIcon(type: NotificationType): { icon: string; bg: string } {
       return { icon: '🚀', bg: 'bg-blue-100 text-blue-800' };
     case 'RENTAL_RETURNED':
       return { icon: '📦', bg: 'bg-teal-100 text-teal-800' };
+    case 'NEW_MESSAGE':
+      return { icon: '💬', bg: 'bg-primary-100 text-primary-800' };
+    case 'REVIEW_RECEIVED':
+      return { icon: '⭐', bg: 'bg-amber-100 text-amber-800' };
     default:
       return { icon: '🔔', bg: 'bg-neutral-100 text-neutral-700' };
   }
@@ -52,6 +57,7 @@ export function Navbar() {
 
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [unreadChatsCount, setUnreadChatsCount] = useState<number>(0);
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const [dropdownNotifications, setDropdownNotifications] = useState<NotificationItem[]>([]);
   const [dropdownLoading, setDropdownLoading] = useState<boolean>(false);
@@ -66,14 +72,16 @@ export function Navbar() {
     const fetchCounts = async () => {
       if (!user) return;
       try {
-        const [incomingData, unreadData] = await Promise.all([
+        const [incomingData, unreadData, unreadChats] = await Promise.all([
           rentalsService.getIncoming({ status: 'PENDING', limit: 50 }).catch(() => null),
           notificationsService.getUnreadCount().catch(() => null),
+          chatsService.getUnreadCount().catch(() => null),
         ]);
 
         if (mounted) {
           if (incomingData) setPendingCount(incomingData.pagination.total);
           if (unreadData !== null) setUnreadCount(unreadData);
+          if (unreadChats !== null) setUnreadChatsCount(unreadChats);
         }
       } catch {
         // Silently ignore background polling errors
@@ -161,7 +169,9 @@ export function Navbar() {
       setUnreadCount((prev) => Math.max(0, prev - 1));
     }
     setDropdownOpen(false);
-    if (notif.data?.rentalId) {
+    if (notif.type === 'NEW_MESSAGE' && notif.data?.rentalId) {
+      navigate(`/chats?rentalId=${notif.data.rentalId}`);
+    } else if (notif.data?.rentalId) {
       navigate(`/rentals/${notif.data.rentalId}`);
     }
   };
@@ -215,6 +225,14 @@ export function Navbar() {
               {pendingCount > 0 && (
                 <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white animate-pulse">
                   {pendingCount}
+                </span>
+              )}
+            </NavLink>
+            <NavLink to="/chats" className={navLinkClass}>
+              <span>Messages</span>
+              {unreadChatsCount > 0 && (
+                <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-primary-600 text-white animate-pulse">
+                  {unreadChatsCount}
                 </span>
               )}
             </NavLink>
@@ -450,6 +468,14 @@ export function Navbar() {
           {pendingCount > 0 && (
             <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white">
               {pendingCount}
+            </span>
+          )}
+        </NavLink>
+        <NavLink to="/chats" className={navLinkClass}>
+          <span>Messages</span>
+          {unreadChatsCount > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-primary-600 text-white">
+              {unreadChatsCount}
             </span>
           )}
         </NavLink>

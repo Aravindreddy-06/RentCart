@@ -65,6 +65,8 @@ function getBadgeConfig(type: NotificationType): { icon: string; bg: string; bor
       return { icon: '📦', bg: '#ccfbf1', border: '#99f6e4', text: '#115e59' };
     case 'REVIEW_RECEIVED':
       return { icon: '⭐', bg: '#fef3c7', border: '#fde68a', text: '#d97706' };
+    case 'NEW_MESSAGE':
+      return { icon: '💬', bg: '#e0e7ff', border: '#c7d2fe', text: '#3730a3' };
     default:
       return { icon: '🔔', bg: '#f3f4f6', border: '#e5e7eb', text: '#374151' };
   }
@@ -152,6 +154,11 @@ export default function NotificationsScreen({ navigation }: Props) {
         prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n)),
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+
+    if (item.type === 'NEW_MESSAGE' && item.data?.rentalId) {
+      navigation.navigate('Chat', { rentalId: item.data.rentalId });
+      return;
     }
 
     if (item.type === 'REVIEW_RECEIVED') {

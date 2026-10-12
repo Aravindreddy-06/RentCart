@@ -260,6 +260,49 @@ Each notification includes `{ rentalId, itemId }` in `data` so the client can na
 
 ---
 
+## 💬 In-App Chat System
+
+RentCart features direct, real-time messaging between borrowers and item owners to coordinate rental logistics, questions, and handovers.
+
+### Rules & Integrity Constraints
+1. **One Conversation Per Rental**: Exactly one private conversation exists per rental agreement, accessible exclusively by its borrower and owner. Third parties receive HTTP **403 Forbidden** or **404 Not Found**.
+2. **Read-Only Statuses**:
+   - Active chatting is supported for rentals with status `PENDING`, `APPROVED`, `ACTIVE`, and `RETURNED` (within 30 days).
+   - Chat becomes **read-only** (message history visible, but sending returns HTTP **403 Forbidden**) when:
+     - The rental is `REJECTED` or `CANCELLED`.
+     - More than 30 days have elapsed since the rental was marked `RETURNED`.
+3. **Content Constraints**: Plain text only, between 1 and 1,000 characters (trimmed). Empty or whitespace-only messages are rejected with HTTP **400 Bad Request**. Images, attachments, voice messages, and group chats are strictly disbarred.
+4. **Rate Limiting**: Sending is throttled to a maximum of 30 messages per minute per user. Exceeding this rate returns HTTP **429 Too Many Requests**.
+5. **Realtime Socket.IO**:
+   - Connected on the same HTTP server (`/socket.io`).
+   - Authenticated during the handshake using the user's JWT access token (`auth: { token }`). Invalid or expired tokens are rejected immediately.
+   - Each user joins their private room `user:<userId>`.
+   - All messages are validated and persisted through the backend database before realtime emission.
+   - Web clients connect with CORS support (`CLIENT_ORIGINS`), while mobile clients connect natively with AppState lifecycle handling (pausing/disconnecting when backgrounded).
+6. **Smart Notifications**:
+   - Sending a message dispatches a `NEW_MESSAGE` notification to the other party only if they do not already have an unread `NEW_MESSAGE` notification for that specific rental (preventing notification spam).
+   - Notification delivery is asynchronous; notification errors never prevent a message from being sent.
+
+### Chat REST Endpoints
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/chats` | Yes | List current user's conversations (one per rental), including other user info, item title, rental status, last message, and unread count; sorted by latest message. |
+| `GET` | `/api/rentals/:id/messages` | Yes | Fetch messages for a rental, oldest to newest, with cursor pagination (`?before=<isoDate>&limit=30`). Returns `isReadOnly` and `readOnlyReason`. |
+| `POST` | `/api/rentals/:id/messages` | Yes | Send a message (`{ body: string }`). Returns HTTP 403 if read-only or non-participant, 429 if rate limited. |
+| `PATCH` | `/api/rentals/:id/messages/read` | Yes | Mark all unread messages from the other participant as read. Emits `message:read` event to the sender. |
+| `GET` | `/api/chats/unread-count` | Yes | Get total number of unread messages across all active conversations. |
+
+### Socket.IO Realtime Events
+
+| Event | Direction | Payload | Description |
+|---|---|---|---|
+| `message:new` | Server ➔ Client (Recipient Room) | `ChatMessage` object | Emitted in real-time to the recipient's room `user:<id>` when a new message is saved. |
+| `message:read` | Server ➔ Client (Sender Room) | `{ rentalId: string, readAt: string }` | Emitted to the sender's room `user:<id>` when their messages are marked as read ("Seen"). |
+
+
+---
+
 ### 2️⃣ Setting Up the Web Application
 
 1. Navigate to the web frontend directory:

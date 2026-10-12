@@ -39,7 +39,9 @@ export default function App() {
     // Listen for notification taps (guarded, no-op in Expo Go)
     const unsubscribe = setupNotificationResponseListener((data) => {
       if (navigationRef.isReady()) {
-        if (data.type === 'REVIEW_RECEIVED' && data.targetUserId) {
+        if (data.type === 'NEW_MESSAGE' && data.rentalId) {
+          navigationRef.navigate('Chat', { rentalId: data.rentalId });
+        } else if (data.type === 'REVIEW_RECEIVED' && data.targetUserId) {
           navigationRef.navigate('PublicProfile', { userId: data.targetUserId });
         } else if (data.rentalId) {
           navigationRef.navigate('RentalDetail', { rentalId: data.rentalId });

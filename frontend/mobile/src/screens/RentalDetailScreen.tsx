@@ -449,6 +449,23 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
               </Text>
             </View>
           )}
+
+          {/* In-app Chat Button */}
+          <TouchableOpacity
+            style={styles.messageBtn}
+            onPress={() =>
+              navigation.navigate('Chat', {
+                rentalId: rental.id,
+                otherUserName: otherPerson?.name,
+                title: rental.item.title,
+              })
+            }
+            activeOpacity={0.8}
+          >
+            <Text style={styles.messageBtnText}>
+              💬 Message {otherPerson?.name || otherPersonRole}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Reviews and Ratings Section */}
@@ -1225,5 +1242,21 @@ const styles = StyleSheet.create({
     color: colors.gray[400],
     fontStyle: 'italic',
     marginTop: 4,
+  },
+  messageBtn: {
+    backgroundColor: colors.primary[50],
+    borderWidth: 1.5,
+    borderColor: colors.primary[300],
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 14,
+  },
+  messageBtnText: {
+    color: colors.primary[700],
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

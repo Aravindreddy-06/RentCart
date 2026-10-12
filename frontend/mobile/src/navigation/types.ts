@@ -27,11 +27,13 @@ export type AppStackParamList = {
   Profile: undefined;
   PublicProfile: { userId: string };
   Notifications: undefined;
+  Chat: { rentalId: string; otherUserName?: string; title?: string };
 };
 
 export type MainTabParamList = {
   HomeTab: undefined;
   RequestsTab: undefined;
+  MessagesTab: undefined;
   MyRentalsTab: undefined;
   ProfileTab: undefined;
 };

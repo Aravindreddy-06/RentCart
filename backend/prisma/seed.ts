@@ -16,6 +16,7 @@ async function main() {
   console.log('🌱  Seeding database…');
 
   // ── Clear existing data ────────────────────────────────────────────────────
+  await prisma.message.deleteMany();
   await prisma.review.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.pushToken.deleteMany();
@@ -445,14 +446,66 @@ async function main() {
     ],
   });
 
-  // ── Sample Notifications ──────────────────────────────────────────────────
   const pendingDrillRental = allRentals.find((r) => r.itemId === drill.id && r.borrowerId === bob.id && r.status === RentalStatus.PENDING)!;
   const approvedWasherRental = allRentals.find((r) => r.itemId === washer.id && r.borrowerId === carol.id)!;
   const activeMixerRental = allRentals.find((r) => r.itemId === mixer.id && r.borrowerId === alice.id)!;
 
+  // ── Sample Chat Messages ──────────────────────────────────────────────────
+  await prisma.message.createMany({
+    data: [
+      {
+        rentalId: returnedDrillRental.id,
+        senderId: bob.id,
+        body: 'Hi Alice! What time is good for pickup today?',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3 - 1000 * 60 * 60 * 2),
+        readAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3 - 1000 * 60 * 50),
+      },
+      {
+        rentalId: returnedDrillRental.id,
+        senderId: alice.id,
+        body: 'Hey Bob! Around 2 PM works great. I have the drill fully charged in its case.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3 - 1000 * 60 * 45),
+        readAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3 - 1000 * 60 * 30),
+      },
+      {
+        rentalId: returnedDrillRental.id,
+        senderId: bob.id,
+        body: 'Awesome, see you at 2 PM! Do you have masonry bits by any chance?',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3 - 1000 * 60 * 20),
+        readAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3 - 1000 * 60 * 15),
+      },
+      {
+        rentalId: returnedDrillRental.id,
+        senderId: alice.id,
+        body: 'Yes, a set of 5mm to 10mm masonry bits is included in the case!',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3 - 1000 * 60 * 10),
+        readAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3 - 1000 * 60 * 5),
+      },
+      // Active conversation on pending rental
+      {
+        rentalId: pendingDrillRental.id,
+        senderId: bob.id,
+        body: 'Hi Alice, would Saturday morning pickup work for this drill?',
+        createdAt: new Date(Date.now() - 1000 * 60 * 20), // 20 mins ago
+        readAt: null, // Unread by Alice
+      },
+    ],
+  });
+
+  // ── Sample Notifications ──────────────────────────────────────────────────
+
   await prisma.notification.createMany({
     data: [
       // Alice's notifications (owner of drill & washer; borrower of mixer)
+      {
+        userId: alice.id,
+        type: NotificationType.NEW_MESSAGE,
+        title: 'New message from Bob Martinez',
+        body: 'Hi Alice, would Saturday morning pickup work for this drill?',
+        data: { rentalId: pendingDrillRental.id, itemId: drill.id, senderId: bob.id },
+        isRead: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 20), // 20 mins ago
+      },
       {
         userId: alice.id,
         type: NotificationType.REVIEW_RECEIVED,

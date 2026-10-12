@@ -18,6 +18,7 @@ import { RentalDetailPage } from './pages/RentalDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { PublicProfilePage } from './pages/PublicProfilePage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { ChatsPage } from './pages/ChatsPage';
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="/items/:id" element={<ItemDetailPage />} />
             <Route path="/rentals" element={<MyRentalsPage />} />
             <Route path="/requests" element={<RequestsPage />} />
+            <Route path="/chats" element={<ChatsPage />} />
             <Route path="/rentals/:id" element={<RentalDetailPage />} />
           </Route>
 

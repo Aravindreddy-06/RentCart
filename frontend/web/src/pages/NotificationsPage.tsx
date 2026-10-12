@@ -69,6 +69,12 @@ function getBadge(type: NotificationType) {
         label: 'Review',
         icon: '⭐',
       };
+    case 'NEW_MESSAGE':
+      return {
+        bg: 'bg-primary-100 text-primary-800 border-primary-200',
+        label: 'Message',
+        icon: '💬',
+      };
     default:
       return {
         bg: 'bg-neutral-100 text-neutral-700 border-neutral-200',
@@ -185,6 +191,10 @@ export function NotificationsPage() {
   const handleNotificationClick = async (notif: NotificationItem) => {
     if (!notif.isRead) {
       notificationsService.markAsRead(notif.id).catch(() => {});
+    }
+    if (notif.type === 'NEW_MESSAGE' && notif.data?.rentalId) {
+      navigate(`/chats?rentalId=${notif.data.rentalId}`);
+      return;
     }
     if (notif.type === 'REVIEW_RECEIVED') {
       const targetUserId = notif.data?.targetUserId || notif.userId;

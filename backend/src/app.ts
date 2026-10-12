@@ -17,6 +17,7 @@ import usersRoutes from './routes/users.routes';
 import notificationsRoutes from './routes/notifications.routes';
 import pushTokensRoutes from './routes/push-tokens.routes';
 import reviewsRoutes from './routes/reviews.routes';
+import chatsRoutes from './routes/chats.routes';
 import { errorHandler } from './middlewares/error.middleware';
 
 export function createApp() {
@@ -62,6 +63,7 @@ export function createApp() {
   app.use('/api/uploads', uploadsRoutes);
   app.use('/api/rentals', rentalsRoutes);
   app.use('/api/reviews', reviewsRoutes);
+  app.use('/api/chats', chatsRoutes);
   app.use('/api/notifications', notificationsRoutes);
   app.use('/api/push-tokens', pushTokensRoutes);
 

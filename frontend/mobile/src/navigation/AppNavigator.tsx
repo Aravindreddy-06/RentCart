@@ -22,7 +22,10 @@ import RequestBorrowScreen from '../screens/RequestBorrowScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import PublicProfileScreen from '../screens/PublicProfileScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
+import MessagesScreen from '../screens/MessagesScreen';
+import ChatScreen from '../screens/ChatScreen';
 import { rentalsService } from '../services/rentals.service';
+import { chatsService } from '../services/chats.service';
 import { colors } from '../utils/colors';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -44,21 +47,30 @@ function AddItemFab({ navigation }: { navigation: NativeStackNavigationProp<AppS
 
 function MainTabs({ navigation }: { navigation: NativeStackNavigationProp<AppStackParamList> }) {
   const [pendingCount, setPendingCount] = useState(0);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
 
-  const refreshPendingCount = useCallback(async () => {
+  const refreshCounts = useCallback(async () => {
     try {
-      const data = await rentalsService.getIncoming('PENDING', 1, 1);
-      setPendingCount(data.pagination.total || 0);
+      const [pendingRes, unreadRes] = await Promise.allSettled([
+        rentalsService.getIncoming('PENDING', 1, 1),
+        chatsService.getUnreadCount(),
+      ]);
+      if (pendingRes.status === 'fulfilled') {
+        setPendingCount(pendingRes.value.pagination.total || 0);
+      }
+      if (unreadRes.status === 'fulfilled') {
+        setUnreadChatCount(unreadRes.value);
+      }
     } catch {
       // Ignore if not logged in or network error
     }
   }, []);
 
   useEffect(() => {
-    refreshPendingCount();
-    const interval = setInterval(refreshPendingCount, 15000);
+    refreshCounts();
+    const interval = setInterval(refreshCounts, 15000);
     return () => clearInterval(interval);
-  }, [refreshPendingCount]);
+  }, [refreshCounts]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -94,7 +106,21 @@ function MainTabs({ navigation }: { navigation: NativeStackNavigationProp<AppSta
           }}
           listeners={{
             focus: () => {
-              refreshPendingCount();
+              refreshCounts();
+            },
+          }}
+        />
+        <Tab.Screen
+          name="MessagesTab"
+          component={MessagesScreen as any}
+          options={{
+            tabBarLabel: 'Messages',
+            tabBarBadge: unreadChatCount > 0 ? unreadChatCount : undefined,
+            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>💬</Text>,
+          }}
+          listeners={{
+            focus: () => {
+              refreshCounts();
             },
           }}
         />
@@ -184,6 +210,13 @@ export default function AppNavigator() {
         name="Notifications"
         component={NotificationsScreen}
         options={{ title: 'Notifications' }}
+      />
+      <Stack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={({ route }) => ({
+          title: route.params?.otherUserName || 'Chat',
+        })}
       />
     </Stack.Navigator>
   );

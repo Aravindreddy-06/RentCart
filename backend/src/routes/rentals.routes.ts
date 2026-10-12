@@ -6,6 +6,7 @@
 import { Router } from 'express';
 import * as rentalsController from '../controllers/rentals.controller';
 import * as reviewsController from '../controllers/reviews.controller';
+import * as messagesController from '../controllers/messages.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 
 const router = Router();
@@ -21,6 +22,11 @@ router.get('/incoming', authenticate, rentalsController.getIncomingRentals);
 
 // Review status for a rental (must be before /:id or after /:id)
 router.get('/:id/review-status', authenticate, reviewsController.getRentalReviewStatus);
+
+// In-app chat messages for a rental
+router.get('/:id/messages', authenticate, messagesController.getRentalMessages);
+router.post('/:id/messages', authenticate, messagesController.sendMessage);
+router.patch('/:id/messages/read', authenticate, messagesController.markMessagesAsRead);
 
 // Single rental details
 router.get('/:id', authenticate, rentalsController.getRental);

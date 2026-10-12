@@ -3,9 +3,11 @@
  * Entry point — starts the HTTP server on the configured port.
  */
 
+import http from 'http';
 import { createApp } from './app';
 import { env } from './config/env';
 import prisma from './prisma/client';
+import { initSocketIO } from './socket';
 
 async function bootstrap() {
   // Verify database connection before accepting traffic
@@ -13,8 +15,10 @@ async function bootstrap() {
   console.log('✅  Database connected');
 
   const app = createApp();
+  const server = http.createServer(app);
+  initSocketIO(server);
 
-  app.listen(env.PORT, () => {
+  server.listen(env.PORT, () => {
     console.log(`🚀  RentCart API running on http://localhost:${env.PORT}`);
     console.log(`   Environment: ${env.NODE_ENV}`);
   });

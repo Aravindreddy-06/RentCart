@@ -29,6 +29,7 @@ enum NotificationType {
   RENTAL_ACTIVATED
   RENTAL_RETURNED
   REVIEW_RECEIVED
+  NEW_MESSAGE
 }
 
 // ─── Models ──────────────────────────────────────────────────────────────────
@@ -53,6 +54,7 @@ model User {
   pushTokens      PushToken[]
   authoredReviews Review[]       @relation("AuthoredReviews")
   receivedReviews Review[]       @relation("ReceivedReviews")
+  sentMessages    Message[]      @relation("SentMessages")
 
   @@map("users")
 }
@@ -98,7 +100,8 @@ model Rental {
   // Relations
   item    Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
   borrower User    @relation("BorrowerRentals", fields: [borrowerId], references: [id], onDelete: Cascade)
-  reviews Review[]
+  reviews  Review[]
+  messages Message[]
 
   @@map("rentals")
 }
@@ -157,3 +160,21 @@ model PushToken {
   @@index([userId])
   @@map("push_tokens")
 }
+
+model Message {
+  id        String    @id @default(uuid())
+  rentalId  String
+  senderId  String
+  body      String
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  // Relations
+  rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  sender User   @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([rentalId, createdAt])
+  @@index([rentalId, readAt])
+  @@map("messages")
+}
+
