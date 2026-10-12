@@ -63,6 +63,8 @@ function getBadgeConfig(type: NotificationType): { icon: string; bg: string; bor
       return { icon: '🚀', bg: '#dbeafe', border: '#bfdbfe', text: '#1e40af' };
     case 'RENTAL_RETURNED':
       return { icon: '📦', bg: '#ccfbf1', border: '#99f6e4', text: '#115e59' };
+    case 'REVIEW_RECEIVED':
+      return { icon: '⭐', bg: '#fef3c7', border: '#fde68a', text: '#d97706' };
     default:
       return { icon: '🔔', bg: '#f3f4f6', border: '#e5e7eb', text: '#374151' };
   }
@@ -152,6 +154,12 @@ export default function NotificationsScreen({ navigation }: Props) {
       setUnreadCount((prev) => Math.max(0, prev - 1));
     }
 
+    if (item.type === 'REVIEW_RECEIVED') {
+      const targetUserId = item.data?.targetUserId || item.userId;
+      navigation.navigate('PublicProfile', { userId: targetUserId });
+      return;
+    }
+
     if (item.data?.rentalId) {
       navigation.navigate('RentalDetail', { rentalId: item.data.rentalId });
     }
@@ -201,9 +209,11 @@ export default function NotificationsScreen({ navigation }: Props) {
             {item.body}
           </Text>
 
-          {item.data?.rentalId && (
+          {item.type === 'REVIEW_RECEIVED' ? (
+            <Text style={styles.viewLink}>View profile →</Text>
+          ) : item.data?.rentalId ? (
             <Text style={styles.viewLink}>View rental details →</Text>
-          )}
+          ) : null}
         </View>
 
         {/* Actions: delete button */}

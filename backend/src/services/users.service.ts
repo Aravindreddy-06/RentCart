@@ -129,45 +129,80 @@ export async function changePassword(userId: string, input: ChangePasswordInput)
 }
 
 export async function getPublicProfile(userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      avatarUrl: true,
-      address: true,
-      createdAt: true,
-      items: {
-        where: { isAvailable: true },
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          category: true,
-          images: true,
-          pricePerDay: true,
-          deposit: true,
-          isAvailable: true,
-          latitude: true,
-          longitude: true,
-          createdAt: true,
+  const [user, reviewsAgg] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        avatarUrl: true,
+        address: true,
+        createdAt: true,
+        items: {
+          where: { isAvailable: true },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            category: true,
+            images: true,
+            pricePerDay: true,
+            deposit: true,
+            isAvailable: true,
+            latitude: true,
+            longitude: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
         },
-        orderBy: { createdAt: 'desc' },
+        _count: {
+          select: { items: true },
+        },
       },
-      _count: {
-        select: { items: true },
-      },
-    },
-  });
+    }),
+    prisma.review.aggregate({
+      where: { targetUserId: userId },
+      _avg: { rating: true },
+      _count: { _all: true },
+    }),
+  ]);
 
   if (!user) return null;
 
+  const rawAvg = reviewsAgg._avg.rating ?? 0;
+  const averageRating = Math.round(rawAvg * 10) / 10;
+  const reviewCount = reviewsAgg._count._all;
+
   // Round items coordinates to ~3 decimals to protect exact owner location
-  const sanitizedItems = user.items.map((item) => ({
+  let sanitizedItems: any[] = user.items.map((item) => ({
     ...item,
     latitude: item.latitude != null ? Math.round(item.latitude * 1000) / 1000 : null,
     longitude: item.longitude != null ? Math.round(item.longitude * 1000) / 1000 : null,
   }));
+
+  if (sanitizedItems.length > 0) {
+    const itemIds = sanitizedItems.map((i) => i.id);
+    const itemAgg = await prisma.review.groupBy({
+      by: ['itemId'],
+      where: { itemId: { in: itemIds } },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+    const itemRatingMap = new Map(
+      itemAgg.map((r) => [
+        r.itemId,
+        {
+          averageRating: r._avg.rating != null ? Math.round(r._avg.rating * 10) / 10 : 0,
+          reviewCount: r._count._all,
+        },
+      ]),
+    );
+    sanitizedItems = sanitizedItems.map((item) => ({
+      ...item,
+      averageRating: itemRatingMap.get(item.id)?.averageRating ?? 0,
+      reviewCount: itemRatingMap.get(item.id)?.reviewCount ?? 0,
+    }));
+  }
 
   return {
     id: user.id,
@@ -176,6 +211,8 @@ export async function getPublicProfile(userId: string) {
     addressArea: extractAddressArea(user.address),
     memberSince: user.createdAt,
     itemCount: user._count.items,
+    averageRating,
+    reviewCount,
     items: sanitizedItems,
   };
 }

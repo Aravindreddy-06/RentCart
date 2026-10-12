@@ -8,6 +8,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { itemsService, type Item } from '../services/items.service';
+import { reviewsService, type Review } from '../services/reviews.service';
+import { StarRating } from '../components/StarRating';
 import { RequestBorrowModal } from '../components/RequestBorrowModal';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -35,6 +37,39 @@ export function ItemDetailPage() {
   const [isTogglingAvailability, setIsTogglingAvailability] = useState(false);
   const [isBorrowModalOpen, setIsBorrowModalOpen] = useState(false);
 
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [reviewsTotalPages, setReviewsTotalPages] = useState(1);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [isLoadingMoreReviews, setIsLoadingMoreReviews] = useState(false);
+
+  const fetchReviews = useCallback(async (itemId: string, page = 1) => {
+    if (page === 1) setIsLoadingReviews(true);
+    else setIsLoadingMoreReviews(true);
+
+    try {
+      const data = await reviewsService.getItemReviews(itemId, { page, limit: 5 });
+      if (page === 1) {
+        setReviews(data.reviews);
+      } else {
+        setReviews((prev) => [...prev, ...data.reviews]);
+      }
+      setReviewsPage(data.pagination.page);
+      setReviewsTotalPages(data.pagination.totalPages);
+    } catch {
+      // Ignored
+    } finally {
+      setIsLoadingReviews(false);
+      setIsLoadingMoreReviews(false);
+    }
+  }, []);
+
+  const handleLoadMoreReviews = () => {
+    if (!id || isLoadingMoreReviews || reviewsPage >= reviewsTotalPages) return;
+    fetchReviews(id, reviewsPage + 1);
+  };
+
   const fetchItem = useCallback(async () => {
     if (!id) return;
     setIsLoading(true);
@@ -42,6 +77,7 @@ export function ItemDetailPage() {
     try {
       const data = await itemsService.getById(id);
       setItem(data);
+      void fetchReviews(data.id, 1);
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 404) {
@@ -54,7 +90,7 @@ export function ItemDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [id, navigate]);
+  }, [id, navigate, fetchReviews]);
 
   useEffect(() => { fetchItem(); }, [fetchItem]);
 
@@ -206,13 +242,26 @@ export function ItemDetailPage() {
         {/* Title, category, pricing */}
         <div className="card p-5">
           <div className="flex items-start justify-between gap-3 mb-3">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 mb-1">
                 <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-100">
                   {item.category}
                 </span>
               </div>
               <h2 className="text-2xl font-bold text-neutral-900">{item.title}</h2>
+              {/* Average stars and review count near title */}
+              {Boolean(item.reviewCount && item.reviewCount > 0) ? (
+                <div className="flex items-center gap-2 pt-1">
+                  <StarRating
+                    rating={item.averageRating}
+                    reviewCount={item.reviewCount}
+                    showValue
+                    size="sm"
+                  />
+                </div>
+              ) : (
+                <p className="text-xs text-neutral-400 pt-0.5">No reviews yet</p>
+              )}
             </div>
           </div>
 
@@ -227,6 +276,87 @@ export function ItemDetailPage() {
           </div>
 
           <p className="text-neutral-600 leading-relaxed">{item.description}</p>
+        </div>
+
+        {/* ── Reviews List Card ── */}
+        <div className="card p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-neutral-900">
+                Reviews
+              </h3>
+              {item.reviewCount != null && item.reviewCount > 0 && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-100 font-bold text-neutral-700">
+                  {item.reviewCount}
+                </span>
+              )}
+            </div>
+
+            {Boolean(item.reviewCount && item.reviewCount > 0) && (
+              <StarRating rating={item.averageRating} showValue size="xs" />
+            )}
+          </div>
+
+          {isLoadingReviews ? (
+            <div className="py-6 flex justify-center">
+              <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="py-4 text-center text-neutral-400 text-sm">
+              No reviews for this item yet. Be the first to rent and review!
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((rev) => (
+                <div key={rev.id} className="border-b border-neutral-100 pb-4 last:border-b-0 last:pb-0 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      {rev.author.avatarUrl ? (
+                        <img
+                          src={rev.author.avatarUrl}
+                          alt={rev.author.name}
+                          className="w-8 h-8 rounded-full object-cover bg-neutral-100 border border-neutral-200"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 font-bold text-xs flex items-center justify-center">
+                          {rev.author.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-xs font-bold text-neutral-900">{rev.author.name}</p>
+                        <p className="text-[11px] text-neutral-400">
+                          {new Date(rev.createdAt).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <StarRating mode="display" rating={rev.rating} size="xs" />
+                  </div>
+
+                  {rev.comment && (
+                    <p className="text-xs text-neutral-600 leading-relaxed pl-10">
+                      {rev.comment}
+                    </p>
+                  )}
+                </div>
+              ))}
+
+              {reviewsPage < reviewsTotalPages && (
+                <div className="pt-2 text-center">
+                  <button
+                    onClick={handleLoadMoreReviews}
+                    disabled={isLoadingMoreReviews}
+                    className="btn-outline text-xs py-2 px-4 w-full sm:w-auto font-semibold"
+                  >
+                    {isLoadingMoreReviews ? 'Loading more…' : 'Load more reviews'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Owner card */}

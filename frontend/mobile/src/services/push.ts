@@ -73,12 +73,19 @@ export function setupForegroundHandler(): void {
   }
 }
 
+export interface NotificationResponseData {
+  rentalId?: string;
+  targetUserId?: string;
+  type?: string;
+  [key: string]: any;
+}
+
 /**
  * Setup notification response listener (taps on notification).
  * No-op in Expo Go.
  */
 export function setupNotificationResponseListener(
-  onNotificationResponse: (rentalId: string) => void,
+  onNotificationResponse: (data: NotificationResponseData) => void,
 ): () => void {
   if (isExpoGo()) {
     return () => {};
@@ -88,9 +95,11 @@ export function setupNotificationResponseListener(
     const Notifications = require('expo-notifications');
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response: any) => {
-        const rentalId = response?.notification?.request?.content?.data?.rentalId;
-        if (typeof rentalId === 'string' && rentalId) {
-          onNotificationResponse(rentalId);
+        const data = response?.notification?.request?.content?.data;
+        if (data && typeof data === 'object') {
+          onNotificationResponse(data);
+        } else if (typeof data === 'string') {
+          onNotificationResponse({ rentalId: data });
         }
       },
     );

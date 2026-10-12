@@ -35,6 +35,8 @@ export interface PublicUserProfile {
   addressArea?: string | null;
   memberSince: string;
   itemCount: number;
+  averageRating?: number;
+  reviewCount?: number;
   items: Item[];
 }
 

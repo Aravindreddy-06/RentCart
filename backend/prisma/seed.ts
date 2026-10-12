@@ -16,6 +16,7 @@ async function main() {
   console.log('🌱  Seeding database…');
 
   // ── Clear existing data ────────────────────────────────────────────────────
+  await prisma.review.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.pushToken.deleteMany();
   await prisma.rental.deleteMany();
@@ -324,6 +325,26 @@ async function main() {
         status: RentalStatus.RETURNED,
       },
       {
+        itemId: drill.id,
+        borrowerId: bob.id,
+        startDate: new Date('2026-09-10'),
+        endDate: new Date('2026-09-12'),
+        totalPrice: 45, // 3 days x 15
+        depositAmount: 50,
+        borrowerNote: 'Building a bookshelf at home.',
+        status: RentalStatus.RETURNED,
+      },
+      {
+        itemId: tent.id,
+        borrowerId: carol.id,
+        startDate: new Date('2026-09-20'),
+        endDate: new Date('2026-09-22'),
+        totalPrice: 60, // 3 days x 20
+        depositAmount: 80,
+        borrowerNote: 'Camping at Redwood park.',
+        status: RentalStatus.RETURNED,
+      },
+      {
         itemId: camera.id,
         borrowerId: carol.id,
         startDate: new Date('2026-10-20'),
@@ -347,16 +368,100 @@ async function main() {
     ],
   });
 
-  // ── Sample Notifications ──────────────────────────────────────────────────
+  // ── Sample Reviews on RETURNED Rentals ────────────────────────────────────
   const allRentals = await prisma.rental.findMany();
-  const pendingDrillRental = allRentals.find((r) => r.itemId === drill.id && r.borrowerId === bob.id)!;
+  const returnedBikeRental = allRentals.find(
+    (r) => r.itemId === bike.id && r.borrowerId === bob.id && r.status === RentalStatus.RETURNED,
+  )!;
+  const returnedDrillRental = allRentals.find(
+    (r) => r.itemId === drill.id && r.borrowerId === bob.id && r.status === RentalStatus.RETURNED,
+  )!;
+  const returnedTentRental = allRentals.find(
+    (r) => r.itemId === tent.id && r.borrowerId === carol.id && r.status === RentalStatus.RETURNED,
+  )!;
+
+  await prisma.review.createMany({
+    data: [
+      // Bike rental: Bob (borrower) reviews Carol (owner)
+      {
+        rentalId: returnedBikeRental.id,
+        itemId: bike.id,
+        authorId: bob.id,
+        targetUserId: carol.id,
+        rating: 5,
+        comment: 'Bike was in fantastic condition! Smooth ride and Carol made pickup very easy.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
+      },
+      // Bike rental: Carol (owner) reviews Bob (borrower)
+      {
+        rentalId: returnedBikeRental.id,
+        itemId: bike.id,
+        authorId: carol.id,
+        targetUserId: bob.id,
+        rating: 5,
+        comment: 'Bob returned the bike clean and right on schedule. Highly recommend as a borrower!',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 40), // 40 hours ago
+      },
+      // Drill rental: Bob (borrower) reviews Alice (owner)
+      {
+        rentalId: returnedDrillRental.id,
+        itemId: drill.id,
+        authorId: bob.id,
+        targetUserId: alice.id,
+        rating: 5,
+        comment: 'Drill worked flawlessly! Battery lasted through the whole shelf project. Thanks Alice!',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5), // 5 days ago
+      },
+      // Drill rental: Alice (owner) reviews Bob (borrower)
+      {
+        rentalId: returnedDrillRental.id,
+        itemId: drill.id,
+        authorId: alice.id,
+        targetUserId: bob.id,
+        rating: 5,
+        comment: 'Great borrower, very polite and returned everything including all bits.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4), // 4 days ago
+      },
+      // Tent rental: Carol (borrower) reviews Alice (owner)
+      {
+        rentalId: returnedTentRental.id,
+        itemId: tent.id,
+        authorId: carol.id,
+        targetUserId: alice.id,
+        rating: 4,
+        comment: 'Great waterproof tent, kept us dry during a rainy night. Clean and well maintained.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10), // 10 days ago (older than 7 days)
+      },
+      // Tent rental: Alice (owner) reviews Carol (borrower)
+      {
+        rentalId: returnedTentRental.id,
+        itemId: tent.id,
+        authorId: alice.id,
+        targetUserId: carol.id,
+        rating: 5,
+        comment: 'Carol returned the tent neatly folded and dry. Excellent borrower!',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 9), // 9 days ago
+      },
+    ],
+  });
+
+  // ── Sample Notifications ──────────────────────────────────────────────────
+  const pendingDrillRental = allRentals.find((r) => r.itemId === drill.id && r.borrowerId === bob.id && r.status === RentalStatus.PENDING)!;
   const approvedWasherRental = allRentals.find((r) => r.itemId === washer.id && r.borrowerId === carol.id)!;
   const activeMixerRental = allRentals.find((r) => r.itemId === mixer.id && r.borrowerId === alice.id)!;
-  const returnedBikeRental = allRentals.find((r) => r.itemId === bike.id && r.borrowerId === bob.id)!;
 
   await prisma.notification.createMany({
     data: [
       // Alice's notifications (owner of drill & washer; borrower of mixer)
+      {
+        userId: alice.id,
+        type: NotificationType.REVIEW_RECEIVED,
+        title: 'New Review Received',
+        body: 'You received a new review',
+        data: { rentalId: returnedDrillRental.id, itemId: drill.id, targetUserId: alice.id },
+        isRead: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 15), // 15 mins ago
+      },
       {
         userId: alice.id,
         type: NotificationType.RENTAL_REQUESTED,
@@ -380,12 +485,21 @@ async function main() {
         type: NotificationType.RENTAL_CANCELLED,
         title: 'Rental Cancelled',
         body: 'Rental request for "Camping Tent (4-person)" was cancelled by the borrower.',
-        data: { rentalId: allRentals.find((r) => r.itemId === tent.id)!.id, itemId: tent.id },
+        data: { rentalId: allRentals.find((r) => r.itemId === tent.id && r.status === RentalStatus.CANCELLED)!.id, itemId: tent.id },
         isRead: true,
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
       },
 
       // Bob's notifications (borrower of drill & bike)
+      {
+        userId: bob.id,
+        type: NotificationType.REVIEW_RECEIVED,
+        title: 'New Review Received',
+        body: 'You received a new review',
+        data: { rentalId: returnedBikeRental.id, itemId: bike.id, targetUserId: bob.id },
+        isRead: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 25), // 25 mins ago
+      },
       {
         userId: bob.id,
         type: NotificationType.RENTAL_RETURNED,

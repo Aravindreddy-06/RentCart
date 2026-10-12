@@ -6,6 +6,7 @@
 
 import { Router } from 'express';
 import * as itemsController from '../controllers/items.controller';
+import * as reviewsController from '../controllers/reviews.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 
 const router = Router();
@@ -18,6 +19,9 @@ router.get('/mine', authenticate, itemsController.getMyItems);
 
 // Booked dates for an item (APPROVED/ACTIVE) — must be before /:id
 router.get('/:id/booked-dates', authenticate, itemsController.getBookedDates);
+
+// Reviews for an item (pagination)
+router.get('/:id/reviews', authenticate, reviewsController.getItemReviews);
 
 // Single item details
 router.get('/:id', authenticate, itemsController.getItem);

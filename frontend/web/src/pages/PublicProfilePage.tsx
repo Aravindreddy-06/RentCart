@@ -5,11 +5,13 @@
  * Never exposes email, phone, or exact coordinates.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { ItemCard } from '../components/ItemCard';
+import { StarRating } from '../components/StarRating';
 import { usersService, type PublicUserProfile } from '../services/users.service';
+import { reviewsService, type Review } from '../services/reviews.service';
 
 export function PublicProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +20,39 @@ export function PublicProfilePage() {
   const [profile, setProfile] = useState<PublicUserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Reviews received state
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [reviewsTotalPages, setReviewsTotalPages] = useState(1);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [isLoadingMoreReviews, setIsLoadingMoreReviews] = useState(false);
+
+  const fetchUserReviews = useCallback(async (userId: string, page = 1) => {
+    if (page === 1) setIsLoadingReviews(true);
+    else setIsLoadingMoreReviews(true);
+
+    try {
+      const data = await reviewsService.getUserReviews(userId, { page, limit: 5 });
+      if (page === 1) {
+        setReviews(data.reviews);
+      } else {
+        setReviews((prev) => [...prev, ...data.reviews]);
+      }
+      setReviewsPage(data.pagination.page);
+      setReviewsTotalPages(data.pagination.totalPages);
+    } catch {
+      // Ignored
+    } finally {
+      setIsLoadingReviews(false);
+      setIsLoadingMoreReviews(false);
+    }
+  }, []);
+
+  const handleLoadMoreReviews = () => {
+    if (!id || isLoadingMoreReviews || reviewsPage >= reviewsTotalPages) return;
+    fetchUserReviews(id, reviewsPage + 1);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -28,7 +63,10 @@ export function PublicProfilePage() {
     usersService
       .getPublicProfile(id)
       .then((data) => {
-        if (mounted) setProfile(data);
+        if (mounted) {
+          setProfile(data);
+          void fetchUserReviews(id, 1);
+        }
       })
       .catch((err) => {
         if (mounted) {
@@ -42,7 +80,7 @@ export function PublicProfilePage() {
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [id, fetchUserReviews]);
 
   const formatDate = (isoString: string) => {
     try {
@@ -127,8 +165,102 @@ export function PublicProfilePage() {
                   <span className="flex items-center gap-1">
                     <span>📦</span> {profile.itemCount} {profile.itemCount === 1 ? 'item listed' : 'items listed'}
                   </span>
+                  {Boolean(profile.reviewCount && profile.reviewCount > 0) ? (
+                    <div className="flex items-center gap-1">
+                      <StarRating
+                        rating={profile.averageRating}
+                        reviewCount={profile.reviewCount}
+                        showValue
+                        size="xs"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-neutral-400">★ No reviews yet</span>
+                  )}
                 </div>
               </div>
+            </div>
+
+            {/* Reviews Received Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-neutral-900">
+                    Reviews Received
+                  </h2>
+                  {profile.reviewCount != null && profile.reviewCount > 0 && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-200 font-bold text-neutral-700">
+                      {profile.reviewCount}
+                    </span>
+                  )}
+                </div>
+
+                {Boolean(profile.reviewCount && profile.reviewCount > 0) && (
+                  <StarRating rating={profile.averageRating} showValue size="xs" />
+                )}
+              </div>
+
+              {isLoadingReviews ? (
+                <div className="card p-8 text-center flex justify-center">
+                  <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : reviews.length === 0 ? (
+                <div className="card p-8 text-center bg-white/60">
+                  <p className="text-neutral-400 text-sm">No reviews received yet.</p>
+                </div>
+              ) : (
+                <div className="card divide-y divide-neutral-100 overflow-hidden">
+                  {reviews.map((rev) => (
+                    <div key={rev.id} className="p-4 sm:p-5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {rev.author.avatarUrl ? (
+                            <img
+                              src={rev.author.avatarUrl}
+                              alt={rev.author.name}
+                              className="w-9 h-9 rounded-full object-cover bg-neutral-100 border border-neutral-200"
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-700 font-bold text-xs flex items-center justify-center">
+                              {rev.author.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm font-bold text-neutral-900">{rev.author.name}</p>
+                            <p className="text-[11px] text-neutral-400">
+                              {new Date(rev.createdAt).toLocaleDateString(undefined, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                            </p>
+                          </div>
+                        </div>
+
+                        <StarRating mode="display" rating={rev.rating} size="xs" />
+                      </div>
+
+                      {rev.comment && (
+                        <p className="text-sm text-neutral-600 leading-relaxed pl-12">
+                          "{rev.comment}"
+                        </p>
+                      )}
+                    </div>
+                  ))}
+
+                  {reviewsPage < reviewsTotalPages && (
+                    <div className="p-4 text-center bg-neutral-50/50">
+                      <button
+                        onClick={handleLoadMoreReviews}
+                        disabled={isLoadingMoreReviews}
+                        className="btn-outline text-xs py-2 px-5 font-semibold"
+                      >
+                        {isLoadingMoreReviews ? 'Loading more…' : 'Load more reviews'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Listed Items Grid */}

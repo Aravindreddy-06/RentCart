@@ -229,6 +229,37 @@ Each notification includes `{ rentalId, itemId }` in `data` so the client can na
 
 ---
 
+## ⭐ Reviews and Ratings System
+
+### Rules & Integrity Constraints
+1. **Rental Status Check**: A review can only be written for a rental with status `RETURNED`. Any attempt to review non-`RETURNED` rentals returns HTTP **400 Bad Request**.
+2. **Participants Only**: Only the borrower and the owner of that rental can review (borrower reviews the owner, owner reviews the borrower). Non-participants receive HTTP **403 Forbidden**.
+3. **One Review Per Participant**: Exactly ONE review is allowed per user per rental. A duplicate attempt returns HTTP **409 Conflict**.
+4. **No Self-Reviews**: A user cannot review themselves (enforced at the service layer).
+5. **Rating Range**: Rating is an integer between 1 and 5 stars (enforced by Zod and a PostgreSQL `CHECK ("rating" >= 1 AND "rating" <= 5)` database constraint).
+6. **Comments**: Optional, maximum 500 characters.
+7. **Time Window**: Reviews cannot be edited after 7 days from creation. The author can delete their own review at any time.
+8. **Asynchronous Notifications**: Submitting a review triggers a `REVIEW_RECEIVED` notification to the reviewed party. Notification delivery failure never fails the review creation.
+9. **Rating Aggregates**:
+   - Item details and item list cards include `averageRating` (rounded to 1 decimal) and `reviewCount`.
+   - Public user profiles include `averageRating` and `reviewCount` computed from reviews received.
+
+### Review Endpoints
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/reviews` | Yes | Create review (`rentalId`, `rating`, `comment`). Returns 400 for non-RETURNED, 403 for non-participants, 409 for duplicate. |
+| `PATCH` | `/api/reviews/:id` | Yes | Edit rating/comment within 7 days (author only). |
+| `DELETE` | `/api/reviews/:id` | Yes | Delete review (author only). Updates aggregates immediately. |
+| `GET` | `/api/items/:id/reviews` | Yes | Get paginated reviews for an item (supports `page` and `limit`). |
+| `GET` | `/api/users/:id/reviews` | Yes | Get paginated reviews received by a user. |
+| `GET` | `/api/rentals/:id/review-status` | Yes | Get review eligibility (`canReview`, `hasReviewed`, `myReview`, `otherReview`). |
+| `GET` | `/api/items` | Yes | Includes `averageRating` and `reviewCount` on each item. |
+| `GET` | `/api/items/:id` | Yes | Includes `averageRating` and `reviewCount` for the item. |
+| `GET` | `/api/users/:id` | Yes | Public user profile includes `averageRating` and `reviewCount`. |
+
+---
+
 ### 2️⃣ Setting Up the Web Application
 
 1. Navigate to the web frontend directory:

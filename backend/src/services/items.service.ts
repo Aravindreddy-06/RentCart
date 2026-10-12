@@ -178,8 +178,10 @@ export async function getItems(query: ItemsQuery) {
       };
     });
 
+    const itemsWithStats = await attachRatingStats(mappedItems);
+
     return {
-      items: mappedItems,
+      items: itemsWithStats,
       pagination: {
         page,
         limit,
@@ -236,8 +238,10 @@ export async function getItems(query: ItemsQuery) {
     };
   });
 
+  const itemsWithStats = await attachRatingStats(mappedItems);
+
   return {
-    items: mappedItems,
+    items: itemsWithStats,
     pagination: {
       page,
       limit,
@@ -247,19 +251,61 @@ export async function getItems(query: ItemsQuery) {
   };
 }
 
-export async function getItemById(id: string, currentUserId?: string) {
-  const item = await prisma.item.findUnique({
-    where: { id },
-    include: {
-      owner: { select: ownerSelect },
-    },
+async function attachRatingStats<T extends { id: string }>(
+  items: T[],
+): Promise<Array<T & { averageRating: number; reviewCount: number }>> {
+  if (items.length === 0) return [];
+  const itemIds = items.map((i) => i.id);
+  const reviewsAgg = await prisma.review.groupBy({
+    by: ['itemId'],
+    where: { itemId: { in: itemIds } },
+    _avg: { rating: true },
+    _count: { _all: true },
   });
 
+  const ratingMap = new Map(
+    reviewsAgg.map((r) => [
+      r.itemId,
+      {
+        averageRating: r._avg.rating != null ? Math.round(r._avg.rating * 10) / 10 : 0,
+        reviewCount: r._count._all,
+      },
+    ]),
+  );
+
+  return items.map((item) => ({
+    ...item,
+    averageRating: ratingMap.get(item.id)?.averageRating ?? 0,
+    reviewCount: ratingMap.get(item.id)?.reviewCount ?? 0,
+  }));
+}
+
+export async function getItemById(id: string, currentUserId?: string) {
+  const [item, aggregate] = await Promise.all([
+    prisma.item.findUnique({
+      where: { id },
+      include: {
+        owner: { select: ownerSelect },
+      },
+    }),
+    prisma.review.aggregate({
+      where: { itemId: id },
+      _avg: { rating: true },
+      _count: { _all: true },
+    }),
+  ]);
+
   if (!item) return null;
+
+  const rawAvg = aggregate._avg.rating ?? 0;
+  const averageRating = Math.round(rawAvg * 10) / 10;
+  const reviewCount = aggregate._count._all;
 
   const isOwner = currentUserId && item.ownerId === currentUserId;
   return {
     ...item,
+    averageRating,
+    reviewCount,
     latitude:
       item.latitude != null
         ? isOwner
@@ -276,13 +322,14 @@ export async function getItemById(id: string, currentUserId?: string) {
 }
 
 export async function getMyItems(ownerId: string) {
-  return prisma.item.findMany({
+  const items = await prisma.item.findMany({
     where: { ownerId },
     orderBy: { createdAt: 'desc' },
     include: {
       owner: { select: ownerSelect },
     },
   });
+  return attachRatingStats(items);
 }
 
 export async function createItem(data: CreateItemInput) {

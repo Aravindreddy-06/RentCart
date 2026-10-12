@@ -21,6 +21,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/types';
 import { usersService, type PublicUserProfile } from '../services/users.service';
+import { reviewsService, type Review } from '../services/reviews.service';
+import { StarRating } from '../components/StarRating';
 import { type Item } from '../services/items.service';
 import { colors } from '../utils/colors';
 
@@ -33,6 +35,33 @@ export default function PublicProfileScreen({ route, navigation }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [isLoadingMoreReviews, setIsLoadingMoreReviews] = useState(false);
+
+  const fetchReviews = useCallback(async (page = 1, isRefresh = false) => {
+    if (page === 1 && !isRefresh) setIsLoadingReviews(true);
+    if (page > 1) setIsLoadingMoreReviews(true);
+    try {
+      const res = await reviewsService.getUserReviews(userId, { page, limit: 5 });
+      if (page === 1) {
+        setReviews(res.reviews);
+      } else {
+        setReviews(prev => [...prev, ...res.reviews]);
+      }
+      setReviewsPage(page);
+      setTotalReviews(res.pagination.total);
+    } catch {
+      // Non-blocking
+    } finally {
+      setIsLoadingReviews(false);
+      setIsLoadingMoreReviews(false);
+    }
+  }, [userId]);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -49,11 +78,19 @@ export default function PublicProfileScreen({ route, navigation }: Props) {
 
   useEffect(() => {
     fetchProfile();
-  }, [fetchProfile]);
+    fetchReviews(1);
+  }, [fetchProfile, fetchReviews]);
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchProfile();
+    fetchReviews(1, true);
+  };
+
+  const handleLoadMoreReviews = () => {
+    if (!isLoadingMoreReviews && reviews.length < totalReviews) {
+      fetchReviews(reviewsPage + 1);
+    }
   };
 
   const formatDate = (isoString: string) => {
@@ -133,6 +170,20 @@ export default function PublicProfileScreen({ route, navigation }: Props) {
             <Text style={styles.verifiedText}>✓ Verified Neighbour</Text>
           </View>
 
+          {/* Rating Summary */}
+          <View style={styles.ratingSummaryRow}>
+            {profile.reviewCount && profile.reviewCount > 0 ? (
+              <StarRating
+                rating={profile.averageRating || 0}
+                size="sm"
+                showValue
+                reviewCount={profile.reviewCount}
+              />
+            ) : (
+              <Text style={styles.noRatingText}>No reviews yet</Text>
+            )}
+          </View>
+
           <View style={styles.metaRow}>
             {profile.addressArea && (
               <View style={styles.metaItem}>
@@ -174,6 +225,66 @@ export default function PublicProfileScreen({ route, navigation }: Props) {
             columnWrapperStyle={styles.columnWrapper}
             scrollEnabled={false}
           />
+        )}
+
+        {/* Reviews Received Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>
+            Reviews Received ({totalReviews || profile.reviewCount || 0})
+          </Text>
+        </View>
+
+        {isLoadingReviews ? (
+          <ActivityIndicator color={colors.primary[600]} style={{ marginVertical: 16 }} />
+        ) : reviews.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyIcon}>⭐</Text>
+            <Text style={styles.emptyText}>No reviews received yet.</Text>
+          </View>
+        ) : (
+          <View style={styles.reviewsList}>
+            {reviews.map((rev) => (
+              <View key={rev.id} style={styles.reviewItem}>
+                <View style={styles.reviewHeaderRow}>
+                  <View style={styles.reviewerInfo}>
+                    {rev.author.avatarUrl ? (
+                      <Image source={{ uri: rev.author.avatarUrl }} style={styles.reviewerAvatar} />
+                    ) : (
+                      <View style={[styles.reviewerAvatar, styles.reviewerAvatarFallback]}>
+                        <Text style={styles.reviewerAvatarText}>
+                          {rev.author.name.charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                    <View>
+                      <Text style={styles.reviewerName}>{rev.author.name}</Text>
+                      <Text style={styles.reviewDate}>
+                        {new Date(rev.createdAt).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  </View>
+                  <StarRating rating={rev.rating} size="sm" />
+                </View>
+                {rev.comment ? (
+                  <Text style={styles.reviewCommentText}>{rev.comment}</Text>
+                ) : null}
+              </View>
+            ))}
+
+            {reviews.length < totalReviews && (
+              <TouchableOpacity
+                style={styles.loadMoreReviewsBtn}
+                onPress={handleLoadMoreReviews}
+                disabled={isLoadingMoreReviews}
+              >
+                {isLoadingMoreReviews ? (
+                  <ActivityIndicator size="small" color={colors.primary[600]} />
+                ) : (
+                  <Text style={styles.loadMoreReviewsBtnText}>Load more reviews</Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -388,5 +499,77 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '500',
     color: colors.gray[400],
+  },
+  ratingSummaryRow: {
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  noRatingText: {
+    fontSize: 12,
+    color: colors.gray[500],
+  },
+  reviewsList: {
+    gap: 12,
+  },
+  reviewItem: {
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    padding: 14,
+  },
+  reviewHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  reviewerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  reviewerAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  reviewerAvatarFallback: {
+    backgroundColor: colors.primary[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewerAvatarText: {
+    color: colors.primary[700],
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  reviewerName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.gray[900],
+  },
+  reviewDate: {
+    fontSize: 11,
+    color: colors.gray[400],
+  },
+  reviewCommentText: {
+    fontSize: 13,
+    color: colors.gray[700],
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  loadMoreReviewsBtn: {
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.gray[100],
+    borderRadius: 10,
+    marginTop: 6,
+  },
+  loadMoreReviewsBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary[600],
   },
 });

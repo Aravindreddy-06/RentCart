@@ -24,6 +24,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/types';
 import { itemsService, Item } from '../services/items.service';
+import { reviewsService, Review } from '../services/reviews.service';
+import { StarRating } from '../components/StarRating';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../utils/colors';
 
@@ -82,6 +84,33 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isTogglingAvailability, setIsTogglingAvailability] = useState(false);
 
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [isLoadingMoreReviews, setIsLoadingMoreReviews] = useState(false);
+
+  const fetchReviews = useCallback(async (page = 1, isRefresh = false) => {
+    if (page === 1 && !isRefresh) setIsLoadingReviews(true);
+    if (page > 1) setIsLoadingMoreReviews(true);
+    try {
+      const res = await reviewsService.getItemReviews(itemId, { page, limit: 5 });
+      if (page === 1) {
+        setReviews(res.reviews);
+      } else {
+        setReviews(prev => [...prev, ...res.reviews]);
+      }
+      setReviewsPage(page);
+      setTotalReviews(res.pagination.total);
+    } catch {
+      // Non-blocking
+    } finally {
+      setIsLoadingReviews(false);
+      setIsLoadingMoreReviews(false);
+    }
+  }, [itemId]);
+
   const fetchItem = useCallback(async (isRefresh = false) => {
     if (!isRefresh) setLoading(true);
     setError('');
@@ -99,11 +128,21 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
     }
   }, [itemId, navigation]);
 
-  useEffect(() => { fetchItem(); }, [fetchItem]);
+  useEffect(() => {
+    fetchItem();
+    fetchReviews(1);
+  }, [fetchItem, fetchReviews]);
 
   const handleRefresh = () => {
     setRefreshing(true);
     fetchItem(true);
+    fetchReviews(1, true);
+  };
+
+  const handleLoadMoreReviews = () => {
+    if (!isLoadingMoreReviews && reviews.length < totalReviews) {
+      fetchReviews(reviewsPage + 1);
+    }
   };
 
   const handleDelete = () => {
@@ -231,6 +270,20 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
           </View>
           <Text style={styles.title}>{item.title}</Text>
 
+          {/* Rating summary */}
+          <View style={styles.ratingSummaryRow}>
+            {item.reviewCount && item.reviewCount > 0 ? (
+              <StarRating
+                rating={item.averageRating || 0}
+                size="sm"
+                showValue
+                reviewCount={item.reviewCount}
+              />
+            ) : (
+              <Text style={styles.noRatingText}>No reviews yet</Text>
+            )}
+          </View>
+
           {/* Pricing */}
           <View style={styles.priceRow}>
             <Text style={styles.price}>${item.pricePerDay}</Text>
@@ -281,6 +334,66 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
             </View>
             <Text style={{ color: colors.gray[400], fontSize: 16 }}>›</Text>
           </TouchableOpacity>
+
+          <View style={styles.divider} />
+
+          {/* Reviews list */}
+          <View style={styles.reviewsSectionHeader}>
+            <Text style={styles.sectionLabel}>Reviews ({totalReviews || item.reviewCount || 0})</Text>
+          </View>
+
+          {isLoadingReviews ? (
+            <ActivityIndicator color={colors.primary[600]} style={{ marginVertical: 16 }} />
+          ) : reviews.length === 0 ? (
+            <Text style={styles.emptyReviewsText}>No reviews for this item yet.</Text>
+          ) : (
+            <View style={styles.reviewsList}>
+              {reviews.map((rev) => (
+                <View key={rev.id} style={styles.reviewItem}>
+                  <View style={styles.reviewHeaderRow}>
+                    <TouchableOpacity
+                      style={styles.reviewerInfo}
+                      onPress={() => navigation.navigate('PublicProfile', { userId: rev.author.id })}
+                    >
+                      {rev.author.avatarUrl ? (
+                        <Image source={{ uri: rev.author.avatarUrl }} style={styles.reviewerAvatar} />
+                      ) : (
+                        <View style={[styles.reviewerAvatar, styles.reviewerAvatarFallback]}>
+                          <Text style={styles.reviewerAvatarText}>
+                            {rev.author.name.charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                      )}
+                      <View>
+                        <Text style={styles.reviewerName}>{rev.author.name}</Text>
+                        <Text style={styles.reviewDate}>
+                          {new Date(rev.createdAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    <StarRating rating={rev.rating} size="sm" />
+                  </View>
+                  {rev.comment ? (
+                    <Text style={styles.reviewCommentText}>{rev.comment}</Text>
+                  ) : null}
+                </View>
+              ))}
+
+              {reviews.length < totalReviews && (
+                <TouchableOpacity
+                  style={styles.loadMoreReviewsBtn}
+                  onPress={handleLoadMoreReviews}
+                  disabled={isLoadingMoreReviews}
+                >
+                  {isLoadingMoreReviews ? (
+                    <ActivityIndicator size="small" color={colors.primary[600]} />
+                  ) : (
+                    <Text style={styles.loadMoreReviewsBtnText}>Load more reviews</Text>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -605,5 +718,88 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: colors.gray[500],
     fontSize: 14,
+  },
+  ratingSummaryRow: {
+    marginVertical: 4,
+  },
+  noRatingText: {
+    fontSize: 12,
+    color: colors.gray[500],
+  },
+  reviewsSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  emptyReviewsText: {
+    fontSize: 13,
+    color: colors.gray[500],
+    fontStyle: 'italic',
+    paddingVertical: 8,
+  },
+  reviewsList: {
+    gap: 12,
+  },
+  reviewItem: {
+    backgroundColor: colors.gray[50],
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    padding: 12,
+  },
+  reviewHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  reviewerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  reviewerAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  reviewerAvatarFallback: {
+    backgroundColor: colors.primary[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewerAvatarText: {
+    color: colors.primary[700],
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  reviewerName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.gray[900],
+  },
+  reviewDate: {
+    fontSize: 11,
+    color: colors.gray[400],
+  },
+  reviewCommentText: {
+    fontSize: 13,
+    color: colors.gray[700],
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  loadMoreReviewsBtn: {
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.gray[100],
+    borderRadius: 10,
+    marginTop: 6,
+  },
+  loadMoreReviewsBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary[600],
   },
 });

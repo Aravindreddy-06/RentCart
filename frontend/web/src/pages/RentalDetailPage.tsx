@@ -8,8 +8,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { StatusBadge } from '../components/StatusBadge';
+import { StarRating } from '../components/StarRating';
 import { useAuth } from '../context/AuthContext';
 import { rentalsService, type Rental, type RentalStatus } from '../services/rentals.service';
+import { reviewsService, type ReviewStatusResponse } from '../services/reviews.service';
 
 export function RentalDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +33,28 @@ export function RentalDetailPage() {
   const [actionInProgress, setActionInProgress] = useState(false);
   const [actionError, setActionError] = useState('');
 
+  // Review state
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatusResponse | null>(null);
+  const [isLoadingReview, setIsLoadingReview] = useState(false);
+  const [ratingInput, setRatingInput] = useState(5);
+  const [commentInput, setCommentInput] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isDeletingReview, setIsDeletingReview] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const [showDeleteReviewModal, setShowDeleteReviewModal] = useState(false);
+
+  const fetchReviewStatus = useCallback(async (rentalId: string) => {
+    setIsLoadingReview(true);
+    try {
+      const status = await reviewsService.getRentalReviewStatus(rentalId);
+      setReviewStatus(status);
+    } catch {
+      // Ignored if non-returned or not ready
+    } finally {
+      setIsLoadingReview(false);
+    }
+  }, []);
+
   const fetchRental = useCallback(async () => {
     if (!id) return;
     setIsLoading(true);
@@ -38,6 +62,9 @@ export function RentalDetailPage() {
     try {
       const data = await rentalsService.getById(id);
       setRental(data);
+      if (data.status === 'RETURNED') {
+        void fetchReviewStatus(data.id);
+      }
     } catch (err: any) {
       const status = err?.response?.status;
       if (status === 404) {
@@ -50,11 +77,48 @@ export function RentalDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [id, fetchReviewStatus]);
 
   useEffect(() => {
     fetchRental();
   }, [fetchRental]);
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rental || ratingInput < 1) return;
+    setIsSubmittingReview(true);
+    setReviewError('');
+    try {
+      await reviewsService.createReview({
+        rentalId: rental.id,
+        rating: ratingInput,
+        comment: commentInput.trim() || undefined,
+      });
+      setCommentInput('');
+      await fetchReviewStatus(rental.id);
+    } catch (err: any) {
+      setReviewError(err?.response?.data?.message || 'Failed to submit review.');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!reviewStatus?.myReview || !rental) return;
+    setIsDeletingReview(true);
+    setReviewError('');
+    try {
+      await reviewsService.deleteReview(reviewStatus.myReview.id);
+      setShowDeleteReviewModal(false);
+      await fetchReviewStatus(rental.id);
+      setRatingInput(5);
+      setCommentInput('');
+    } catch (err: any) {
+      setReviewError(err?.response?.data?.message || 'Failed to delete review.');
+    } finally {
+      setIsDeletingReview(false);
+    }
+  };
 
   const isOwner = user?.id === rental?.item?.ownerId;
   const isBorrower = user?.id === rental?.borrowerId;
@@ -390,6 +454,138 @@ export function RentalDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* ── Review Section (when rental is RETURNED) ── */}
+            {rental.status === 'RETURNED' && (
+              <div className="bg-white rounded-2xl p-6 border border-neutral-200/80 shadow-sm space-y-4">
+                {isLoadingReview ? (
+                  <div className="flex items-center justify-center py-6">
+                    <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : reviewStatus?.canReview ? (
+                  <div className="space-y-4">
+                    <div>
+                      <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
+                        <span className="text-amber-400">★</span> Rate your experience
+                      </h2>
+                      <p className="text-xs text-neutral-500 mt-1">
+                        Leave a rating and review for{' '}
+                        <strong>{reviewStatus.targetUser?.name ?? 'the other party'}</strong>.
+                      </p>
+                    </div>
+
+                    {reviewError && (
+                      <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl">
+                        {reviewError}
+                      </div>
+                    )}
+
+                    <form onSubmit={handleSubmitReview} className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                          Select Rating (1 to 5 stars)
+                        </label>
+                        <StarRating
+                          mode="input"
+                          value={ratingInput}
+                          onChange={setRatingInput}
+                          size="lg"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="block text-xs font-semibold text-neutral-700">
+                            Comment <span className="font-normal text-neutral-400">(optional)</span>
+                          </label>
+                          <span className="text-[11px] text-neutral-400">
+                            {commentInput.length}/500
+                          </span>
+                        </div>
+                        <textarea
+                          value={commentInput}
+                          onChange={(e) => setCommentInput(e.target.value)}
+                          placeholder="How was the communication, item condition, or overall experience?"
+                          maxLength={500}
+                          rows={3}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isSubmittingReview || ratingInput < 1}
+                        className="btn-primary py-2.5 px-6 text-sm font-semibold disabled:opacity-50"
+                      >
+                        {isSubmittingReview ? 'Submitting…' : 'Submit Review'}
+                      </button>
+                    </form>
+                  </div>
+                ) : reviewStatus?.hasReviewed && reviewStatus.myReview ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
+                          <span className="text-amber-400">★</span> Your Review
+                        </h2>
+                        <p className="text-xs text-neutral-400 mt-0.5">
+                          Submitted on {new Date(reviewStatus.myReview.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setShowDeleteReviewModal(true)}
+                        disabled={isDeletingReview}
+                        className="text-xs text-red-600 hover:text-red-700 font-semibold px-2.5 py-1 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-200 transition-colors"
+                      >
+                        Delete Review
+                      </button>
+                    </div>
+
+                    {reviewError && (
+                      <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl">
+                        {reviewError}
+                      </div>
+                    )}
+
+                    <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-100 space-y-2">
+                      <StarRating
+                        mode="display"
+                        rating={reviewStatus.myReview.rating}
+                        showValue
+                        size="md"
+                      />
+                      {reviewStatus.myReview.comment && (
+                        <p className="text-sm text-neutral-700 leading-relaxed italic">
+                          "{reviewStatus.myReview.comment}"
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Other participant's review */}
+                {reviewStatus?.otherReview && (
+                  <div className="pt-4 border-t border-neutral-100 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-neutral-700">
+                        Review from {reviewStatus.otherReview.author.name}:
+                      </span>
+                      <StarRating
+                        mode="display"
+                        rating={reviewStatus.otherReview.rating}
+                        size="xs"
+                        showValue
+                      />
+                    </div>
+                    {reviewStatus.otherReview.comment && (
+                      <p className="text-xs text-neutral-600 italic">
+                        "{reviewStatus.otherReview.comment}"
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Right: Other Party & Action Controls (1 col) */}
@@ -618,6 +814,41 @@ export function RentalDetailPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Review Confirmation Modal */}
+      {showDeleteReviewModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isDeletingReview) setShowDeleteReviewModal(false);
+          }}
+        >
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <h4 className="text-lg font-bold text-neutral-900">Delete Your Review?</h4>
+            <p className="text-neutral-500 text-sm">
+              Are you sure you want to delete your review? This will remove your rating and comment.
+            </p>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteReviewModal(false)}
+                disabled={isDeletingReview}
+                className="btn-outline flex-1 py-2.5 text-sm"
+              >
+                Keep Review
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteReview}
+                disabled={isDeletingReview}
+                className="btn-primary flex-1 py-2.5 text-sm bg-red-600 hover:bg-red-700 font-semibold"
+              >
+                {isDeletingReview ? 'Deleting…' : 'Yes, Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}

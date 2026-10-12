@@ -63,6 +63,12 @@ function getBadge(type: NotificationType) {
         label: 'Returned',
         icon: '📦',
       };
+    case 'REVIEW_RECEIVED':
+      return {
+        bg: 'bg-amber-100 text-amber-800 border-amber-200',
+        label: 'Review',
+        icon: '⭐',
+      };
     default:
       return {
         bg: 'bg-neutral-100 text-neutral-700 border-neutral-200',
@@ -179,6 +185,11 @@ export function NotificationsPage() {
   const handleNotificationClick = async (notif: NotificationItem) => {
     if (!notif.isRead) {
       notificationsService.markAsRead(notif.id).catch(() => {});
+    }
+    if (notif.type === 'REVIEW_RECEIVED') {
+      const targetUserId = notif.data?.targetUserId || notif.userId;
+      navigate(`/users/${targetUserId}`);
+      return;
     }
     if (notif.data?.rentalId) {
       navigate(`/rentals/${notif.data.rentalId}`);

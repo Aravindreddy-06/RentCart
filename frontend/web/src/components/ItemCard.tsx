@@ -6,6 +6,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import type { Item } from '../services/items.service';
+import { StarRating } from './StarRating';
 
 interface ItemCardProps {
   item: Item;
@@ -74,6 +75,19 @@ export function ItemCard({ item }: ItemCardProps) {
             </span>
           )}
         </div>
+
+        {/* Rating summary (hidden if no reviews) */}
+        {Boolean(item.reviewCount && item.reviewCount > 0) && (
+          <div className="mb-2">
+            <StarRating
+              rating={item.averageRating}
+              reviewCount={item.reviewCount}
+              showValue
+              size="xs"
+            />
+          </div>
+        )}
+
         <p className="text-neutral-500 text-xs line-clamp-2 mb-3 leading-relaxed">
           {item.description}
         </p>

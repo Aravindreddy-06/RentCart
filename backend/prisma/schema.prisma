@@ -28,6 +28,7 @@ enum NotificationType {
   RENTAL_CANCELLED
   RENTAL_ACTIVATED
   RENTAL_RETURNED
+  REVIEW_RECEIVED
 }
 
 // ─── Models ──────────────────────────────────────────────────────────────────
@@ -46,10 +47,12 @@ model User {
   updatedAt    DateTime @updatedAt
 
   // Relations
-  items         Item[]         @relation("OwnerItems")
-  rentals       Rental[]       @relation("BorrowerRentals")
-  notifications Notification[]
-  pushTokens    PushToken[]
+  items           Item[]         @relation("OwnerItems")
+  rentals         Rental[]       @relation("BorrowerRentals")
+  notifications   Notification[]
+  pushTokens      PushToken[]
+  authoredReviews Review[]       @relation("AuthoredReviews")
+  receivedReviews Review[]       @relation("ReceivedReviews")
 
   @@map("users")
 }
@@ -72,6 +75,7 @@ model Item {
   // Relations
   owner   User     @relation("OwnerItems", fields: [ownerId], references: [id], onDelete: Cascade)
   rentals Rental[]
+  reviews Review[]
 
   @@index([latitude, longitude])
   @@map("items")
@@ -92,10 +96,34 @@ model Rental {
   updatedAt     DateTime     @updatedAt
 
   // Relations
-  item     Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  borrower User @relation("BorrowerRentals", fields: [borrowerId], references: [id], onDelete: Cascade)
+  item    Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  borrower User    @relation("BorrowerRentals", fields: [borrowerId], references: [id], onDelete: Cascade)
+  reviews Review[]
 
   @@map("rentals")
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  rentalId     String
+  itemId       String
+  authorId     String
+  targetUserId String
+  rating       Int
+  comment      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  rental     Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  item       Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  author     User   @relation("AuthoredReviews", fields: [authorId], references: [id], onDelete: Cascade)
+  targetUser User   @relation("ReceivedReviews", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@unique([rentalId, authorId])
+  @@index([targetUserId])
+  @@index([itemId])
+  @@map("reviews")
 }
 
 model Notification {

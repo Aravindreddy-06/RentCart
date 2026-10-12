@@ -33,6 +33,7 @@ import { AppStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { itemsService, Item } from '../services/items.service';
 import { notificationsService } from '../services/notifications.service';
+import { StarRating } from '../components/StarRating';
 import { colors } from '../utils/colors';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
@@ -256,6 +257,17 @@ export default function HomeScreen({ navigation }: Props) {
           <Text style={styles.itemTitle} numberOfLines={1}>
             {item.title}
           </Text>
+
+          {Boolean(item.reviewCount && item.reviewCount > 0) && (
+            <View style={{ marginTop: 2, marginBottom: 4 }}>
+              <StarRating
+                rating={item.averageRating}
+                reviewCount={item.reviewCount}
+                showValue
+                size="xs"
+              />
+            </View>
+          )}
 
           <View style={styles.cardFooter}>
             <Text style={styles.priceText}>

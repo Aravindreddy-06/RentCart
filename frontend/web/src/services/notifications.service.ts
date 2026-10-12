@@ -11,7 +11,8 @@ export type NotificationType =
   | 'RENTAL_REJECTED'
   | 'RENTAL_CANCELLED'
   | 'RENTAL_ACTIVATED'
-  | 'RENTAL_RETURNED';
+  | 'RENTAL_RETURNED'
+  | 'REVIEW_RECEIVED';
 
 export interface NotificationItem {
   id: string;

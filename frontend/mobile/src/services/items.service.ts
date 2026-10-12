@@ -25,6 +25,8 @@ export interface Item {
   latitude?: number;
   longitude?: number;
   distanceKm?: number;
+  averageRating?: number;
+  reviewCount?: number;
   createdAt: string;
   updatedAt: string;
   owner: ItemOwner;

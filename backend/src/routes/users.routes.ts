@@ -8,6 +8,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middlewares/auth.middleware';
 import { uploadAvatar as multerUploadAvatar } from '../middlewares/upload.middleware';
 import * as usersController from '../controllers/users.controller';
+import * as reviewsController from '../controllers/reviews.controller';
 
 const router = Router();
 
@@ -32,6 +33,9 @@ router.post(
 
 // Password change
 router.patch('/me/password', authenticate, usersController.changePassword);
+
+// Reviews received by user — must be before /:id or after /:id (Express matches :id/reviews correctly)
+router.get('/:id/reviews', authenticate, reviewsController.getUserReviews);
 
 // Public profile
 router.get('/:id', authenticate, usersController.getPublicProfile);

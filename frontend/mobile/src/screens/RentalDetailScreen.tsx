@@ -18,11 +18,15 @@ import {
   RefreshControl,
   Modal,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/types';
 import { rentalsService, Rental, RentalStatus } from '../services/rentals.service';
+import { reviewsService, type ReviewStatusResponse } from '../services/reviews.service';
+import { StarRating } from '../components/StarRating';
 import { useAuth } from '../context/AuthContext';
 import { StatusBadge } from '../components/StatusBadge';
 import { colors } from '../utils/colors';
@@ -59,6 +63,26 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectNote, setRejectNote] = useState('');
 
+  // Review state
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatusResponse | null>(null);
+  const [isLoadingReview, setIsLoadingReview] = useState(false);
+  const [ratingInput, setRatingInput] = useState(5);
+  const [commentInput, setCommentInput] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isDeletingReview, setIsDeletingReview] = useState(false);
+
+  const fetchReviewStatus = useCallback(async (id: string) => {
+    setIsLoadingReview(true);
+    try {
+      const status = await reviewsService.getRentalReviewStatus(id);
+      setReviewStatus(status);
+    } catch {
+      // Non-blocking
+    } finally {
+      setIsLoadingReview(false);
+    }
+  }, []);
+
   const fetchRental = useCallback(async (isRefresh = false) => {
     if (isRefresh) setIsRefreshing(true);
     else setIsLoading(true);
@@ -67,6 +91,9 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
     try {
       const data = await rentalsService.getById(rentalId);
       setRental(data);
+      if (data.status === 'RETURNED') {
+        void fetchReviewStatus(data.id);
+      }
     } catch (err: any) {
       const status = err?.response?.status;
       if (status === 404) setError('Rental request not found.');
@@ -76,11 +103,54 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [rentalId]);
+  }, [rentalId, fetchReviewStatus]);
 
   useEffect(() => {
     fetchRental();
   }, [fetchRental]);
+
+  const handleSubmitReview = async () => {
+    if (!rental || ratingInput < 1) return;
+    setIsSubmittingReview(true);
+    try {
+      await reviewsService.createReview({
+        rentalId: rental.id,
+        rating: ratingInput,
+        comment: commentInput.trim() || undefined,
+      });
+      setCommentInput('');
+      Alert.alert('Review Submitted! ⭐', 'Thank you for rating your experience.');
+      fetchReviewStatus(rental.id);
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Failed to submit review.');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = () => {
+    if (!reviewStatus?.myReview || !rental) return;
+    Alert.alert('Delete Review', 'Are you sure you want to delete your review?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          setIsDeletingReview(true);
+          try {
+            await reviewsService.deleteReview(reviewStatus.myReview!.id);
+            setRatingInput(5);
+            setCommentInput('');
+            fetchReviewStatus(rental.id);
+          } catch (err: any) {
+            Alert.alert('Error', err?.response?.data?.message || 'Failed to delete review.');
+          } finally {
+            setIsDeletingReview(false);
+          }
+        },
+      },
+    ]);
+  };
 
   const isOwner = user?.id === rental?.item?.ownerId;
   const isBorrower = user?.id === rental?.borrowerId;
@@ -380,6 +450,122 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
             </View>
           )}
         </View>
+
+        {/* Reviews and Ratings Section */}
+        {rental.status === 'RETURNED' && (
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ width: '100%' }}
+          >
+            {isLoadingReview ? (
+              <View style={[styles.card, { alignItems: 'center', paddingVertical: 20 }]}>
+                <ActivityIndicator size="small" color={colors.primary[600]} />
+              </View>
+            ) : (
+              <>
+                {/* Rate your experience form if user can review */}
+                {reviewStatus?.canReview && (
+                  <View style={styles.card}>
+                    <Text style={styles.cardHeader}>Rate Your Experience</Text>
+                    <Text style={styles.reviewSubText}>
+                      How was your rental experience with {otherPerson?.name || 'this user'}?
+                    </Text>
+
+                    <View style={styles.starInputContainer}>
+                      <StarRating
+                        rating={ratingInput}
+                        onRatingChange={setRatingInput}
+                        mode="input"
+                        size="lg"
+                      />
+                    </View>
+
+                    <View style={styles.commentHeaderRow}>
+                      <Text style={styles.fieldLabel}>Feedback (optional)</Text>
+                      <Text style={styles.charCount}>{commentInput.length}/500</Text>
+                    </View>
+                    <TextInput
+                      style={styles.reviewTextInput}
+                      placeholder="Share your experience (communication, item condition, etc.)..."
+                      placeholderTextColor={colors.gray[400]}
+                      multiline
+                      maxLength={500}
+                      value={commentInput}
+                      onChangeText={setCommentInput}
+                    />
+
+                    <TouchableOpacity
+                      style={[
+                        styles.btnSubmitReview,
+                        isSubmittingReview && { opacity: 0.7 },
+                      ]}
+                      onPress={handleSubmitReview}
+                      disabled={isSubmittingReview || ratingInput < 1}
+                    >
+                      {isSubmittingReview ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                      ) : (
+                        <Text style={styles.btnSubmitReviewText}>Submit Review</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* My Review display if already reviewed */}
+                {reviewStatus?.hasReviewed && reviewStatus.myReview && (
+                  <View style={styles.card}>
+                    <View style={styles.reviewCardHeaderRow}>
+                      <Text style={styles.cardHeader}>Your Review</Text>
+                      <TouchableOpacity
+                        onPress={handleDeleteReview}
+                        disabled={isDeletingReview}
+                      >
+                        {isDeletingReview ? (
+                          <ActivityIndicator size="small" color="#dc2626" />
+                        ) : (
+                          <Text style={styles.deleteReviewText}>Delete</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.myReviewBox}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <StarRating rating={reviewStatus.myReview.rating} size="md" />
+                        <Text style={styles.myReviewDate}>
+                          {new Date(reviewStatus.myReview.createdAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                      {reviewStatus.myReview.comment ? (
+                        <Text style={styles.myReviewComment}>"{reviewStatus.myReview.comment}"</Text>
+                      ) : (
+                        <Text style={styles.myReviewNoComment}>No written comment provided.</Text>
+                      )}
+                    </View>
+                  </View>
+                )}
+
+                {/* Other person's review display if exists */}
+                {reviewStatus?.otherReview && (
+                  <View style={styles.card}>
+                    <Text style={styles.cardHeader}>{otherPersonRole}'s Review of You</Text>
+                    <View style={styles.otherReviewBox}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <StarRating rating={reviewStatus.otherReview.rating} size="md" />
+                        <Text style={styles.myReviewDate}>
+                          {new Date(reviewStatus.otherReview.createdAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                      {reviewStatus.otherReview.comment ? (
+                        <Text style={styles.myReviewComment}>"{reviewStatus.otherReview.comment}"</Text>
+                      ) : (
+                        <Text style={styles.myReviewNoComment}>No written comment provided.</Text>
+                      )}
+                    </View>
+                  </View>
+                )}
+              </>
+            )}
+          </KeyboardAvoidingView>
+        )}
       </ScrollView>
 
       {/* Action Footer */}
@@ -949,5 +1135,95 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#ffffff',
+  },
+  reviewSubText: {
+    fontSize: 13,
+    color: colors.gray[600],
+    marginBottom: 8,
+  },
+  starInputContainer: {
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  commentHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  fieldLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.gray[700],
+  },
+  charCount: {
+    fontSize: 11,
+    color: colors.gray[400],
+  },
+  reviewTextInput: {
+    borderWidth: 1,
+    borderColor: colors.gray[300],
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 13,
+    color: colors.gray[900],
+    backgroundColor: '#ffffff',
+    height: 80,
+    textAlignVertical: 'top',
+    marginBottom: 12,
+  },
+  btnSubmitReview: {
+    backgroundColor: colors.primary[600],
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnSubmitReviewText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  reviewCardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  deleteReviewText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#dc2626',
+  },
+  myReviewBox: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+  },
+  otherReviewBox: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+  },
+  myReviewDate: {
+    fontSize: 11,
+    color: colors.gray[500],
+  },
+  myReviewComment: {
+    fontSize: 13,
+    color: colors.gray[800],
+    fontStyle: 'italic',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  myReviewNoComment: {
+    fontSize: 12,
+    color: colors.gray[400],
+    fontStyle: 'italic',
+    marginTop: 4,
   },
 });
