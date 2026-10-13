@@ -31,6 +31,16 @@ router.patch('/:id/messages/read', authenticate, messagesController.markMessages
 // Single rental details
 router.get('/:id', authenticate, rentalsController.getRental);
 
+// Pickup point management
+router.patch('/:id/pickup', authenticate, rentalsController.updatePickup);
+router.get('/:id/pickup', authenticate, rentalsController.getPickup);
+
+// Live tracking
+router.post('/:id/tracking/start', authenticate, rentalsController.startTracking);
+router.post('/:id/tracking/stop', authenticate, rentalsController.stopTracking);
+router.post('/:id/tracking/arrived', authenticate, rentalsController.markArrived);
+router.get('/:id/tracking', authenticate, rentalsController.getTracking);
+
 // Lifecycle transitions
 router.patch('/:id/approve', authenticate, rentalsController.approveRental);
 router.patch('/:id/reject', authenticate, rentalsController.rejectRental);

@@ -8,6 +8,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { StatusBadge } from '../components/StatusBadge';
+import { LocationPicker, type LocationValue } from '../components/LocationPicker';
+import { useAuth } from '../context/AuthContext';
 import { rentalsService, type Rental, type RentalStatus } from '../services/rentals.service';
 
 const TABS: { label: string; value: RentalStatus | '' }[] = [
@@ -22,6 +24,7 @@ const TABS: { label: string; value: RentalStatus | '' }[] = [
 
 export function RequestsPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<RentalStatus | ''>('');
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +35,19 @@ export function RequestsPage() {
   const [rejectNote, setRejectNote] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectError, setRejectError] = useState('');
+
+  // Approve pickup confirmation modal state
+  const [approvingRental, setApprovingRental] = useState<Rental | null>(null);
+  const [pickupLocation, setPickupLocation] = useState<LocationValue>({
+    latitude: 37.7749,
+    longitude: -122.4194,
+    address: '',
+  });
+  const [pickupNote, setPickupNote] = useState('');
+  const [pickupTimeFrom, setPickupTimeFrom] = useState('');
+  const [pickupTimeTo, setPickupTimeTo] = useState('');
+  const [isApproving, setIsApproving] = useState(false);
+  const [approveError, setApproveError] = useState('');
 
   // Processing indicator for other action buttons (approve/activate/return)
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
@@ -54,19 +70,48 @@ export function RequestsPage() {
     fetchRequests();
   }, [fetchRequests]);
 
-  const handleApprove = async (rentalId: string) => {
-    setActionInProgress(rentalId);
-    setActionError('');
+  const openApproveModal = (rental: Rental) => {
+    setApprovingRental(rental);
+    setPickupLocation({
+      latitude: rental.pickupLatitude ?? user?.latitude ?? 37.7749,
+      longitude: rental.pickupLongitude ?? user?.longitude ?? -122.4194,
+      address: rental.pickupAddress || user?.address || '',
+    });
+    setPickupNote(rental.pickupNote || '');
+    setPickupTimeFrom(rental.pickupTimeFrom ? rental.pickupTimeFrom.slice(0, 16) : '');
+    setPickupTimeTo(rental.pickupTimeTo ? rental.pickupTimeTo.slice(0, 16) : '');
+    setApproveError('');
+  };
+
+  const handleConfirmApprove = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!approvingRental) return;
+
+    if (!pickupLocation.address.trim()) {
+      setApproveError('Please provide a pickup address.');
+      return;
+    }
+
+    setIsApproving(true);
+    setApproveError('');
     try {
-      await rentalsService.approve(rentalId);
+      await rentalsService.approve(approvingRental.id, {
+        pickupLatitude: pickupLocation.latitude,
+        pickupLongitude: pickupLocation.longitude,
+        pickupAddress: pickupLocation.address.trim(),
+        pickupNote: pickupNote.trim() ? pickupNote.trim() : null,
+        pickupTimeFrom: pickupTimeFrom ? new Date(pickupTimeFrom).toISOString() : null,
+        pickupTimeTo: pickupTimeTo ? new Date(pickupTimeTo).toISOString() : null,
+      });
+      setApprovingRental(null);
       await fetchRequests();
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ??
-        'Failed to approve request. Dates may conflict with another booking.';
-      setActionError(msg);
+        'Failed to approve request. Please make sure the pickup point is set correctly.';
+      setApproveError(msg);
     } finally {
-      setActionInProgress(null);
+      setIsApproving(false);
     }
   };
 
@@ -316,24 +361,33 @@ export function RequestsPage() {
                             Decline
                           </button>
                           <button
-                            onClick={() => handleApprove(rental.id)}
+                            onClick={() => openApproveModal(rental)}
                             disabled={isBusy}
                             className="px-5 py-2 text-xs sm:text-sm font-semibold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm"
                           >
-                            {isBusy ? 'Approving…' : '✓ Approve Request'}
+                            ✓ Approve Request
                           </button>
                         </>
                       )}
 
-                      {/* APPROVED -> Mark Active */}
+                      {/* APPROVED -> Edit Pickup & Mark Active */}
                       {rental.status === 'APPROVED' && (
-                        <button
-                          onClick={() => handleActivate(rental.id)}
-                          disabled={isBusy}
-                          className="px-5 py-2 text-xs sm:text-sm font-semibold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm"
-                        >
-                          {isBusy ? 'Updating…' : '🤝 Hand Over Item (Mark Active)'}
-                        </button>
+                        <>
+                          <button
+                            onClick={() => openApproveModal(rental)}
+                            disabled={isBusy}
+                            className="px-3 py-2 text-xs sm:text-sm font-medium rounded-xl text-neutral-700 border border-neutral-300 bg-white hover:bg-neutral-50 transition-colors"
+                          >
+                            📍 Edit Pickup
+                          </button>
+                          <button
+                            onClick={() => handleActivate(rental.id)}
+                            disabled={isBusy}
+                            className="px-5 py-2 text-xs sm:text-sm font-semibold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm"
+                          >
+                            {isBusy ? 'Updating…' : '🤝 Hand Over Item (Mark Active)'}
+                          </button>
+                        </>
                       )}
 
                       {/* ACTIVE -> Mark Returned */}
@@ -406,6 +460,134 @@ export function RequestsPage() {
                   className="btn-primary flex-1 py-2.5 text-sm bg-red-600 hover:bg-red-700 font-semibold"
                 >
                   {isRejecting ? 'Declining…' : 'Confirm Decline'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Pickup Point Modal */}
+      {approvingRental && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto animate-fade-in"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isApproving) setApprovingRental(null);
+          }}
+        >
+          <div className="bg-white rounded-2xl p-6 max-w-xl w-full shadow-2xl space-y-5 my-8 max-h-[90vh] overflow-y-auto">
+            <div>
+              <div className="flex items-center justify-between">
+                <h4 className="text-xl font-bold text-neutral-900">
+                  {approvingRental.status === 'APPROVED' ? 'Edit Pickup Point' : 'Confirm Pickup Point'}
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setApprovingRental(null)}
+                  disabled={isApproving}
+                  className="text-neutral-400 hover:text-neutral-600 p-1 rounded-lg"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-neutral-500 text-sm mt-1">
+                Set where {approvingRental.borrower.name} should meet you to pick up{' '}
+                <strong className="text-neutral-800">{approvingRental.item.title}</strong>.
+              </p>
+            </div>
+
+            {/* Safety Tip Alert */}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-start gap-3 text-xs text-amber-900 shadow-sm">
+              <span className="text-lg leading-none">🛡️</span>
+              <div>
+                <p className="font-bold text-amber-950">Safety Tip</p>
+                <p className="mt-0.5 text-amber-800">
+                  Meet in a public, well-lit place when possible. Only approved borrowers will see this exact location.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleConfirmApprove} className="space-y-4">
+              {/* Location Picker */}
+              <LocationPicker
+                value={pickupLocation}
+                onChange={setPickupLocation}
+              />
+
+              {/* Note / Specific instructions */}
+              <div>
+                <label className="block text-xs font-semibold uppercase text-neutral-700 mb-1">
+                  Pickup Note <span className="font-normal text-neutral-400">(optional, max 200 chars)</span>
+                </label>
+                <input
+                  type="text"
+                  value={pickupNote}
+                  onChange={(e) => setPickupNote(e.target.value.slice(0, 200))}
+                  placeholder="e.g. Gate 2, ring the bell on the porch"
+                  maxLength={200}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 text-sm"
+                />
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-[11px] text-neutral-400">
+                    Additional arrival directions or gate codes.
+                  </span>
+                  <span className="text-[11px] text-neutral-400">
+                    {pickupNote.length}/200
+                  </span>
+                </div>
+              </div>
+
+              {/* Optional Time Window */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-neutral-700 mb-1">
+                    Pickup Window From <span className="font-normal text-neutral-400">(optional)</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={pickupTimeFrom}
+                    onChange={(e) => setPickupTimeFrom(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-300 text-xs focus:ring-2 focus:ring-primary-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-neutral-700 mb-1">
+                    Pickup Window To <span className="font-normal text-neutral-400">(optional)</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={pickupTimeTo}
+                    onChange={(e) => setPickupTimeTo(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-300 text-xs focus:ring-2 focus:ring-primary-100"
+                  />
+                </div>
+              </div>
+
+              {approveError && (
+                <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200">
+                  {approveError}
+                </p>
+              )}
+
+              <div className="flex gap-3 pt-3 border-t border-neutral-100">
+                <button
+                  type="button"
+                  onClick={() => setApprovingRental(null)}
+                  disabled={isApproving}
+                  className="btn-outline flex-1 py-2.5 text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isApproving}
+                  className="btn-primary flex-1 py-2.5 text-sm bg-emerald-600 hover:bg-emerald-700 font-semibold shadow-sm"
+                >
+                  {isApproving
+                    ? 'Saving…'
+                    : approvingRental.status === 'APPROVED'
+                    ? 'Update Pickup Point'
+                    : 'Confirm & Approve'}
                 </button>
               </div>
             </form>

@@ -316,6 +316,12 @@ async function main() {
         depositAmount: 120,
         borrowerNote: 'Cleaning our driveway before the holidays.',
         status: RentalStatus.APPROVED,
+        pickupLatitude: 37.7749,
+        pickupLongitude: -122.4194,
+        pickupAddress: '742 Evergreen Terrace, Springfield',
+        pickupNote: 'Gate 2, ring the bell on the porch',
+        pickupTimeFrom: new Date('2026-11-05T09:00:00Z'),
+        pickupTimeTo: new Date('2026-11-05T12:00:00Z'),
       },
       {
         itemId: mixer.id,

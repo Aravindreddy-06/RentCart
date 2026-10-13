@@ -157,11 +157,32 @@ All endpoints require authentication, validate with Zod, and return consistent J
 - `GET /api/rentals/mine` *(Protected)* — Rentals where the authenticated user is the borrower (`?status=` filter, `page`, `limit`).
 - `GET /api/rentals/incoming` *(Protected)* — Rental requests on items owned by the authenticated user (`?status=` filter, `page`, `limit`).
 - `GET /api/rentals/:id` *(Protected)* — Rental details (accessible only by borrower or owner).
-- `PATCH /api/rentals/:id/approve` *(Protected, Owner only)* — Owner approves a `PENDING` request. Re-checks conflicts inside transaction and returns 409 if overlapping with an existing approved/active rental.
+- `PATCH /api/rentals/:id/approve` *(Protected, Owner only)* — Owner approves a `PENDING` request. Accepts optional pickup fields (`pickupLatitude`, `pickupLongitude`, `pickupAddress`, `pickupNote`, `pickupTimeFrom`, `pickupTimeTo`). If omitted, automatically falls back to owner's profile location and address; returns 400 if owner has neither. Re-checks booking conflicts and sends `RENTAL_APPROVED` and `PICKUP_LOCATION_SHARED` notifications.
+- `PATCH /api/rentals/:id/pickup` *(Protected, Owner only)* — Update designated pickup point while rental is `APPROVED` or `ACTIVE`.
+- `GET /api/rentals/:id/pickup` *(Protected)* — Retrieve pickup point coordinates and address. Accessible by owner always; accessible by borrower **ONLY** while `APPROVED` or `ACTIVE` (returns 403 Forbidden otherwise). Non-participants receive 403.
+- `POST /api/rentals/:id/tracking/start` *(Protected, Borrower only)* — Starts live tracking (allowed only when `APPROVED`). Upserts LiveLocation, notifies the owner with `BORROWER_ON_THE_WAY` (at most once per session), and emits `tracking:started` via socket.
+- `POST /api/rentals/:id/tracking/stop` *(Protected, Borrower only)* — Stops location sharing and emits `tracking:stopped` to the owner.
+- `POST /api/rentals/:id/tracking/arrived` *(Protected, Borrower only)* — Marks borrower as arrived at pickup point, cleans up live location session, notifies owner with `BORROWER_ARRIVED`, and emits `tracking:arrived`.
+- `GET /api/rentals/:id/tracking` *(Protected, Owner only)* — Fetches latest borrower live coordinates, timestamp, and estimated arrival time (`etaMinutes`). Returns `null` if borrower is not sharing.
 - `PATCH /api/rentals/:id/reject` *(Protected, Owner only)* — Owner rejects a `PENDING` request with optional `ownerNote`. Status becomes `REJECTED`.
 - `PATCH /api/rentals/:id/cancel` *(Protected, Borrower only)* — Borrower cancels a `PENDING` or `APPROVED` rental. Status becomes `CANCELLED`.
-- `PATCH /api/rentals/:id/activate` *(Protected, Owner only)* — Owner marks an `APPROVED` rental as `ACTIVE` (item handed over).
-- `PATCH /api/rentals/:id/return` *(Protected, Owner only)* — Owner marks an `ACTIVE` rental as `RETURNED` (item returned).
+- `PATCH /api/rentals/:id/activate` *(Protected, Owner only)* — Owner marks an `APPROVED` rental as `ACTIVE` (item handed over). Auto-stops any active tracking session.
+- `PATCH /api/rentals/:id/return` *(Protected, Owner only)* — Owner marks an `ACTIVE` rental as `RETURNED` (item returned). Auto-stops any active tracking session.
+
+### Realtime Socket.IO Events & Live Tracking
+- **JWT Handshake Auth**: Socket connections authenticate using Bearer JWT tokens.
+- **Client Update**: Borrower emits `tracking:update` with `{ rentalId, latitude, longitude, heading }`.
+  - Server verifies sender is the confirmed borrower of the rental and rental is `APPROVED`.
+  - Rate limited / throttled on server to at most 1 update per 3 seconds.
+  - Server computes ETA in minutes using the Haversine distance formula to the confirmed pickup point at an assumed average transit speed of 25 km/h.
+  - Emits `tracking:location` `{ rentalId, latitude, longitude, heading, etaMinutes, updatedAt }` directly to the owner's private room `user:<ownerId>`.
+- **Lifecycle Events**: Server emits `tracking:started`, `tracking:stopped`, and `tracking:arrived` to `user:<ownerId>`.
+- **Auto-Stop & Cleanup**: Tracking automatically terminates when:
+  1. The borrower manually stops it or marks arrival.
+  2. The rental status departs from `APPROVED` (`ACTIVE`, `CANCELLED`, `REJECTED`, `RETURNED`).
+  3. No location update is received for 5 minutes (inactivity timeout).
+  4. 2 hours elapse from session start (maximum duration).
+  A periodic background job running every 30 seconds purges expired `LiveLocation` records.
 
 ### Notifications & Push Tokens (`/api/notifications`, `/api/push-tokens`)
 All endpoints require authentication and return consistent JSON format.
@@ -179,16 +200,25 @@ All endpoints require authentication and return consistent JSON format.
 |---|---|---|---|---|
 | **Rental requested** | Item owner | `RENTAL_REQUESTED` | `Rental Requested` | Borrower requested to rent item |
 | **Rental approved** | Borrower | `RENTAL_APPROVED` | `Rental Approved` | Owner approved the request |
+| **Pickup point shared** | Borrower | `PICKUP_LOCATION_SHARED` | `Pickup Location Shared` | Owner confirmed pickup location |
+| **Borrower on the way** | Item owner | `BORROWER_ON_THE_WAY` | `Borrower On The Way` | Borrower started sharing live location |
+| **Borrower arrived** | Item owner | `BORROWER_ARRIVED` | `Borrower Arrived` | Borrower arrived at the pickup location |
 | **Rental rejected** | Borrower | `RENTAL_REJECTED` | `Rental Rejected` | Owner declined (includes owner's note) |
 | **Rental cancelled** | Item owner | `RENTAL_CANCELLED` | `Rental Cancelled` | Borrower cancelled request |
 | **Rental marked ACTIVE** | Borrower | `RENTAL_ACTIVATED` | `Rental Active` | Item handed over and active |
 | **Rental marked RETURNED** | Borrower | `RENTAL_RETURNED` | `Rental Returned` | Item returned to owner |
 
-Each notification includes `{ rentalId, itemId }` in `data` so the client can navigate directly to the rental detail view. Notifications fail-safe: failures never roll back or abort rental lifecycle operations. Users are never notified of their own actions.
+Each notification includes `{ rentalId, itemId }` in `data` so clients navigate directly to `RentalDetail`. Notifications fail-safe: failures never roll back or abort rental lifecycle operations. Users are never notified of their own actions.
+
+> [!IMPORTANT]
+> **Privacy & Coordinate Protection:**
+> - Pickup location coordinates and address are **NEVER** exposed on public endpoints (`GET /api/items`, public profiles `/users/:id`), notification bodies, or server logs.
+> - The borrower receives `null` for pickup fields on `GET /api/rentals/:id` and HTTP 403 on `GET /api/rentals/:id/pickup` when the rental is in `PENDING`, `CANCELLED`, `REJECTED`, or `RETURNED` status.
+> - Raw geographical coordinates are never written to application logs.
 
 > [!NOTE]
-> **Push Notifications & Expo Go:**
-> Remote push notifications require an Expo development build (`npx expo run:android` / `npx expo run:ios` or EAS build) with native credentials. In **Expo Go** (`Constants.executionEnvironment === 'storeClient'`), the mobile app automatically detects the environment and skips push token registration gracefully without throwing errors or warnings to the user. In-app notifications continue to work seamlessly via polling and API synchronization.
+> **Live Tracking in Expo Go:**
+> Expo Go does not support background location execution. Live tracking runs strictly in the foreground with `watchPositionAsync` while the RentCart app remains active on screen. If the app goes to the background, screen is exited, or user logs out, location tracking automatically stops and a friendly prompt asks the user to keep the app open while sharing live arrival.
 
 ---
 

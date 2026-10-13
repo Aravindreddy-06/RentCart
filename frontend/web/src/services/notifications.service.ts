@@ -13,7 +13,10 @@ export type NotificationType =
   | 'RENTAL_ACTIVATED'
   | 'RENTAL_RETURNED'
   | 'REVIEW_RECEIVED'
-  | 'NEW_MESSAGE';
+  | 'NEW_MESSAGE'
+  | 'PICKUP_LOCATION_SHARED'
+  | 'BORROWER_ON_THE_WAY'
+  | 'BORROWER_ARRIVED';
 
 export interface NotificationItem {
   id: string;

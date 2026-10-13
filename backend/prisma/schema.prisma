@@ -30,6 +30,9 @@ enum NotificationType {
   RENTAL_RETURNED
   REVIEW_RECEIVED
   NEW_MESSAGE
+  PICKUP_LOCATION_SHARED
+  BORROWER_ON_THE_WAY
+  BORROWER_ARRIVED
 }
 
 enum OtpPurpose {
@@ -63,6 +66,7 @@ model User {
   receivedReviews Review[]       @relation("ReceivedReviews")
   sentMessages    Message[]      @relation("SentMessages")
   otpCodes        OtpCode[]
+  liveLocations   LiveLocation[]
 
   @@map("users")
 }
@@ -92,26 +96,54 @@ model Item {
 }
 
 model Rental {
-  id            String       @id @default(uuid())
-  itemId        String
-  borrowerId    String
-  startDate     DateTime     @db.Date
-  endDate       DateTime     @db.Date
-  totalPrice    Float
-  depositAmount Float        @default(0)
-  borrowerNote  String?
-  ownerNote     String?
-  status        RentalStatus @default(PENDING)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id              String        @id @default(uuid())
+  itemId          String
+  borrowerId      String
+  startDate       DateTime      @db.Date
+  endDate         DateTime      @db.Date
+  totalPrice      Float
+  depositAmount   Float         @default(0)
+  borrowerNote    String?
+  ownerNote       String?
+  status          RentalStatus  @default(PENDING)
+  pickupLatitude  Float?
+  pickupLongitude Float?
+  pickupAddress   String?
+  pickupNote      String?
+  pickupTimeFrom  DateTime?
+  pickupTimeTo    DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   // Relations
-  item    Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  borrower User    @relation("BorrowerRentals", fields: [borrowerId], references: [id], onDelete: Cascade)
-  reviews  Review[]
-  messages Message[]
+  item         Item          @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  borrower     User          @relation("BorrowerRentals", fields: [borrowerId], references: [id], onDelete: Cascade)
+  reviews      Review[]
+  messages     Message[]
+  liveLocation LiveLocation?
 
   @@map("rentals")
+}
+
+model LiveLocation {
+  id        String    @id @default(uuid())
+  rentalId  String    @unique
+  userId    String
+  latitude  Float
+  longitude Float
+  heading   Float?
+  startedAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  endedAt   DateTime?
+  arrivedAt DateTime?
+
+  // Relations
+  rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([rentalId])
+  @@index([userId])
+  @@map("live_locations")
 }
 
 model Review {

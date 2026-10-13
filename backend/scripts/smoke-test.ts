@@ -20,6 +20,8 @@ import { createApp } from '../src/app';
 import { initSocketIO } from '../src/socket';
 import { getDevOtp } from '../src/services/mail.service';
 import { OtpPurpose } from '@prisma/client';
+import { io as ioClient } from 'socket.io-client';
+import { signAccessToken } from '../src/utils/jwt';
 
 const TEST_PORT = 4123;
 const BASE_URL = `http://localhost:${TEST_PORT}/api`;
@@ -29,6 +31,23 @@ async function postJson(endpoint: string, data: any): Promise<{ status: number; 
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+  });
+  const json: any = await res.json().catch(() => null);
+  return { status: res.status, ok: res.ok, data: json };
+}
+
+async function req(
+  endpoint: string,
+  method = 'GET',
+  data?: any,
+  token?: string,
+): Promise<{ status: number; ok: boolean; data: any }> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${BASE_URL}${endpoint}`, {
+    method,
+    headers,
+    body: data !== undefined ? JSON.stringify(data) : undefined,
   });
   const json: any = await res.json().catch(() => null);
   return { status: res.status, ok: res.ok, data: json };
@@ -49,6 +68,10 @@ async function runSmokeTests() {
   console.log(`✓ Test server running on port ${TEST_PORT}`);
 
   const testEmail = `test.user.${Date.now()}@example.com`;
+  const ownerEmail = `owner.${Date.now()}@example.com`;
+  const borrowerEmail = `borrower.${Date.now()}@example.com`;
+  const strangerEmail = `stranger.${Date.now()}@example.com`;
+  const noProfileOwnerEmail = `noprofile.owner.${Date.now()}@example.com`;
   const initialPassword = 'Password123';
   const newPassword = 'NewPassword456';
 
@@ -245,13 +268,372 @@ async function runSmokeTests() {
     }
     console.log('✓ New password logged in successfully!');
 
+    // ── PICKUP LOCATION & LIVE TRACKING TESTS ─────────────────────────────
+    console.log('\n======================================================');
+    console.log('📍 Starting Pickup Location & Live Tracking Smoke Tests...');
+    console.log('======================================================\n');
+
+    const owner = await prisma.user.create({
+      data: {
+        name: 'Alice Owner',
+        email: ownerEmail,
+        passwordHash: 'dummy',
+        address: '742 Evergreen Terrace, Springfield',
+        latitude: 37.7749,
+        longitude: -122.4194,
+        emailVerified: true,
+      },
+    });
+    const ownerToken = signAccessToken({ userId: owner.id, email: owner.email });
+
+    const noProfileOwner = await prisma.user.create({
+      data: {
+        name: 'No Profile Owner',
+        email: noProfileOwnerEmail,
+        passwordHash: 'dummy',
+        address: null,
+        latitude: null,
+        longitude: null,
+        emailVerified: true,
+      },
+    });
+    const noProfileOwnerToken = signAccessToken({ userId: noProfileOwner.id, email: noProfileOwner.email });
+
+    const borrower = await prisma.user.create({
+      data: {
+        name: 'Bob Borrower',
+        email: borrowerEmail,
+        passwordHash: 'dummy',
+        emailVerified: true,
+      },
+    });
+    const borrowerToken = signAccessToken({ userId: borrower.id, email: borrower.email });
+
+    const stranger = await prisma.user.create({
+      data: {
+        name: 'Charlie Stranger',
+        email: strangerEmail,
+        passwordHash: 'dummy',
+        emailVerified: true,
+      },
+    });
+    const strangerToken = signAccessToken({ userId: stranger.id, email: stranger.email });
+
+    // Create item for owner
+    const item = await prisma.item.create({
+      data: {
+        ownerId: owner.id,
+        title: 'Cordless Leaf Blower',
+        description: 'Powerful handheld leaf blower with battery.',
+        category: 'Tools',
+        pricePerDay: 20,
+        deposit: 50,
+        isAvailable: true,
+      },
+    });
+
+    // Create item for noProfileOwner
+    const itemNoProfile = await prisma.item.create({
+      data: {
+        ownerId: noProfileOwner.id,
+        title: 'Hedge Trimmer',
+        description: 'Electric hedge trimmer for garden work.',
+        category: 'Tools',
+        pricePerDay: 15,
+        deposit: 30,
+        isAvailable: true,
+      },
+    });
+
+    // ── 12. Approve without pickup point uses profile fallback ───────────────
+    console.log('\n[12] Testing Approve with profile location fallback...');
+    // Request rental on owner's item
+    const rentRes1 = await req(
+      '/rentals',
+      'POST',
+      {
+        itemId: item.id,
+        startDate: '2026-11-20',
+        endDate: '2026-11-22',
+        borrowerNote: 'Need for weekend yard cleaning',
+      },
+      borrowerToken,
+    );
+    if (rentRes1.status !== 201) throw new Error(`Create rental failed: ${JSON.stringify(rentRes1.data)}`);
+    const rental1Id = rentRes1.data.data.id;
+
+    // Approve with empty body {} -> should fallback to owner profile location and address
+    const approveRes1 = await req(`/rentals/${rental1Id}/approve`, 'PATCH', {}, ownerToken);
+    if (approveRes1.status !== 200) throw new Error(`Approve fallback failed: ${JSON.stringify(approveRes1.data)}`);
+    const approvedRental = approveRes1.data.data;
+    if (
+      approvedRental.pickupLatitude !== 37.7749 ||
+      approvedRental.pickupLongitude !== -122.4194 ||
+      approvedRental.pickupAddress !== '742 Evergreen Terrace, Springfield'
+    ) {
+      throw new Error(`Profile fallback location mismatch: ${JSON.stringify(approvedRental)}`);
+    }
+    console.log('✓ Approve without pickup point used owner profile location and address fallback');
+
+    // Test that approve without profile location returns 400
+    const rentResNoProfile = await req(
+      '/rentals',
+      'POST',
+      {
+        itemId: itemNoProfile.id,
+        startDate: '2026-11-20',
+        endDate: '2026-11-22',
+      },
+      borrowerToken,
+    );
+    const rentalNoProfileId = rentResNoProfile.data.data.id;
+    const approveFailRes = await req(`/rentals/${rentalNoProfileId}/approve`, 'PATCH', {}, noProfileOwnerToken);
+    if (approveFailRes.status !== 400) {
+      throw new Error(`Expected 400 when owner has no location, got: ${approveFailRes.status}`);
+    }
+    console.log('✓ Approve returns 400 when owner has no location and body omitted pickup point');
+
+    // ── 13. Borrower can read pickup only while APPROVED or ACTIVE ────────────
+    console.log('\n[13] Testing Borrower pickup visibility while APPROVED or ACTIVE...');
+    const borrowerGetPickupApproved = await req(`/rentals/${rental1Id}/pickup`, 'GET', undefined, borrowerToken);
+    if (borrowerGetPickupApproved.status !== 200 || borrowerGetPickupApproved.data.data.pickupLatitude !== 37.7749) {
+      throw new Error(`Borrower GET /pickup failed while APPROVED: ${JSON.stringify(borrowerGetPickupApproved.data)}`);
+    }
+
+    const borrowerGetRentalApproved = await req(`/rentals/${rental1Id}`, 'GET', undefined, borrowerToken);
+    if (borrowerGetRentalApproved.data.data.pickupLatitude !== 37.7749) {
+      throw new Error(`Borrower GET /rentals/:id did not include pickup while APPROVED`);
+    }
+    console.log('✓ Borrower can read pickup location while APPROVED');
+
+    // Activate rental
+    const activateRes = await req(`/rentals/${rental1Id}/activate`, 'PATCH', undefined, ownerToken);
+    if (activateRes.status !== 200) throw new Error(`Activate failed: ${JSON.stringify(activateRes.data)}`);
+
+    const borrowerGetPickupActive = await req(`/rentals/${rental1Id}/pickup`, 'GET', undefined, borrowerToken);
+    if (borrowerGetPickupActive.status !== 200 || borrowerGetPickupActive.data.data.pickupLatitude !== 37.7749) {
+      throw new Error(`Borrower GET /pickup failed while ACTIVE: ${JSON.stringify(borrowerGetPickupActive.data)}`);
+    }
+    console.log('✓ Borrower can read pickup location while ACTIVE');
+
+    // ── 14. 403 after RETURNED or CANCELLED ────────────────────────────────────
+    console.log('\n[14] Testing 403 after RETURNED or CANCELLED...');
+    // Return rental1
+    const returnRes = await req(`/rentals/${rental1Id}/return`, 'PATCH', undefined, ownerToken);
+    if (returnRes.status !== 200) throw new Error(`Return failed: ${JSON.stringify(returnRes.data)}`);
+
+    const borrowerGetPickupReturned = await req(`/rentals/${rental1Id}/pickup`, 'GET', undefined, borrowerToken);
+    if (borrowerGetPickupReturned.status !== 403) {
+      throw new Error(`Expected 403 for GET /pickup after RETURNED, got ${borrowerGetPickupReturned.status}`);
+    }
+
+    const borrowerGetRentalReturned = await req(`/rentals/${rental1Id}`, 'GET', undefined, borrowerToken);
+    if (
+      borrowerGetRentalReturned.data.data.pickupLatitude !== null ||
+      borrowerGetRentalReturned.data.data.pickupAddress !== null
+    ) {
+      throw new Error(`Pickup coordinates returned to borrower after RETURNED: ${JSON.stringify(borrowerGetRentalReturned.data)}`);
+    }
+    console.log('✓ Borrower gets 403 and null coordinates after rental is RETURNED');
+
+    // Test cancelled rental
+    const rentRes2 = await req(
+      '/rentals',
+      'POST',
+      {
+        itemId: item.id,
+        startDate: '2026-11-25',
+        endDate: '2026-11-27',
+      },
+      borrowerToken,
+    );
+    const rental2Id = rentRes2.data.data.id;
+    await req(`/rentals/${rental2Id}/approve`, 'PATCH', {}, ownerToken);
+    const cancelRes = await req(`/rentals/${rental2Id}/cancel`, 'PATCH', undefined, borrowerToken);
+    if (cancelRes.status !== 200) throw new Error(`Cancel failed`);
+
+    const borrowerGetPickupCancelled = await req(`/rentals/${rental2Id}/pickup`, 'GET', undefined, borrowerToken);
+    if (borrowerGetPickupCancelled.status !== 403) {
+      throw new Error(`Expected 403 for GET /pickup after CANCELLED, got ${borrowerGetPickupCancelled.status}`);
+    }
+    console.log('✓ Borrower gets 403 after rental is CANCELLED');
+
+    // ── 15. Non-participant gets 403 ──────────────────────────────────────────
+    console.log('\n[15] Testing Non-participant gets 403...');
+    // Create fresh APPROVED rental
+    const rentRes3 = await req(
+      '/rentals',
+      'POST',
+      {
+        itemId: item.id,
+        startDate: '2026-11-28',
+        endDate: '2026-11-29',
+      },
+      borrowerToken,
+    );
+    const rental3Id = rentRes3.data.data.id;
+    await req(`/rentals/${rental3Id}/approve`, 'PATCH', {}, ownerToken);
+
+    const strangerGetPickup = await req(`/rentals/${rental3Id}/pickup`, 'GET', undefined, strangerToken);
+    if (strangerGetPickup.status !== 403) {
+      throw new Error(`Expected 403 for stranger GET /pickup, got ${strangerGetPickup.status}`);
+    }
+
+    const strangerPatchPickup = await req(
+      `/rentals/${rental3Id}/pickup`,
+      'PATCH',
+      {
+        pickupLatitude: 10,
+        pickupLongitude: 20,
+        pickupAddress: 'Hacked address',
+      },
+      strangerToken,
+    );
+    if (strangerPatchPickup.status !== 403) {
+      throw new Error(`Expected 403 for stranger PATCH /pickup, got ${strangerPatchPickup.status}`);
+    }
+    console.log('✓ Non-participant gets 403 on pickup endpoints');
+
+    // ── 16. Owner cannot start borrower tracking ──────────────────────────────
+    console.log('\n[16] Testing Owner cannot start borrower tracking...');
+    const ownerStartTrackingRes = await req(`/rentals/${rental3Id}/tracking/start`, 'POST', {}, ownerToken);
+    if (ownerStartTrackingRes.status !== 403) {
+      throw new Error(`Expected 403 when owner starts tracking, got: ${ownerStartTrackingRes.status}`);
+    }
+    console.log('✓ Owner cannot start borrower tracking (403 enforced)');
+
+    // ── 17. Tracking & Socket events ──────────────────────────────────────────
+    console.log('\n[17] Testing Live tracking socket events and stranger ignore...');
+    const ownerSocket = ioClient(`http://localhost:${TEST_PORT}`, {
+      auth: { token: ownerToken },
+      transports: ['websocket'],
+    });
+    const borrowerSocket = ioClient(`http://localhost:${TEST_PORT}`, {
+      auth: { token: borrowerToken },
+      transports: ['websocket'],
+    });
+    const strangerSocket = ioClient(`http://localhost:${TEST_PORT}`, {
+      auth: { token: strangerToken },
+      transports: ['websocket'],
+    });
+
+    await new Promise<void>((resolve) => {
+      let count = 0;
+      const check = () => {
+        count++;
+        if (count === 3) resolve();
+      };
+      ownerSocket.on('connect', check);
+      borrowerSocket.on('connect', check);
+      strangerSocket.on('connect', check);
+    });
+    console.log('✓ Sockets connected successfully');
+
+    // Borrower starts tracking
+    const startRes = await req(
+      `/rentals/${rental3Id}/tracking/start`,
+      'POST',
+      { latitude: 37.76, longitude: -122.41 },
+      borrowerToken,
+    );
+    if (startRes.status !== 200) throw new Error(`Borrower start tracking failed: ${JSON.stringify(startRes.data)}`);
+
+    // Non-borrower socket emits tracking:update -> should be ignored
+    strangerSocket.emit('tracking:update', {
+      rentalId: rental3Id,
+      latitude: 10.1234,
+      longitude: 20.5678,
+      heading: 0,
+    });
+    await new Promise((r) => setTimeout(r, 200));
+
+    const checkLiveLoc = await prisma.liveLocation.findUnique({ where: { rentalId: rental3Id } });
+    if (!checkLiveLoc || checkLiveLoc.latitude === 10.1234) {
+      throw new Error('Stranger tracking:update was NOT ignored!');
+    }
+    console.log('✓ tracking:update from non-borrower was safely ignored');
+
+    // Owner receives tracking:location
+    const locationPromise = new Promise<any>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Timed out waiting for tracking:location event')), 5000);
+      ownerSocket.on('tracking:location', (data: any) => {
+        clearTimeout(timer);
+        resolve(data);
+      });
+    });
+
+    // Borrower emits legitimate update
+    borrowerSocket.emit('tracking:update', {
+      rentalId: rental3Id,
+      latitude: 37.771,
+      longitude: -122.418,
+      heading: 45,
+    });
+
+    const receivedLocation = await locationPromise;
+    if (
+      receivedLocation.rentalId !== rental3Id ||
+      receivedLocation.latitude !== 37.771 ||
+      receivedLocation.longitude !== -122.418 ||
+      typeof receivedLocation.etaMinutes !== 'number'
+    ) {
+      throw new Error(`Owner received unexpected tracking:location: ${JSON.stringify(receivedLocation)}`);
+    }
+    console.log(`✓ Owner received tracking:location with ETA (${receivedLocation.etaMinutes} min)`);
+
+    ownerSocket.disconnect();
+    borrowerSocket.disconnect();
+    strangerSocket.disconnect();
+
+    // ── 18. Auto-stop tracking on status change ───────────────────────────────
+    console.log('\n[18] Testing Auto-stop tracking on status change...');
+    // While tracking is active, owner activates rental
+    await req(`/rentals/${rental3Id}/activate`, 'PATCH', undefined, ownerToken);
+    const liveLocAfterStatus = await prisma.liveLocation.findUnique({ where: { rentalId: rental3Id } });
+    if (liveLocAfterStatus !== null) {
+      throw new Error('LiveLocation row was not deleted when rental was activated!');
+    }
+    console.log('✓ LiveLocation row automatically cleaned up on status transition away from APPROVED');
+
+    // ── 19. Privacy checks: pickup point never appears in GET /api/items or public profiles ──
+    console.log('\n[19] Testing Privacy checks in items and public profiles...');
+    const itemsRes = await req('/items', 'GET', undefined, borrowerToken);
+    if (itemsRes.status !== 200) throw new Error(`GET /items failed: ${itemsRes.status} ${JSON.stringify(itemsRes.data)}`);
+    const itemsList = itemsRes.data.data.items || itemsRes.data.data;
+    for (const itm of itemsList) {
+      if ('pickupLatitude' in itm || 'pickupLongitude' in itm || 'pickupAddress' in itm || 'pickupNote' in itm) {
+        throw new Error('Pickup field leaked in GET /api/items listing!');
+      }
+    }
+
+    const singleItemRes = await req(`/items/${item.id}`, 'GET', undefined, borrowerToken);
+    if (singleItemRes.status !== 200) throw new Error(`GET /items/:id failed: ${singleItemRes.status} ${JSON.stringify(singleItemRes.data)}`);
+    const singleItem = singleItemRes.data.data;
+    if ('pickupLatitude' in singleItem || 'pickupLongitude' in singleItem || 'pickupAddress' in singleItem || 'pickupNote' in singleItem) {
+      throw new Error('Pickup field leaked in GET /api/items/:id!');
+    }
+
+    const publicProfileRes = await req(`/users/${owner.id}`, 'GET', undefined, borrowerToken);
+    if (publicProfileRes.status !== 200) throw new Error(`GET /users/:id failed: ${publicProfileRes.status} ${JSON.stringify(publicProfileRes.data)}`);
+    const publicProfile = publicProfileRes.data.data;
+    if ('pickupLatitude' in publicProfile || 'pickupLongitude' in publicProfile || 'pickupAddress' in publicProfile || 'pickupNote' in publicProfile) {
+      throw new Error('Pickup field leaked in public user profile!');
+    }
+    console.log('✓ Privacy checks passed: pickup location never leaked in items or public profiles');
+
     console.log('\n======================================================');
     console.log('🎉 ALL BACKEND SMOKE TESTS PASSED 100%!');
     console.log('======================================================\n');
   } finally {
-    // Cleanup test user and close server
+    // Cleanup test users and close server
     try {
-      await prisma.user.deleteMany({ where: { email: testEmail } });
+      await prisma.user.deleteMany({
+        where: {
+          email: {
+            in: [testEmail, ownerEmail, borrowerEmail, strangerEmail, noProfileOwnerEmail],
+          },
+        },
+      });
     } catch {}
     await prisma.$disconnect();
     server.close();

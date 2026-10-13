@@ -7,6 +7,7 @@
 import prisma from '../prisma/client';
 import { Prisma, RentalStatus, NotificationType } from '@prisma/client';
 import { createNotification } from './notifications.service';
+import { stopTrackingOnStatusChange } from './tracking.service';
 
 export class ValidationError extends Error {
   statusCode = 400;
@@ -102,11 +103,26 @@ export function sanitizeRentalForUser(rental: any, currentUserId: string) {
   const isBorrower = rental.borrowerId === currentUserId;
   const isOwner = rental.item?.ownerId === currentUserId;
   const canSeePhone = rental.status === 'APPROVED' || rental.status === 'ACTIVE';
+  const canSeePickup = isOwner || (isBorrower && (rental.status === 'APPROVED' || rental.status === 'ACTIVE'));
 
   const sanitized = {
     ...rental,
     startDate: rental.startDate instanceof Date ? formatDateOnly(rental.startDate) : rental.startDate,
     endDate: rental.endDate instanceof Date ? formatDateOnly(rental.endDate) : rental.endDate,
+    pickupLatitude: canSeePickup ? (rental.pickupLatitude ?? null) : null,
+    pickupLongitude: canSeePickup ? (rental.pickupLongitude ?? null) : null,
+    pickupAddress: canSeePickup ? (rental.pickupAddress ?? null) : null,
+    pickupNote: canSeePickup ? (rental.pickupNote ?? null) : null,
+    pickupTimeFrom: canSeePickup
+      ? rental.pickupTimeFrom instanceof Date
+        ? rental.pickupTimeFrom.toISOString()
+        : rental.pickupTimeFrom ?? null
+      : null,
+    pickupTimeTo: canSeePickup
+      ? rental.pickupTimeTo instanceof Date
+        ? rental.pickupTimeTo.toISOString()
+        : rental.pickupTimeTo ?? null
+      : null,
   };
 
   if (sanitized.borrower) {
@@ -303,7 +319,20 @@ export async function getRentalById(rentalId: string, currentUserId: string) {
   return sanitizeRentalForUser(rental, currentUserId);
 }
 
-export async function approveRental(rentalId: string, ownerId: string) {
+export interface ApproveRentalInput {
+  pickupLatitude?: number | null;
+  pickupLongitude?: number | null;
+  pickupAddress?: string | null;
+  pickupNote?: string | null;
+  pickupTimeFrom?: string | Date | null;
+  pickupTimeTo?: string | Date | null;
+}
+
+export async function approveRental(
+  rentalId: string,
+  ownerId: string,
+  input?: ApproveRentalInput,
+) {
   const rental = await prisma.rental.findUnique({
     where: { id: rentalId },
     include: { item: true },
@@ -319,6 +348,40 @@ export async function approveRental(rentalId: string, ownerId: string) {
       `Cannot approve a rental with status ${rental.status}. Only PENDING requests can be approved.`,
     );
   }
+
+  // Fetch owner profile to use as fallback
+  const owner = await prisma.user.findUnique({ where: { id: ownerId } });
+
+  const lat =
+    typeof input?.pickupLatitude === 'number'
+      ? input.pickupLatitude
+      : (owner?.latitude ?? null);
+
+  const lng =
+    typeof input?.pickupLongitude === 'number'
+      ? input.pickupLongitude
+      : (owner?.longitude ?? null);
+
+  const address =
+    typeof input?.pickupAddress === 'string' && input.pickupAddress.trim().length > 0
+      ? input.pickupAddress.trim()
+      : (owner?.address?.trim() || null);
+
+  if (lat === null || lng === null || !address) {
+    throw new ValidationError(
+      'A pickup point (coordinates and address) is required to approve this rental. Please set a pickup point.',
+    );
+  }
+
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    throw new ValidationError(
+      'Invalid coordinates: latitude must be between -90 and 90, longitude between -180 and 180',
+    );
+  }
+
+  const pickupNote = input?.pickupNote ? input.pickupNote.trim().slice(0, 200) : null;
+  const pickupTimeFrom = input?.pickupTimeFrom ? new Date(input.pickupTimeFrom) : null;
+  const pickupTimeTo = input?.pickupTimeTo ? new Date(input.pickupTimeTo) : null;
 
   try {
     const updated = await prisma.$transaction(
@@ -343,7 +406,15 @@ export async function approveRental(rentalId: string, ownerId: string) {
 
         return tx.rental.update({
           where: { id: rental.id },
-          data: { status: RentalStatus.APPROVED },
+          data: {
+            status: RentalStatus.APPROVED,
+            pickupLatitude: lat,
+            pickupLongitude: lng,
+            pickupAddress: address,
+            pickupNote,
+            pickupTimeFrom,
+            pickupTimeTo,
+          },
           include: rentalInclude,
         });
       },
@@ -365,6 +436,19 @@ export async function approveRental(rentalId: string, ownerId: string) {
       console.error('Failed to create rental approved notification:', notifErr);
     }
 
+    try {
+      await createNotification(
+        updated.borrowerId,
+        NotificationType.PICKUP_LOCATION_SHARED,
+        'Pickup Location Shared',
+        `Pickup location for "${updated.item.title}" has been confirmed.`,
+        { rentalId: updated.id, itemId: updated.itemId },
+        ownerId,
+      );
+    } catch (notifErr) {
+      console.error('Failed to create pickup location shared notification:', notifErr);
+    }
+
     return sanitizeRentalForUser(updated, ownerId);
   } catch (err: any) {
     if (err instanceof ConflictError) throw err;
@@ -377,6 +461,98 @@ export async function approveRental(rentalId: string, ownerId: string) {
     }
     throw err;
   }
+}
+
+export interface UpdatePickupInput {
+  pickupLatitude: number;
+  pickupLongitude: number;
+  pickupAddress: string;
+  pickupNote?: string | null;
+  pickupTimeFrom?: string | Date | null;
+  pickupTimeTo?: string | Date | null;
+}
+
+export async function updatePickupPoint(
+  rentalId: string,
+  ownerId: string,
+  input: UpdatePickupInput,
+) {
+  const rental = await prisma.rental.findUnique({
+    where: { id: rentalId },
+    include: { item: true },
+  });
+
+  if (!rental) throw new NotFoundError('Rental not found');
+  if (rental.item.ownerId !== ownerId) {
+    throw new ForbiddenError('Only the item owner can update the pickup point');
+  }
+
+  if (rental.status !== RentalStatus.APPROVED && rental.status !== RentalStatus.ACTIVE) {
+    throw new ValidationError(
+      `Pickup point can only be updated while rental is APPROVED or ACTIVE. Current status: ${rental.status}`,
+    );
+  }
+
+  if (
+    typeof input.pickupLatitude !== 'number' ||
+    typeof input.pickupLongitude !== 'number' ||
+    input.pickupLatitude < -90 ||
+    input.pickupLatitude > 90 ||
+    input.pickupLongitude < -180 ||
+    input.pickupLongitude > 180
+  ) {
+    throw new ValidationError(
+      'Invalid coordinates: latitude must be between -90 and 90, longitude between -180 and 180',
+    );
+  }
+
+  if (!input.pickupAddress?.trim()) {
+    throw new ValidationError('Pickup address is required');
+  }
+
+  const updated = await prisma.rental.update({
+    where: { id: rental.id },
+    data: {
+      pickupLatitude: input.pickupLatitude,
+      pickupLongitude: input.pickupLongitude,
+      pickupAddress: input.pickupAddress.trim(),
+      pickupNote: input.pickupNote ? input.pickupNote.trim().slice(0, 200) : null,
+      pickupTimeFrom: input.pickupTimeFrom ? new Date(input.pickupTimeFrom) : null,
+      pickupTimeTo: input.pickupTimeTo ? new Date(input.pickupTimeTo) : null,
+    },
+    include: rentalInclude,
+  });
+
+  return sanitizeRentalForUser(updated, ownerId);
+}
+
+export async function getPickupPoint(rentalId: string, currentUserId: string) {
+  const rental = await prisma.rental.findUnique({
+    where: { id: rentalId },
+    include: { item: true },
+  });
+
+  if (!rental) throw new NotFoundError('Rental not found');
+
+  const isOwner = rental.item.ownerId === currentUserId;
+  const isBorrower = rental.borrowerId === currentUserId;
+
+  if (!isOwner && !isBorrower) {
+    throw new ForbiddenError('You do not have permission to view this pickup point');
+  }
+
+  if (isBorrower && rental.status !== RentalStatus.APPROVED && rental.status !== RentalStatus.ACTIVE) {
+    throw new ForbiddenError('Pickup location is only visible while rental is approved or active');
+  }
+
+  return {
+    pickupLatitude: rental.pickupLatitude,
+    pickupLongitude: rental.pickupLongitude,
+    pickupAddress: rental.pickupAddress,
+    pickupNote: rental.pickupNote,
+    pickupTimeFrom: rental.pickupTimeFrom ? rental.pickupTimeFrom.toISOString() : null,
+    pickupTimeTo: rental.pickupTimeTo ? rental.pickupTimeTo.toISOString() : null,
+  };
 }
 
 export async function rejectRental(rentalId: string, ownerId: string, ownerNote?: string) {
@@ -404,6 +580,8 @@ export async function rejectRental(rentalId: string, ownerId: string, ownerNote?
     },
     include: rentalInclude,
   });
+
+  await stopTrackingOnStatusChange(rental.id, 'REJECTED');
 
   try {
     const noteText = ownerNote?.trim() ? `: "${ownerNote.trim()}"` : '.';
@@ -445,6 +623,8 @@ export async function cancelRental(rentalId: string, borrowerId: string) {
     include: rentalInclude,
   });
 
+  await stopTrackingOnStatusChange(rental.id, 'CANCELLED');
+
   try {
     await createNotification(
       updated.item.ownerId,
@@ -484,6 +664,8 @@ export async function activateRental(rentalId: string, ownerId: string) {
     include: rentalInclude,
   });
 
+  await stopTrackingOnStatusChange(rental.id, 'ACTIVE');
+
   try {
     await createNotification(
       updated.borrowerId,
@@ -522,6 +704,8 @@ export async function returnRental(rentalId: string, ownerId: string) {
     data: { status: RentalStatus.RETURNED },
     include: rentalInclude,
   });
+
+  await stopTrackingOnStatusChange(rental.id, 'RETURNED');
 
   try {
     await createNotification(

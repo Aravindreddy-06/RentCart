@@ -46,6 +46,12 @@ function getBadgeIcon(type: NotificationType): { icon: string; bg: string } {
       return { icon: '💬', bg: 'bg-primary-100 text-primary-800' };
     case 'REVIEW_RECEIVED':
       return { icon: '⭐', bg: 'bg-amber-100 text-amber-800' };
+    case 'PICKUP_LOCATION_SHARED':
+      return { icon: '📍', bg: 'bg-emerald-100 text-emerald-800' };
+    case 'BORROWER_ON_THE_WAY':
+      return { icon: '🚗', bg: 'bg-blue-100 text-blue-800' };
+    case 'BORROWER_ARRIVED':
+      return { icon: '🎉', bg: 'bg-emerald-100 text-emerald-800' };
     default:
       return { icon: '🔔', bg: 'bg-neutral-100 text-neutral-700' };
   }

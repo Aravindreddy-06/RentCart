@@ -4,14 +4,47 @@
  * other party profile (with privacy-gated phone number), notes, and role-based actions.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { StatusBadge } from '../components/StatusBadge';
 import { StarRating } from '../components/StarRating';
+import { MapView } from '../components/MapView';
+import { LocationPicker, type LocationValue } from '../components/LocationPicker';
 import { useAuth } from '../context/AuthContext';
-import { rentalsService, type Rental, type RentalStatus } from '../services/rentals.service';
+import { connectSocket } from '../services/socket';
+import {
+  rentalsService,
+  type Rental,
+  type RentalStatus,
+  type LiveTrackingData,
+} from '../services/rentals.service';
 import { reviewsService, type ReviewStatusResponse } from '../services/reviews.service';
+
+function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Number((R * c).toFixed(1));
+}
+
+function formatPickupTimeWindow(from?: string | null, to?: string | null) {
+  if (!from && !to) return null;
+  if (from && to) {
+    return `${new Date(from).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} – ${new Date(to).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }
+  if (from) {
+    return `From ${new Date(from).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+  }
+  return `Until ${new Date(to!).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+}
 
 export function RentalDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +62,32 @@ export function RentalDetailPage() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectNote, setRejectNote] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
+
+  // Pickup point modal (confirm on approve OR edit pickup)
+  const [showPickupModal, setShowPickupModal] = useState(false);
+  const [isEditingPickup, setIsEditingPickup] = useState(false);
+  const [pickupFormLocation, setPickupFormLocation] = useState<LocationValue>({
+    latitude: 37.7749,
+    longitude: -122.4194,
+    address: '',
+  });
+  const [pickupFormNote, setPickupFormNote] = useState('');
+  const [pickupFormTimeFrom, setPickupFormTimeFrom] = useState('');
+  const [pickupFormTimeTo, setPickupFormTimeTo] = useState('');
+  const [isSavingPickup, setIsSavingPickup] = useState(false);
+  const [pickupSaveError, setPickupSaveError] = useState('');
+
+  // Borrower location & tracking state
+  const [borrowerCoords, setBorrowerCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [copiedAddress, setCopiedAddress] = useState(false);
+  const [isTracking, setIsTracking] = useState(false);
+  const [watchId, setWatchId] = useState<number | null>(null);
+  const [trackingError, setTrackingError] = useState('');
+  const [hasArrived, setHasArrived] = useState(false);
+  const lastEmitRef = useRef<number>(0);
+
+  // Owner live tracking view state
+  const [liveTracking, setLiveTracking] = useState<LiveTrackingData | null>(null);
 
   const [actionInProgress, setActionInProgress] = useState(false);
   const [actionError, setActionError] = useState('');
@@ -123,22 +182,265 @@ export function RentalDetailPage() {
   const isOwner = user?.id === rental?.item?.ownerId;
   const isBorrower = user?.id === rental?.borrowerId;
 
-  // Lifecycle actions
-  const handleApprove = async () => {
+  // Borrower: fetch current position to display distance to pickup point
+  useEffect(() => {
+    if (isBorrower && (rental?.status === 'APPROVED' || rental?.status === 'ACTIVE') && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setBorrowerCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {},
+        { timeout: 8000 },
+      );
+    }
+  }, [isBorrower, rental?.status]);
+
+  // Clean up location watcher on unmount
+  useEffect(() => {
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [watchId]);
+
+  // Owner: Listen for live tracking updates via Socket.IO
+  useEffect(() => {
+    if (!rental || !isOwner || rental.status !== 'APPROVED') return;
+
+    // Fetch initial tracking state
+    void rentalsService
+      .getTracking(rental.id)
+      .then((data) => {
+        setLiveTracking(data);
+      })
+      .catch(() => {});
+
+    const socket = connectSocket();
+    if (!socket) return;
+
+    const handleLocation = (data: any) => {
+      if (data?.rentalId === rental.id) {
+        setLiveTracking({
+          isSharing: true,
+          location: {
+            latitude: data.latitude,
+            longitude: data.longitude,
+            heading: data.heading ?? null,
+          },
+          startedAt: liveTracking?.startedAt || data.updatedAt,
+          updatedAt: data.updatedAt,
+          etaMinutes: data.etaMinutes,
+        });
+      }
+    };
+
+    const handleStarted = (data: any) => {
+      if (data?.rentalId === rental.id) {
+        void rentalsService.getTracking(rental.id).then(setLiveTracking).catch(() => {});
+      }
+    };
+
+    const handleStopped = (data: any) => {
+      if (data?.rentalId === rental.id) {
+        setLiveTracking((prev) => (prev ? { ...prev, isSharing: false } : null));
+      }
+    };
+
+    const handleArrivedEvt = (data: any) => {
+      if (data?.rentalId === rental.id) {
+        setHasArrived(true);
+        setLiveTracking((prev) => (prev ? { ...prev, isSharing: false } : null));
+      }
+    };
+
+    socket.on('tracking:location', handleLocation);
+    socket.on('tracking:started', handleStarted);
+    socket.on('tracking:stopped', handleStopped);
+    socket.on('tracking:arrived', handleArrivedEvt);
+
+    return () => {
+      socket.off('tracking:location', handleLocation);
+      socket.off('tracking:started', handleStarted);
+      socket.off('tracking:stopped', handleStopped);
+      socket.off('tracking:arrived', handleArrivedEvt);
+    };
+  }, [rental?.id, rental?.status, isOwner]);
+
+  // Pickup Modal open helpers
+  const openApprovePickupModal = () => {
     if (!rental) return;
-    setActionInProgress(true);
-    setActionError('');
+    setIsEditingPickup(false);
+    setPickupFormLocation({
+      latitude: rental.pickupLatitude ?? user?.latitude ?? 37.7749,
+      longitude: rental.pickupLongitude ?? user?.longitude ?? -122.4194,
+      address: rental.pickupAddress || user?.address || '',
+    });
+    setPickupFormNote(rental.pickupNote || '');
+    setPickupFormTimeFrom(rental.pickupTimeFrom ? rental.pickupTimeFrom.slice(0, 16) : '');
+    setPickupFormTimeTo(rental.pickupTimeTo ? rental.pickupTimeTo.slice(0, 16) : '');
+    setPickupSaveError('');
+    setShowPickupModal(true);
+  };
+
+  const openEditPickupModal = () => {
+    if (!rental) return;
+    setIsEditingPickup(true);
+    setPickupFormLocation({
+      latitude: rental.pickupLatitude ?? user?.latitude ?? 37.7749,
+      longitude: rental.pickupLongitude ?? user?.longitude ?? -122.4194,
+      address: rental.pickupAddress || user?.address || '',
+    });
+    setPickupFormNote(rental.pickupNote || '');
+    setPickupFormTimeFrom(rental.pickupTimeFrom ? rental.pickupTimeFrom.slice(0, 16) : '');
+    setPickupFormTimeTo(rental.pickupTimeTo ? rental.pickupTimeTo.slice(0, 16) : '');
+    setPickupSaveError('');
+    setShowPickupModal(true);
+  };
+
+  const handleSavePickup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rental) return;
+    if (!pickupFormLocation.address.trim()) {
+      setPickupSaveError('Please provide a pickup address.');
+      return;
+    }
+
+    setIsSavingPickup(true);
+    setPickupSaveError('');
     try {
-      await rentalsService.approve(rental.id);
+      const payload = {
+        pickupLatitude: pickupFormLocation.latitude,
+        pickupLongitude: pickupFormLocation.longitude,
+        pickupAddress: pickupFormLocation.address.trim(),
+        pickupNote: pickupFormNote.trim() ? pickupFormNote.trim() : null,
+        pickupTimeFrom: pickupFormTimeFrom ? new Date(pickupFormTimeFrom).toISOString() : null,
+        pickupTimeTo: pickupFormTimeTo ? new Date(pickupFormTimeTo).toISOString() : null,
+      };
+
+      if (isEditingPickup) {
+        await rentalsService.updatePickup(rental.id, payload);
+      } else {
+        await rentalsService.approve(rental.id, payload);
+      }
+      setShowPickupModal(false);
       await fetchRental();
     } catch (err: any) {
-      setActionError(
-        err?.response?.data?.message ??
-          'Could not approve request. The dates may conflict with another booking.',
+      setPickupSaveError(
+        err?.response?.data?.message ?? 'Failed to save pickup location. Please verify coordinates and address.',
       );
     } finally {
-      setActionInProgress(false);
+      setIsSavingPickup(false);
     }
+  };
+
+  // Borrower tracking actions
+  const handleStartTracking = () => {
+    if (!rental) return;
+    if (!navigator.geolocation) {
+      setTrackingError('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setTrackingError('');
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const lat = Number(pos.coords.latitude.toFixed(6));
+          const lng = Number(pos.coords.longitude.toFixed(6));
+          const heading = pos.coords.heading ?? null;
+
+          await rentalsService.startTracking(rental.id, {
+            latitude: lat,
+            longitude: lng,
+            heading,
+          });
+
+          const socket = connectSocket();
+
+          const id = navigator.geolocation.watchPosition(
+            (watchPos) => {
+              const now = Date.now();
+              // Throttle socket updates to 1 per 3 seconds
+              if (now - lastEmitRef.current >= 3000) {
+                lastEmitRef.current = now;
+                const wLat = Number(watchPos.coords.latitude.toFixed(6));
+                const wLng = Number(watchPos.coords.longitude.toFixed(6));
+                setBorrowerCoords({ lat: wLat, lng: wLng });
+
+                socket?.emit('tracking:update', {
+                  rentalId: rental.id,
+                  latitude: wLat,
+                  longitude: wLng,
+                  heading: watchPos.coords.heading ?? null,
+                });
+              }
+            },
+            (watchErr) => {
+              console.warn('[Tracking] Watch position warning:', watchErr.message);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+          );
+
+          setWatchId(id);
+          setIsTracking(true);
+          setHasArrived(false);
+        } catch (err: any) {
+          setTrackingError(err?.response?.data?.message || 'Failed to start live location sharing.');
+        }
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          setTrackingError('Location permission denied. Please allow location access in your browser settings.');
+        } else {
+          setTrackingError('Could not retrieve current location. Please check your GPS.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
+
+  const handleStopTracking = async () => {
+    if (!rental) return;
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      setWatchId(null);
+    }
+    try {
+      await rentalsService.stopTracking(rental.id);
+    } catch {
+      // Best effort
+    }
+    setIsTracking(false);
+  };
+
+  const handleMarkArrived = async () => {
+    if (!rental) return;
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      setWatchId(null);
+    }
+    try {
+      await rentalsService.markArrived(rental.id);
+      setIsTracking(false);
+      setHasArrived(true);
+    } catch (err: any) {
+      setTrackingError(err?.response?.data?.message || 'Failed to record arrival.');
+    }
+  };
+
+  const handleCopyAddress = () => {
+    if (!rental?.pickupAddress) return;
+    navigator.clipboard.writeText(rental.pickupAddress).then(() => {
+      setCopiedAddress(true);
+      setTimeout(() => setCopiedAddress(false), 2000);
+    });
+  };
+
+  // Lifecycle actions
+  const handleApprove = () => {
+    openApprovePickupModal();
   };
 
   const handleActivate = async () => {
@@ -454,6 +756,277 @@ export function RentalDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* ── Pickup Location Card ── */}
+            {((isOwner && (rental.pickupLatitude != null || rental.pickupAddress || rental.status === 'APPROVED' || rental.status === 'ACTIVE')) ||
+              (isBorrower && (rental.status === 'APPROVED' || rental.status === 'ACTIVE'))) && (
+              <div className="bg-white rounded-2xl p-6 border border-neutral-200/80 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base">
+                      📍
+                    </div>
+                    <div>
+                      <h2 className="text-base font-bold text-neutral-900">Pickup Location</h2>
+                      <p className="text-xs text-neutral-500">
+                        {isOwner ? 'Your designated pickup point for this rental' : 'Confirmed pickup location for this item'}
+                      </p>
+                    </div>
+                  </div>
+                  {isOwner && (rental.status === 'APPROVED' || rental.status === 'ACTIVE') && (
+                    <button
+                      type="button"
+                      onClick={openEditPickupModal}
+                      className="text-xs text-primary-600 hover:text-primary-700 font-semibold px-3 py-1.5 rounded-lg border border-primary-200 hover:bg-primary-50 transition-colors"
+                    >
+                      Edit Pickup
+                    </button>
+                  )}
+                </div>
+
+                {rental.pickupLatitude != null && rental.pickupLongitude != null ? (
+                  <div className="space-y-3">
+                    <MapView
+                      center={[rental.pickupLatitude, rental.pickupLongitude]}
+                      zoom={14}
+                      height="240px"
+                      pickupMarker={{
+                        latitude: rental.pickupLatitude,
+                        longitude: rental.pickupLongitude,
+                        label: 'Pickup Point',
+                      }}
+                      borrowerMarker={
+                        isOwner && liveTracking?.isSharing && liveTracking.location
+                          ? {
+                              latitude: liveTracking.location.latitude,
+                              longitude: liveTracking.location.longitude,
+                              label: "Borrower's Live Location",
+                            }
+                          : undefined
+                      }
+                    />
+
+                    <div className="p-3.5 bg-neutral-50 rounded-xl border border-neutral-100 space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                            Address
+                          </p>
+                          <p className="text-sm font-medium text-neutral-800 mt-0.5">
+                            {rental.pickupAddress || 'Coordinates provided'}
+                          </p>
+                        </div>
+                        {rental.pickupAddress && (
+                          <button
+                            type="button"
+                            onClick={handleCopyAddress}
+                            className="shrink-0 text-xs text-neutral-600 hover:text-neutral-900 font-medium px-2.5 py-1 rounded-md border border-neutral-200 hover:bg-neutral-100 transition-colors"
+                          >
+                            {copiedAddress ? '✓ Copied' : 'Copy address'}
+                          </button>
+                        )}
+                      </div>
+
+                      {isBorrower && borrowerCoords && (
+                        <div className="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md font-medium flex items-center gap-1.5 inline-flex">
+                          <span>🧭</span>
+                          <span>
+                            ~{getDistanceKm(borrowerCoords.lat, borrowerCoords.lng, rental.pickupLatitude, rental.pickupLongitude)} km straight-line distance from you
+                          </span>
+                        </div>
+                      )}
+
+                      {formatPickupTimeWindow(rental.pickupTimeFrom, rental.pickupTimeTo) && (
+                        <div className="text-xs text-neutral-600 flex items-center gap-1.5 pt-1 border-t border-neutral-200/60">
+                          <span className="font-semibold text-neutral-700">🕒 Pickup Window:</span>
+                          <span>{formatPickupTimeWindow(rental.pickupTimeFrom, rental.pickupTimeTo)}</span>
+                        </div>
+                      )}
+
+                      {rental.pickupNote && (
+                        <div className="text-xs text-neutral-700 bg-amber-50/80 border border-amber-200/80 p-2.5 rounded-lg italic">
+                          <span className="font-semibold not-italic text-amber-900 block mb-0.5">Note from Owner:</span>
+                          "{rental.pickupNote}"
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2.5 pt-1">
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${rental.pickupLatitude},${rental.pickupLongitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-primary flex-1 py-2.5 text-xs font-semibold flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                        </svg>
+                        <span>Navigate in Google Maps</span>
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-neutral-50 rounded-xl text-center text-xs text-neutral-500">
+                    {isOwner ? (
+                      <div className="space-y-2">
+                        <p>You have not configured a pickup point yet.</p>
+                        <button
+                          type="button"
+                          onClick={openEditPickupModal}
+                          className="btn-primary py-2 px-4 text-xs font-semibold"
+                        >
+                          Set Pickup Point
+                        </button>
+                      </div>
+                    ) : (
+                      <p>The owner has not specified an exact pickup point yet.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Live Tracking Cards (APPROVED status only) ── */}
+            {rental.status === 'APPROVED' && (
+              <>
+                {/* Borrower Live Tracking Control */}
+                {isBorrower && (
+                  <div className="bg-white rounded-2xl p-6 border border-neutral-200/80 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🚗</span>
+                        <div>
+                          <h2 className="text-base font-bold text-neutral-900">Live Location Sharing</h2>
+                          <p className="text-xs text-neutral-500">
+                            Keep the owner informed as you head to the pickup point
+                          </p>
+                        </div>
+                      </div>
+                      {isTracking && (
+                        <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 animate-pulse">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500" /> Live
+                        </span>
+                      )}
+                    </div>
+
+                    {trackingError && (
+                      <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-start gap-2">
+                        <span>⚠️</span>
+                        <span>{trackingError}</span>
+                      </div>
+                    )}
+
+                    {isTracking ? (
+                      <div className="space-y-3">
+                        <div className="p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-xl text-xs text-emerald-800 space-y-1">
+                          <p className="font-semibold flex items-center gap-1.5">
+                            <span>📡 Sharing your live location</span>
+                          </p>
+                          <p className="text-emerald-700 text-[11px]">
+                            Updates are sent to the owner every few seconds while this screen stays active.
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={handleStopTracking}
+                            className="flex-1 py-2.5 px-4 rounded-xl border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 font-semibold text-xs transition-colors"
+                          >
+                            Stop Sharing
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleMarkArrived}
+                            className="flex-1 btn-primary py-2.5 px-4 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700"
+                          >
+                            ✓ I've Arrived
+                          </button>
+                        </div>
+                      </div>
+                    ) : hasArrived ? (
+                      <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2">
+                        <span className="text-lg">🎉</span>
+                        <div>
+                          <p className="font-bold">You marked yourself as arrived!</p>
+                          <p className="text-[11px] text-emerald-700">The owner has been notified that you are at the pickup point.</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-xs text-neutral-600">
+                          Going to pick up the item? Tap below to share your route and let the owner track your estimated arrival time.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleStartTracking}
+                          className="btn-primary w-full py-2.5 text-xs font-semibold flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700"
+                        >
+                          <span>🚗 I'm on my way</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Owner Live Tracking View */}
+                {isOwner && (
+                  <div className="bg-white rounded-2xl p-6 border border-neutral-200/80 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">📡</span>
+                        <div>
+                          <h2 className="text-base font-bold text-neutral-900">Borrower Live Tracking</h2>
+                          <p className="text-xs text-neutral-500">Live arrival updates from the borrower</p>
+                        </div>
+                      </div>
+                      {liveTracking?.isSharing ? (
+                        <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 animate-pulse">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500" /> On the way
+                        </span>
+                      ) : (
+                        <span className="text-xs text-neutral-400 bg-neutral-100 px-2.5 py-1 rounded-full font-medium">
+                          Not sharing
+                        </span>
+                      )}
+                    </div>
+
+                    {liveTracking?.isSharing && liveTracking.location ? (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3 p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl">
+                          <div>
+                            <p className="text-[11px] font-semibold text-emerald-700 uppercase">Estimated Arrival</p>
+                            <p className="text-lg font-extrabold text-emerald-900 mt-0.5">
+                              {liveTracking.etaMinutes != null ? `~${liveTracking.etaMinutes} min` : 'Calculating…'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-semibold text-emerald-700 uppercase">Last Updated</p>
+                            <p className="text-xs font-medium text-emerald-800 mt-1">
+                              {liveTracking.updatedAt ? new Date(liveTracking.updatedAt).toLocaleTimeString() : 'Just now'}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-neutral-500 italic">
+                          The blue vehicle marker on the map above reflects the borrower's live location.
+                        </p>
+                      </div>
+                    ) : hasArrived ? (
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2">
+                        <span className="text-lg">🎉</span>
+                        <div>
+                          <p className="font-bold">Borrower has arrived!</p>
+                          <p className="text-[11px] text-emerald-700">Please prepare the item for hand-over.</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-3.5 bg-neutral-50 rounded-xl border border-neutral-100 text-xs text-neutral-500">
+                        The borrower hasn't started sharing their live location yet. When they tap "I'm on my way", their moving position and ETA will appear here in real time.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
 
             {/* ── Review Section (when rental is RETURNED) ── */}
             {rental.status === 'RETURNED' && (
@@ -861,6 +1434,123 @@ export function RentalDetailPage() {
                 {isDeletingReview ? 'Deleting…' : 'Yes, Delete'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm / Edit Pickup Point Modal */}
+      {showPickupModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isSavingPickup) setShowPickupModal(false);
+          }}
+        >
+          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4 my-8">
+            <div>
+              <h4 className="text-lg font-bold text-neutral-900">
+                {isEditingPickup ? 'Edit Pickup Point' : 'Confirm Pickup Point'}
+              </h4>
+              <p className="text-neutral-500 text-xs mt-1">
+                {isEditingPickup
+                  ? 'Update the designated pickup location and instructions for this rental.'
+                  : 'Confirm where the borrower should meet you to pick up the item.'}
+              </p>
+            </div>
+
+            {/* Safety tip */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800 flex items-start gap-2.5">
+              <span className="text-base leading-none">💡</span>
+              <p className="leading-relaxed">
+                <strong>Safety Tip:</strong> Meet in a public, well-lit place when possible (e.g. outside a store, library, or transit station).
+              </p>
+            </div>
+
+            {pickupSaveError && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl">
+                {pickupSaveError}
+              </div>
+            )}
+
+            <form onSubmit={handleSavePickup} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                  Pickup Location & Address <span className="text-red-500">*</span>
+                </label>
+                <LocationPicker
+                  value={pickupFormLocation}
+                  onChange={setPickupFormLocation}
+                  height="220px"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-xs font-semibold text-neutral-700">
+                    Pickup Note <span className="font-normal text-neutral-400">(optional)</span>
+                  </label>
+                  <span className="text-[11px] text-neutral-400">
+                    {pickupFormNote.length}/200
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  maxLength={200}
+                  value={pickupFormNote}
+                  onChange={(e) => setPickupFormNote(e.target.value)}
+                  placeholder="e.g. Gate 2, ring the bell, meet near the entrance"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 focus:border-primary-500 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                  Pickup Time Window <span className="font-normal text-neutral-400">(optional)</span>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] text-neutral-500 mb-0.5">From</label>
+                    <input
+                      type="datetime-local"
+                      value={pickupFormTimeFrom}
+                      onChange={(e) => setPickupFormTimeFrom(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-300 focus:border-primary-500 text-xs focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] text-neutral-500 mb-0.5">To</label>
+                    <input
+                      type="datetime-local"
+                      value={pickupFormTimeTo}
+                      onChange={(e) => setPickupFormTimeTo(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-300 focus:border-primary-500 text-xs focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPickupModal(false)}
+                  disabled={isSavingPickup}
+                  className="btn-outline flex-1 py-2.5 text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingPickup}
+                  className="btn-primary flex-1 py-2.5 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {isSavingPickup
+                    ? 'Saving…'
+                    : isEditingPickup
+                      ? 'Save Pickup Location'
+                      : 'Confirm & Approve'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

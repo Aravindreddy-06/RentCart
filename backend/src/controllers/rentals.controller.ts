@@ -7,6 +7,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { RentalStatus } from '@prisma/client';
 import * as rentalsService from '../services/rentals.service';
+import * as trackingService from '../services/tracking.service';
 import { success, failure } from '../utils/response';
 
 // ─── Validation Schemas ───────────────────────────────────────────────────────
@@ -22,6 +23,34 @@ const RejectRentalSchema = z.object({
   ownerNote: z.string().max(500, 'Note must not exceed 500 characters').optional(),
 });
 
+const ApproveRentalSchema = z
+  .object({
+    pickupLatitude: z.number().min(-90).max(90).optional().nullable(),
+    pickupLongitude: z.number().min(-180).max(180).optional().nullable(),
+    pickupAddress: z.string().trim().min(1).optional().nullable(),
+    pickupNote: z.string().max(200, 'Note must not exceed 200 characters').optional().nullable(),
+    pickupTimeFrom: z.string().optional().nullable(),
+    pickupTimeTo: z.string().optional().nullable(),
+  })
+  .optional();
+
+const UpdatePickupSchema = z.object({
+  pickupLatitude: z.number().min(-90).max(90),
+  pickupLongitude: z.number().min(-180).max(180),
+  pickupAddress: z.string().trim().min(1, 'Pickup address is required'),
+  pickupNote: z.string().max(200, 'Note must not exceed 200 characters').optional().nullable(),
+  pickupTimeFrom: z.string().optional().nullable(),
+  pickupTimeTo: z.string().optional().nullable(),
+});
+
+const StartTrackingSchema = z
+  .object({
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
+    heading: z.number().optional().nullable(),
+  })
+  .optional();
+
 function getParamId(req: Request): string {
   const id = req.params['id'];
   return Array.isArray(id) ? id[0] : id;
@@ -32,9 +61,12 @@ function handleServiceError(err: unknown, res: Response, next: NextFunction) {
     err instanceof rentalsService.ValidationError ||
     err instanceof rentalsService.ForbiddenError ||
     err instanceof rentalsService.NotFoundError ||
-    err instanceof rentalsService.ConflictError
+    err instanceof rentalsService.ConflictError ||
+    err instanceof trackingService.ValidationError ||
+    err instanceof trackingService.ForbiddenError ||
+    err instanceof trackingService.NotFoundError
   ) {
-    return failure(res, err.message, err.statusCode);
+    return failure(res, (err as any).message, (err as any).statusCode);
   }
   next(err);
 }
@@ -112,8 +144,89 @@ export async function getRental(req: Request, res: Response, next: NextFunction)
 
 export async function approveRental(req: Request, res: Response, next: NextFunction) {
   try {
-    const rental = await rentalsService.approveRental(getParamId(req), req.user!.userId);
+    const parsed = ApproveRentalSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return failure(res, 'Validation failed', 422, parsed.error.flatten().fieldErrors);
+    }
+
+    const rental = await rentalsService.approveRental(
+      getParamId(req),
+      req.user!.userId,
+      parsed.data,
+    );
     return success(res, rental);
+  } catch (err) {
+    handleServiceError(err, res, next);
+  }
+}
+
+export async function updatePickup(req: Request, res: Response, next: NextFunction) {
+  try {
+    const parsed = UpdatePickupSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return failure(res, 'Validation failed', 422, parsed.error.flatten().fieldErrors);
+    }
+
+    const rental = await rentalsService.updatePickupPoint(
+      getParamId(req),
+      req.user!.userId,
+      parsed.data,
+    );
+    return success(res, rental);
+  } catch (err) {
+    handleServiceError(err, res, next);
+  }
+}
+
+export async function getPickup(req: Request, res: Response, next: NextFunction) {
+  try {
+    const pickup = await rentalsService.getPickupPoint(getParamId(req), req.user!.userId);
+    return success(res, pickup);
+  } catch (err) {
+    handleServiceError(err, res, next);
+  }
+}
+
+export async function startTracking(req: Request, res: Response, next: NextFunction) {
+  try {
+    const parsed = StartTrackingSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return failure(res, 'Validation failed', 422, parsed.error.flatten().fieldErrors);
+    }
+
+    const result = await trackingService.startTracking(
+      getParamId(req),
+      req.user!.userId,
+      parsed.data,
+    );
+    return success(res, result);
+  } catch (err) {
+    handleServiceError(err, res, next);
+  }
+}
+
+export async function stopTracking(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await trackingService.stopTracking(getParamId(req), req.user!.userId);
+    return success(res, result);
+  } catch (err) {
+    handleServiceError(err, res, next);
+  }
+}
+
+export async function markArrived(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await trackingService.markArrived(getParamId(req), req.user!.userId);
+    return success(res, result);
+  } catch (err) {
+    handleServiceError(err, res, next);
+  }
+}
+
+export async function getTracking(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await trackingService.getTracking(getParamId(req), req.user!.userId);
+    return success(res, result);
   } catch (err) {
     handleServiceError(err, res, next);
   }

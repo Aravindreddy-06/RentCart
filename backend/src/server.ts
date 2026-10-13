@@ -10,6 +10,7 @@ import prisma from './prisma/client';
 import { initSocketIO } from './socket';
 import { verifySmtpConnection } from './services/mail.service';
 import { startOtpCleanupJob } from './services/otp.service';
+import { startTrackingCleanupJob } from './services/tracking.service';
 
 async function bootstrap() {
   // Verify database connection before accepting traffic
@@ -21,6 +22,9 @@ async function bootstrap() {
 
   // Start periodic OTP cleanup job
   startOtpCleanupJob();
+
+  // Start periodic LiveLocation tracking cleanup job
+  startTrackingCleanupJob();
 
   const app = createApp();
   const server = http.createServer(app);

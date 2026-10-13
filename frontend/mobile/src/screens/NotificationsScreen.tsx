@@ -67,6 +67,12 @@ function getBadgeConfig(type: NotificationType): { icon: string; bg: string; bor
       return { icon: '⭐', bg: '#fef3c7', border: '#fde68a', text: '#d97706' };
     case 'NEW_MESSAGE':
       return { icon: '💬', bg: '#e0e7ff', border: '#c7d2fe', text: '#3730a3' };
+    case 'PICKUP_LOCATION_SHARED':
+      return { icon: '📍', bg: '#dcfce7', border: '#bbf7d0', text: '#166534' };
+    case 'BORROWER_ON_THE_WAY':
+      return { icon: '🚗', bg: '#dbeafe', border: '#bfdbfe', text: '#1e40af' };
+    case 'BORROWER_ARRIVED':
+      return { icon: '🎉', bg: '#dcfce7', border: '#bbf7d0', text: '#166534' };
     default:
       return { icon: '🔔', bg: '#f3f4f6', border: '#e5e7eb', text: '#374151' };
   }

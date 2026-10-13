@@ -24,6 +24,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/types';
 import { rentalsService, Rental, RentalStatus } from '../services/rentals.service';
 import { StatusBadge } from '../components/StatusBadge';
+import { useAuth } from '../context/AuthContext';
+import LocationPicker, { LocationValue } from '../components/LocationPicker';
 import { colors } from '../utils/colors';
 
 const TABS: { label: string; value: RentalStatus | '' }[] = [
@@ -45,9 +47,23 @@ export default function RequestsScreen() {
   const [error, setError] = useState('');
 
   // Reject modal
+  const { user } = useAuth();
   const [rejectingRental, setRejectingRental] = useState<Rental | null>(null);
   const [rejectNote, setRejectNote] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
+
+  // Confirm Pickup Point Modal
+  const [approvingRental, setApprovingRental] = useState<Rental | null>(null);
+  const [pickupLocation, setPickupLocation] = useState<LocationValue>({
+    latitude: 37.7749,
+    longitude: -122.4194,
+    address: '',
+  });
+  const [pickupNote, setPickupNote] = useState('');
+  const [pickupTimeFrom, setPickupTimeFrom] = useState('');
+  const [pickupTimeTo, setPickupTimeTo] = useState('');
+  const [pickupError, setPickupError] = useState('');
+  const [isApproving, setIsApproving] = useState(false);
 
   const [busyRentalId, setBusyRentalId] = useState<string | null>(null);
 
@@ -71,19 +87,45 @@ export default function RequestsScreen() {
     fetchRequests();
   }, [fetchRequests]);
 
-  const handleApprove = async (rental: Rental) => {
-    setBusyRentalId(rental.id);
+  const handleApproveClick = (rental: Rental) => {
+    setApprovingRental(rental);
+    setPickupLocation({
+      latitude: rental.pickupLatitude ?? user?.latitude ?? 37.7749,
+      longitude: rental.pickupLongitude ?? user?.longitude ?? -122.4194,
+      address: rental.pickupAddress || user?.address || '',
+    });
+    setPickupNote(rental.pickupNote || '');
+    setPickupTimeFrom(rental.pickupTimeFrom ? rental.pickupTimeFrom.slice(0, 16) : '');
+    setPickupTimeTo(rental.pickupTimeTo ? rental.pickupTimeTo.slice(0, 16) : '');
+    setPickupError('');
+  };
+
+  const confirmApprove = async () => {
+    if (!approvingRental) return;
+    if (!pickupLocation.address.trim()) {
+      setPickupError('Please provide a pickup address.');
+      return;
+    }
+
+    setIsApproving(true);
+    setPickupError('');
     try {
-      await rentalsService.approve(rental.id);
-      Alert.alert('Approved! ✓', `Request for "${rental.item.title}" has been approved.`);
+      await rentalsService.approve(approvingRental.id, {
+        pickupLatitude: pickupLocation.latitude,
+        pickupLongitude: pickupLocation.longitude,
+        pickupAddress: pickupLocation.address.trim(),
+        pickupNote: pickupNote.trim() ? pickupNote.trim() : null,
+        pickupTimeFrom: pickupTimeFrom ? new Date(pickupTimeFrom).toISOString() : null,
+        pickupTimeTo: pickupTimeTo ? new Date(pickupTimeTo).toISOString() : null,
+      });
+      const approvedTitle = approvingRental.item.title;
+      setApprovingRental(null);
+      Alert.alert('Approved! ✓', `Request for "${approvedTitle}" has been approved with confirmed pickup point.`);
       fetchRequests(true);
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ??
-        'Failed to approve request. The dates may conflict with another booking.';
-      Alert.alert('Approval Conflict', msg);
+      setPickupError(err?.response?.data?.message ?? 'Failed to approve request. Please check pickup coordinates.');
     } finally {
-      setBusyRentalId(null);
+      setIsApproving(false);
     }
   };
 
@@ -201,7 +243,7 @@ export default function RequestsScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.approveBtn}
-                onPress={() => handleApprove(item)}
+                onPress={() => handleApproveClick(item)}
                 disabled={isBusy}
               >
                 {isBusy ? (
@@ -360,6 +402,70 @@ export default function RequestsScreen() {
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <Text style={styles.modalRejectText}>Decline</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Confirm Pickup Point Modal */}
+      <Modal
+        visible={!!approvingRental}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setApprovingRental(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, styles.pickupModalCard]}>
+            <Text style={styles.modalTitle}>Confirm Pickup Point</Text>
+            <Text style={styles.modalSubtitle}>
+              Confirm where the borrower will meet you to pick up the item.
+            </Text>
+
+            {/* Safety tip */}
+            <View style={styles.safetyBox}>
+              <Text style={styles.safetyText}>
+                💡 Safety tip: Meet in a public, well-lit place when possible.
+              </Text>
+            </View>
+
+            {pickupError ? (
+              <Text style={[styles.errorText, { marginBottom: 8 }]}>{pickupError}</Text>
+            ) : null}
+
+            <LocationPicker
+              value={pickupLocation}
+              onChange={setPickupLocation}
+              height={140}
+            />
+
+            <TextInput
+              style={[styles.modalInput, styles.noteInput]}
+              placeholder="Pickup note: Gate 2, call upon arrival... (optional, max 200)"
+              placeholderTextColor={colors.gray[400]}
+              value={pickupNote}
+              onChangeText={setPickupNote}
+              maxLength={200}
+            />
+
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setApprovingRental(null)}
+                disabled={isApproving}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.approveBtn, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
+                onPress={confirmApprove}
+                disabled={isApproving}
+              >
+                {isApproving ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.approveBtnText}>Confirm & Approve</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -668,5 +774,26 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#ffffff',
+  },
+  pickupModalCard: {
+    maxWidth: 380,
+  },
+  safetyBox: {
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    borderRadius: 10,
+    padding: 8,
+    marginBottom: 10,
+  },
+  safetyText: {
+    fontSize: 11,
+    color: '#1e40af',
+    lineHeight: 15,
+  },
+  noteInput: {
+    height: 44,
+    marginBottom: 12,
+    marginTop: 8,
   },
 });
