@@ -20,9 +20,11 @@ const UpdateProfileSchema = z.object({
   avatarUrl: z.string().nullable().optional(),
 });
 
+import { passwordSchema } from '../utils/validators';
+
 const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
-  newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+  newPassword: passwordSchema,
 });
 
 function getUserId(req: Request): string {

@@ -4,8 +4,11 @@
  */
 
 export type AuthStackParamList = {
-  Login: undefined;
+  Login: { message?: string } | undefined;
   Register: undefined;
+  VerifyEmail: { email: string };
+  ForgotPassword: undefined;
+  ResetPassword: { email?: string; infoMessage?: string } | undefined;
 };
 
 export type AppStackParamList = {

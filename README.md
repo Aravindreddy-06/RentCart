@@ -75,7 +75,16 @@ RentCart/
    JWT_REFRESH_EXPIRES_IN="7d"
    CLIENT_ORIGINS="http://localhost:5173,http://localhost:19006"
    PUBLIC_BASE_URL="http://10.221.161.232:4000"
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=465
+   SMTP_USER=your_email@gmail.com
+   SMTP_PASS=your16characterapppassword
+   MAIL_FROM="RentCart <your_email@gmail.com>"
    ```
+
+   > **Note on SMTP / Gmail App Password:**
+   > - To send real emails via Gmail, enable 2-Step Verification on your Google Account, generate a 16-character **App Password** under Security, and set `SMTP_USER` and `SMTP_PASS`.
+   > - **Development Fallback:** If SMTP is unconfigured or fails in `NODE_ENV=development`, RentCart prints OTP codes directly to the backend terminal so development and local testing work seamlessly without active SMTP credentials.
 
    > **Note on `PUBLIC_BASE_URL`:**
    > `PUBLIC_BASE_URL` is used to build absolute URLs for uploaded static images served at `/uploads`. When running on a local network for mobile device access, replace the IP with your machine's LAN IP so phones can load images.
@@ -88,7 +97,7 @@ RentCart/
    # Run database migrations
    npm run migrate
 
-   # Seed initial categories & demo data
+   # Seed initial categories & demo data (all seed accounts pre-verified)
    npm run seed
    ```
 
@@ -103,9 +112,14 @@ RentCart/
 ## 📡 API Endpoints
 
 ### Authentication (`/api/auth`)
-- `POST /api/auth/register` — Register a new user account
-- `POST /api/auth/login` — Sign in and receive access + refresh tokens
-- `POST /api/auth/refresh` — Refresh access token using refresh token
+- `POST /api/auth/register` — Register a new account as unverified. Generates a 6-digit OTP, dispatches a verification email, and returns `{ email, requiresVerification: true }` without tokens.
+- `POST /api/auth/login` — Sign in. Returns HTTP 403 with code `EMAIL_NOT_VERIFIED` if unverified (and sends a fresh OTP if cooldown permits). Verified users receive access + refresh tokens.
+- `POST /api/auth/verify-email` — Verify email address with 6-digit OTP (`{ email, otp }`). Marks user verified and returns user + access + refresh tokens.
+- `POST /api/auth/resend-otp` — Resend verification or password reset OTP (`{ email, purpose }`). Enforces 60-second cooldown and 5 OTPs/hour limit.
+- `POST /api/auth/forgot-password` — Request password reset code (`{ email }`). Always returns a generic 200 response to prevent account enumeration.
+- `POST /api/auth/reset-password` — Reset password using OTP (`{ email, otp, newPassword }`). Enforces password strength rules (8+ chars, 1 letter, 1 number) and sends password changed notification email.
+- `POST /api/auth/refresh` — Refresh access token using refresh token.
+- `GET /api/auth/me` *(Protected)* — Get authenticated user details.
 
 ### Image Uploads (`/api/uploads`)
 - `POST /api/uploads/images` *(Protected)* — Upload up to 5 images (`multipart/form-data`, max 5 MB each, JPG/PNG/WebP). Returns `{ urls: string[] }` containing absolute URLs constructed with `PUBLIC_BASE_URL`.
@@ -300,6 +314,24 @@ RentCart features direct, real-time messaging between borrowers and item owners 
 | `message:new` | Server ➔ Client (Recipient Room) | `ChatMessage` object | Emitted in real-time to the recipient's room `user:<id>` when a new message is saved. |
 | `message:read` | Server ➔ Client (Sender Room) | `{ rentalId: string, readAt: string }` | Emitted to the sender's room `user:<id>` when their messages are marked as read ("Seen"). |
 
+---
+
+## 🔐 Email Verification & Password Reset System
+
+RentCart enforces email ownership verification on signup and provides a secure, enumeration-safe forgot/reset password flow using cryptographically generated One-Time Passwords (OTPs).
+
+### OTP Rules & Security Architecture
+1. **Cryptographic Generation**: 6-digit numeric OTPs generated with `crypto.randomInt(100000, 1000000)`.
+2. **Hash-Only Storage & Constant-Time Validation**: OTP plain text is never stored in the database. Only SHA-256 hashes are persisted (`codeHash`). Comparisons are executed with `crypto.timingSafeEqual` in constant time to prevent timing attacks.
+3. **Single Use & Expiration**: OTPs are valid for 10 minutes and strictly single use (`consumedAt` timestamp). Consumed or expired OTPs cannot be re-used.
+4. **Attempt Lockout**: Maximum of 5 failed attempts per OTP. On the 5th failed attempt, the code is permanently invalidated, returning `attemptsLeft: 0`. A fresh code must then be requested.
+5. **Rate Limiting & Cooldown**:
+   - **Resend Cooldown**: 60 seconds between resend requests per purpose (`retryAfterSeconds` returned on HTTP 429).
+   - **Hourly Throttling**: Maximum of 5 OTP emails per email address per hour.
+   - **IP Rate Limiting**: All OTP endpoints are rate-limited per IP using `express-rate-limit`.
+6. **No Account Enumeration**: The `POST /api/auth/forgot-password` endpoint always returns a generic HTTP 200 success response whether or not the email exists in the database. Reset emails are dispatched only for verified accounts.
+7. **Password Complexity Rules**: Minimum 8 characters, at least one letter and at least one number. Enforced across registration, password change, and password reset.
+8. **Automated Cleanup**: A recurring background job automatically cleans up expired and consumed OTP codes.
 
 ---
 

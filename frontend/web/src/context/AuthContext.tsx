@@ -1,6 +1,6 @@
 /**
  * src/context/AuthContext.tsx
- * Global auth state — user, tokens, login/logout helpers.
+ * Global auth state — user, tokens, login/logout, email verification helpers.
  * Wraps the entire app so any component can call useAuth().
  */
 
@@ -12,7 +12,11 @@ import {
   useCallback,
 } from 'react';
 import type { ReactNode } from 'react';
-import { authService, type User } from '../services/auth.service';
+import {
+  authService,
+  type User,
+  type RegisterResponse,
+} from '../services/auth.service';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,7 +28,9 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
+  register: (data: RegisterData) => Promise<RegisterResponse>;
+  verifyEmail: (email: string, otp: string) => Promise<void>;
+  setSession: (user: User, accessToken: string, refreshToken: string) => void;
   logout: () => void;
   setUser: (user: User | null) => void;
 }
@@ -84,7 +90,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (data: RegisterData) => {
-      const { user, accessToken, refreshToken } = await authService.register(data);
+      return await authService.register(data);
+    },
+    [],
+  );
+
+  const verifyEmail = useCallback(
+    async (email: string, otp: string) => {
+      const { user, accessToken, refreshToken } = await authService.verifyEmail({ email, otp });
       handleAuthSuccess(user, accessToken, refreshToken);
     },
     [handleAuthSuccess],
@@ -102,7 +115,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ ...state, login, register, logout, setUser }}
+      value={{
+        ...state,
+        login,
+        register,
+        verifyEmail,
+        setSession: handleAuthSuccess,
+        logout,
+        setUser,
+      }}
     >
       {children}
     </AuthContext.Provider>

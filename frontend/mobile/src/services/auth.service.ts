@@ -1,5 +1,6 @@
 /**
  * src/services/auth.service.ts (mobile)
+ * Authentication API methods for mobile app.
  */
 
 import api from './api';
@@ -13,6 +14,8 @@ export interface User {
   address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  emailVerified?: boolean;
+  emailVerifiedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -36,10 +39,18 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
+export interface RegisterResponse {
+  email: string;
+  requiresVerification: boolean;
+}
+
+export interface GenericMessageResponse {
+  message: string;
+}
+
 export const authService = {
-  async register(data: RegisterData): Promise<AuthResponse> {
+  async register(data: RegisterData): Promise<RegisterResponse> {
     const res = await api.post('/auth/register', data);
-    console.log('Raw register response:', JSON.stringify(res.data, null, 2));
     if (!res.data?.success || !res.data?.data) {
       throw new Error(res.data?.message || 'Invalid registration response from server');
     }
@@ -48,20 +59,47 @@ export const authService = {
 
   async login(data: LoginData): Promise<AuthResponse> {
     const res = await api.post('/auth/login', data);
-    console.log('Raw login response:', JSON.stringify(res.data, null, 2));
     if (!res.data?.success || !res.data?.data) {
       throw new Error(res.data?.message || 'Invalid login response from server');
     }
     return res.data.data;
   },
 
+  async verifyEmail(data: { email: string; otp: string }): Promise<AuthResponse> {
+    const res = await api.post('/auth/verify-email', data);
+    if (!res.data?.success || !res.data?.data) {
+      throw new Error(res.data?.message || 'Verification failed');
+    }
+    return res.data.data;
+  },
+
+  async resendOtp(data: {
+    email: string;
+    purpose: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
+  }): Promise<GenericMessageResponse> {
+    const res = await api.post('/auth/resend-otp', data);
+    return res.data.data;
+  },
+
+  async forgotPassword(data: { email: string }): Promise<GenericMessageResponse> {
+    const res = await api.post('/auth/forgot-password', data);
+    return res.data.data;
+  },
+
+  async resetPassword(data: {
+    email: string;
+    otp: string;
+    newPassword: string;
+  }): Promise<GenericMessageResponse> {
+    const res = await api.post('/auth/reset-password', data);
+    return res.data.data;
+  },
+
   async getMe(): Promise<User> {
     const res = await api.get('/auth/me');
-    console.log('Raw getMe response:', JSON.stringify(res.data, null, 2));
-    const user = res.data?.data?.user || res.data?.data || res.data;
-    if (!user || typeof user !== 'object') {
-      throw new Error('Invalid user profile response from server');
+    if (!res.data?.success || !res.data?.data?.user) {
+      throw new Error(res.data?.message || 'Failed to fetch user profile');
     }
-    return user;
+    return res.data.data.user;
   },
 };

@@ -8,11 +8,19 @@ import { createApp } from './app';
 import { env } from './config/env';
 import prisma from './prisma/client';
 import { initSocketIO } from './socket';
+import { verifySmtpConnection } from './services/mail.service';
+import { startOtpCleanupJob } from './services/otp.service';
 
 async function bootstrap() {
   // Verify database connection before accepting traffic
   await prisma.$connect();
   console.log('✅  Database connected');
+
+  // Verify SMTP connection on startup
+  verifySmtpConnection();
+
+  // Start periodic OTP cleanup job
+  startOtpCleanupJob();
 
   const app = createApp();
   const server = http.createServer(app);

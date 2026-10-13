@@ -2,11 +2,17 @@
  * src/context/AuthContext.tsx (mobile)
  * Global auth state using expo-secure-store for token & user persistence.
  * Enforces min 1.5s splash screen loading on app startup.
+ * Tokens are stored in SecureStore ONLY after login or email verification succeeds.
  */
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { authService, type User, type RegisterData } from '../services/auth.service';
+import {
+  authService,
+  type User,
+  type RegisterData,
+  type RegisterResponse,
+} from '../services/auth.service';
 import { tokenStorage } from '../services/api';
 import { registerForPush, unregisterPush } from '../services/push';
 
@@ -19,7 +25,8 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
+  register: (data: RegisterData) => Promise<RegisterResponse>;
+  verifyEmail: (email: string, otp: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: User) => Promise<void>;
 }
@@ -107,7 +114,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (data: RegisterData) => {
-      const { user, accessToken, refreshToken } = await authService.register(data);
+      return await authService.register(data);
+    },
+    []
+  );
+
+  const verifyEmail = useCallback(
+    async (email: string, otp: string) => {
+      const { user, accessToken, refreshToken } = await authService.verifyEmail({ email, otp });
       await handleAuthSuccess(user, accessToken, refreshToken);
     },
     [handleAuthSuccess]
@@ -129,7 +143,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout, updateUser }}>
+    <AuthContext.Provider
+      value={{
+        ...state,
+        login,
+        register,
+        verifyEmail,
+        logout,
+        updateUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -1,10 +1,11 @@
 /**
  * src/pages/LoginPage.tsx
- * Login form with email/password, show/hide password, error handling, and link to Register.
+ * Login form with email/password, show/hide password, error handling,
+ * Forgot Password navigation, and redirection to /verify-email if unverified.
  */
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,8 +23,12 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState('');
+
+  // Success message if redirected from reset password or other flow
+  const successNotice = (location.state as { message?: string })?.message;
 
   const {
     register,
@@ -37,9 +42,13 @@ export function LoginPage() {
       await login(data.email, data.password);
       navigate('/home', { replace: true });
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setApiError(msg ?? 'Something went wrong. Please try again.');
+      const resp = (err as { response?: { data?: { code?: string; message?: string } } })?.response?.data;
+      if (resp?.code === 'EMAIL_NOT_VERIFIED') {
+        // Redirect to OTP verification page
+        navigate(`/verify-email?email=${encodeURIComponent(data.email)}`);
+        return;
+      }
+      setApiError(resp?.message ?? 'Invalid email or password. Please try again.');
     }
   };
 
@@ -60,6 +69,16 @@ export function LoginPage() {
 
         {/* Card */}
         <div className="card p-8">
+          {/* Success notice */}
+          {successNotice && (
+            <div className="mb-5 px-4 py-3 rounded-xl bg-primary-50 border border-primary-200 text-primary-800 text-sm flex items-center gap-2">
+              <svg className="w-4 h-4 text-primary-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
+              </svg>
+              {successNotice}
+            </div>
+          )}
+
           {/* API error banner */}
           {apiError && (
             <div className="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
@@ -91,9 +110,17 @@ export function LoginPage() {
 
             {/* Password */}
             <div>
-              <label htmlFor="login-password" className="block text-sm font-medium text-neutral-700 mb-1.5">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="login-password" className="block text-sm font-medium text-neutral-700">
+                  Password
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative">
                 <input
                   id="login-password"

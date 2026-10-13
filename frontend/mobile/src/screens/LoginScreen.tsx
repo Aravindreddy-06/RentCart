@@ -1,5 +1,7 @@
 /**
  * src/screens/LoginScreen.tsx (mobile)
+ * Login screen with email/password, redirection to VerifyEmail on EMAIL_NOT_VERIFIED,
+ * and Forgot Password link.
  */
 
 import React, { useState } from 'react';
@@ -22,15 +24,17 @@ import { colors } from '../utils/colors';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
-export default function LoginScreen({ navigation }: Props) {
+export default function LoginScreen({ navigation, route }: Props) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const successMessage = route.params?.message;
+
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!email.trim() || !password) {
       setError('Please fill in all fields');
       return;
     }
@@ -38,10 +42,18 @@ export default function LoginScreen({ navigation }: Props) {
     setLoading(true);
 
     try {
-      await login(email, password);
+      const normalizedEmail = email.trim().toLowerCase();
+      await login(normalizedEmail, password);
     } catch (err: any) {
+      const resp = err.response?.data;
+      if (resp?.code === 'EMAIL_NOT_VERIFIED') {
+        // Redirect to email verification
+        navigation.navigate('VerifyEmail', { email: email.trim().toLowerCase() });
+        return;
+      }
+
       setError(
-        err.response?.data?.error || err.message || 'Failed to login. Check credentials.'
+        resp?.message || err.message || 'Failed to login. Please check your credentials.'
       );
     } finally {
       setLoading(false);
@@ -49,9 +61,9 @@ export default function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -66,6 +78,12 @@ export default function LoginScreen({ navigation }: Props) {
           </View>
 
           <View style={styles.formCard}>
+            {successMessage && (
+              <View style={styles.successContainer}>
+                <Text style={styles.successText}>{successMessage}</Text>
+              </View>
+            )}
+
             {error && (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{error}</Text>
@@ -86,7 +104,15 @@ export default function LoginScreen({ navigation }: Props) {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
+              <View style={styles.passwordLabelRow}>
+                <Text style={styles.label}>Password</Text>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('ForgotPassword')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+                </TouchableOpacity>
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
@@ -101,6 +127,7 @@ export default function LoginScreen({ navigation }: Props) {
               style={styles.primaryButton}
               onPress={handleLogin}
               disabled={loading}
+              activeOpacity={0.8}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
@@ -134,21 +161,18 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 28,
   },
   logoBadge: {
     width: 64,
     height: 64,
     borderRadius: 20,
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.primary[50],
+    borderWidth: 1.5,
+    borderColor: colors.primary[200],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: colors.primary[500],
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
   },
   logoIcon: {
     fontSize: 32,
@@ -164,6 +188,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.gray[500],
     textAlign: 'center',
+    lineHeight: 20,
     maxWidth: 280,
   },
   formCard: {
@@ -172,11 +197,19 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: colors.gray[200],
-    shadowColor: colors.gray[900],
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+  },
+  successContainer: {
+    backgroundColor: colors.primary[50],
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  successText: {
+    color: colors.primary[700],
+    fontSize: 13,
+    fontWeight: '600',
   },
   errorContainer: {
     backgroundColor: '#fef2f2',
@@ -187,27 +220,37 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   errorText: {
-    color: colors.danger,
-    fontSize: 14,
+    color: '#b91c1c',
+    fontSize: 13,
   },
   inputGroup: {
     marginBottom: 16,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.gray[700],
+  passwordLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 6,
   },
+  label: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.gray[700],
+  },
+  forgotPasswordText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary[600],
+  },
   input: {
+    backgroundColor: colors.gray[50],
     borderWidth: 1,
-    borderColor: colors.gray[300],
+    borderColor: colors.gray[200],
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
     color: colors.gray[900],
-    backgroundColor: '#fff',
   },
   primaryButton: {
     backgroundColor: colors.primary[600],
@@ -215,24 +258,25 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
+    marginBottom: 16,
   },
   primaryButtonText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
+    alignItems: 'center',
   },
   footerText: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.gray[500],
   },
   linkText: {
     fontSize: 14,
-    fontWeight: '600',
     color: colors.primary[600],
+    fontWeight: '700',
   },
 });

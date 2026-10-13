@@ -1,5 +1,7 @@
 /**
  * src/screens/RegisterScreen.tsx (mobile)
+ * Registration screen with password rules (min 8 chars, at least 1 letter, 1 number),
+ * password requirement indicators, and navigation to VerifyEmail.
  */
 
 import React, { useState } from 'react';
@@ -32,25 +34,39 @@ export default function RegisterScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const hasMinLength = password.length >= 8;
+  const hasLetter = /[a-zA-Z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+
   const handleRegister = async () => {
-    if (!name || !email || !password) {
+    if (!name.trim() || !email.trim() || !password) {
       setError('Name, email, and password are required');
       return;
     }
+
+    if (!hasMinLength || !hasLetter || !hasNumber) {
+      setError('Password must be at least 8 characters and include at least one letter and one number.');
+      return;
+    }
+
     setError(null);
     setLoading(true);
 
     try {
+      const normalizedEmail = email.trim().toLowerCase();
       await register({
-        name,
-        email,
+        name: name.trim(),
+        email: normalizedEmail,
         password,
-        phone: phone || undefined,
-        address: address || undefined,
+        phone: phone.trim() || undefined,
+        address: address.trim() || undefined,
       });
+
+      // Navigate to VerifyEmail screen
+      navigation.navigate('VerifyEmail', { email: normalizedEmail });
     } catch (err: any) {
       setError(
-        err.response?.data?.error || err.message || 'Failed to create account.'
+        err.response?.data?.message || err.message || 'Failed to create account.'
       );
     } finally {
       setLoading(false);
@@ -58,9 +74,9 @@ export default function RegisterScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -106,12 +122,40 @@ export default function RegisterScreen({ navigation }: Props) {
               <Text style={styles.label}>Password *</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Min 6 characters"
+                placeholder="Create a strong password"
                 placeholderTextColor={colors.gray[400]}
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
               />
+
+              {/* Password strength hints */}
+              <View style={styles.hintsBox}>
+                <View style={styles.hintRow}>
+                  <Text style={[styles.hintDot, hasMinLength && styles.hintDotActive]}>
+                    {hasMinLength ? '✓' : '•'}
+                  </Text>
+                  <Text style={[styles.hintText, hasMinLength && styles.hintTextActive]}>
+                    At least 8 characters
+                  </Text>
+                </View>
+                <View style={styles.hintRow}>
+                  <Text style={[styles.hintDot, hasLetter && styles.hintDotActive]}>
+                    {hasLetter ? '✓' : '•'}
+                  </Text>
+                  <Text style={[styles.hintText, hasLetter && styles.hintTextActive]}>
+                    At least one letter (a-z, A-Z)
+                  </Text>
+                </View>
+                <View style={styles.hintRow}>
+                  <Text style={[styles.hintDot, hasNumber && styles.hintDotActive]}>
+                    {hasNumber ? '✓' : '•'}
+                  </Text>
+                  <Text style={[styles.hintText, hasNumber && styles.hintTextActive]}>
+                    At least one number (0-9)
+                  </Text>
+                </View>
+              </View>
             </View>
 
             <View style={styles.inputGroup}>
@@ -141,6 +185,7 @@ export default function RegisterScreen({ navigation }: Props) {
               style={styles.primaryButton}
               onPress={handleRegister}
               disabled={loading}
+              activeOpacity={0.8}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
@@ -204,27 +249,56 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   errorText: {
-    color: colors.danger,
-    fontSize: 14,
+    color: '#b91c1c',
+    fontSize: 13,
   },
   inputGroup: {
     marginBottom: 16,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: colors.gray[700],
     marginBottom: 6,
   },
   input: {
+    backgroundColor: colors.gray[50],
     borderWidth: 1,
-    borderColor: colors.gray[300],
+    borderColor: colors.gray[200],
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
     color: colors.gray[900],
-    backgroundColor: '#fff',
+  },
+  hintsBox: {
+    marginTop: 8,
+    backgroundColor: colors.gray[50],
+    borderRadius: 8,
+    padding: 10,
+    gap: 4,
+  },
+  hintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  hintDot: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.gray[400],
+    width: 14,
+  },
+  hintDotActive: {
+    color: colors.primary[600],
+  },
+  hintText: {
+    fontSize: 12,
+    color: colors.gray[500],
+  },
+  hintTextActive: {
+    color: colors.primary[700],
+    fontWeight: '600',
   },
   primaryButton: {
     backgroundColor: colors.primary[600],
@@ -232,24 +306,25 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
+    marginBottom: 16,
   },
   primaryButtonText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
+    alignItems: 'center',
   },
   footerText: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.gray[500],
   },
   linkText: {
     fontSize: 14,
-    fontWeight: '600',
     color: colors.primary[600],
+    fontWeight: '700',
   },
 });

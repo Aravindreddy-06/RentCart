@@ -27,6 +27,8 @@ async function main() {
   // ── Users ──────────────────────────────────────────────────────────────────
   const hash = (pw: string) => bcrypt.hashSync(pw, 10);
 
+  const now = new Date();
+
   // Alice Johnson — Center (Springfield Downtown)
   const alice = await prisma.user.create({
     data: {
@@ -38,6 +40,8 @@ async function main() {
       address: '12 Maple Street, Springfield',
       latitude: 37.7749,
       longitude: -122.4194,
+      emailVerified: true,
+      emailVerifiedAt: now,
     },
   });
 
@@ -52,6 +56,8 @@ async function main() {
       address: '45 Oak Avenue, Springfield',
       latitude: 37.7785,
       longitude: -122.4125,
+      emailVerified: true,
+      emailVerifiedAt: now,
     },
   });
 
@@ -66,6 +72,8 @@ async function main() {
       address: '78 Pine Road, Springfield',
       latitude: 37.788,
       longitude: -122.408,
+      emailVerified: true,
+      emailVerifiedAt: now,
     },
   });
 
@@ -80,6 +88,8 @@ async function main() {
       address: '105 Elm Boulevard, Springfield',
       latitude: 37.795,
       longitude: -122.392,
+      emailVerified: true,
+      emailVerifiedAt: now,
     },
   });
 
@@ -94,6 +104,8 @@ async function main() {
       address: '220 Hillside Drive, Springfield',
       latitude: 37.82,
       longitude: -122.37,
+      emailVerified: true,
+      emailVerifiedAt: now,
     },
   });
 

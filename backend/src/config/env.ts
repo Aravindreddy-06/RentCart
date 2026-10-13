@@ -23,4 +23,9 @@ export const env = {
   CLIENT_ORIGINS: (process.env.CLIENT_ORIGINS ?? 'http://localhost:5173').split(','),
   NODE_ENV: process.env.NODE_ENV ?? 'development',
   PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL ?? 'http://localhost:4000',
+  SMTP_HOST: process.env.SMTP_HOST,
+  SMTP_PORT: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587,
+  SMTP_USER: process.env.SMTP_USER,
+  SMTP_PASS: process.env.SMTP_PASS,
+  MAIL_FROM: process.env.MAIL_FROM ?? 'RentCart <noreply@rentcart.app>',
 } as const;

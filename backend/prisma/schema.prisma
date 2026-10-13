@@ -32,20 +32,27 @@ enum NotificationType {
   NEW_MESSAGE
 }
 
+enum OtpPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
 // ─── Models ──────────────────────────────────────────────────────────────────
 
 model User {
-  id           String   @id @default(uuid())
-  name         String
-  email        String   @unique
-  phone        String?
-  passwordHash String
-  avatarUrl    String?
-  address      String?
-  latitude     Float?
-  longitude    Float?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String         @id @default(uuid())
+  name            String
+  email           String         @unique
+  phone           String?
+  passwordHash    String
+  avatarUrl       String?
+  address         String?
+  latitude        Float?
+  longitude       Float?
+  emailVerified   Boolean        @default(false)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   // Relations
   items           Item[]         @relation("OwnerItems")
@@ -55,6 +62,7 @@ model User {
   authoredReviews Review[]       @relation("AuthoredReviews")
   receivedReviews Review[]       @relation("ReceivedReviews")
   sentMessages    Message[]      @relation("SentMessages")
+  otpCodes        OtpCode[]
 
   @@map("users")
 }
@@ -176,5 +184,22 @@ model Message {
   @@index([rentalId, createdAt])
   @@index([rentalId, readAt])
   @@map("messages")
+}
+
+model OtpCode {
+  id         String     @id @default(uuid())
+  userId     String
+  purpose    OtpPurpose
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int        @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime   @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, createdAt])
+  @@map("otp_codes")
 }
 

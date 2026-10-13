@@ -1,6 +1,7 @@
 /**
  * src/pages/RegisterPage.tsx
  * Registration form: name, email, phone (optional), password, confirm password.
+ * Includes real-time password strength hints and redirects to /verify-email.
  */
 
 import { useState } from 'react';
@@ -16,7 +17,11 @@ const registerSchema = z
     name: z.string().min(2, 'Name must be at least 2 characters'),
     email: z.string().email('Please enter a valid email'),
     phone: z.string().optional(),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(/[a-zA-Z]/, 'Password must contain at least one letter')
+      .regex(/[0-9]/, 'Password must contain at least one number'),
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -36,8 +41,14 @@ export function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({ resolver: zodResolver(registerSchema) });
+
+  const passwordValue = watch('password') || '';
+  const hasMinLength = passwordValue.length >= 8;
+  const hasLetter = /[a-zA-Z]/.test(passwordValue);
+  const hasNumber = /[0-9]/.test(passwordValue);
 
   const onSubmit = async (data: RegisterFormData) => {
     setApiError('');
@@ -48,7 +59,8 @@ export function RegisterPage() {
         phone: data.phone || undefined,
         password: data.password,
       });
-      navigate('/home', { replace: true });
+      // Redirect to OTP verification with email query param
+      navigate(`/verify-email?email=${encodeURIComponent(data.email)}`);
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -141,7 +153,7 @@ export function RegisterPage() {
                   id="reg-password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  placeholder="At least 8 characters"
+                  placeholder="Create a strong password"
                   className={`form-field pr-11 ${errors.password ? 'form-field-error' : ''}`}
                   {...register('password')}
                 />
@@ -162,6 +174,36 @@ export function RegisterPage() {
                   )}
                 </button>
               </div>
+
+              {/* Password strength hints */}
+              <div className="mt-2.5 p-3 rounded-xl bg-neutral-50 border border-neutral-100 space-y-1.5 text-xs">
+                <p className="font-semibold text-neutral-600 mb-1">Password requirements:</p>
+                <div className="flex items-center gap-2">
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${hasMinLength ? 'bg-primary-500 text-white' : 'bg-neutral-200 text-neutral-500'}`}>
+                    {hasMinLength ? '✓' : '•'}
+                  </span>
+                  <span className={hasMinLength ? 'text-primary-700 font-medium' : 'text-neutral-500'}>
+                    At least 8 characters
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${hasLetter ? 'bg-primary-500 text-white' : 'bg-neutral-200 text-neutral-500'}`}>
+                    {hasLetter ? '✓' : '•'}
+                  </span>
+                  <span className={hasLetter ? 'text-primary-700 font-medium' : 'text-neutral-500'}>
+                    At least one letter (a-z, A-Z)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${hasNumber ? 'bg-primary-500 text-white' : 'bg-neutral-200 text-neutral-500'}`}>
+                    {hasNumber ? '✓' : '•'}
+                  </span>
+                  <span className={hasNumber ? 'text-primary-700 font-medium' : 'text-neutral-500'}>
+                    At least one number (0-9)
+                  </span>
+                </div>
+              </div>
+
               {errors.password && <p className="mt-1.5 text-xs text-red-600">{errors.password.message}</p>}
             </div>
 

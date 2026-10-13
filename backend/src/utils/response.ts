@@ -11,10 +11,17 @@ export function success<T>(res: Response, data: T, statusCode = 200) {
 }
 
 /** Send an error response. */
-export function failure(res: Response, message: string, statusCode = 400, errors?: unknown) {
+export function failure(
+  res: Response,
+  message: string,
+  statusCode = 400,
+  errors?: unknown,
+  extra?: Record<string, unknown>,
+) {
   return res.status(statusCode).json({
     success: false,
     message,
     ...(errors ? { errors } : {}),
+    ...(extra ? extra : {}),
   });
 }
