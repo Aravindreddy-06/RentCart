@@ -7,6 +7,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { rentalsService, type BookedDateRange } from '../services/rentals.service';
 import type { Item } from '../services/items.service';
+import { formatINR } from '../utils/currency';
+import { formatDateDMY } from '../utils/date';
 
 interface RequestBorrowModalProps {
   item: Item;
@@ -89,7 +91,7 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
     }
     if (overlapConflict) {
       setError(
-        `Selected dates overlap with an existing booking (${overlapConflict.startDate} to ${overlapConflict.endDate}).`,
+        `Selected dates overlap with an existing booking (${formatDateDMY(overlapConflict.startDate)} to ${formatDateDMY(overlapConflict.endDate)}).`,
       );
       return;
     }
@@ -205,8 +207,8 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
             {/* Overlap Error */}
             {overlapConflict && (
               <p className="text-red-600 text-xs font-medium bg-red-50 p-2.5 rounded-lg border border-red-200">
-                ⚠️ Dates overlap with a confirmed booking ({overlapConflict.startDate} to{' '}
-                {overlapConflict.endDate}). Please select different dates.
+                ⚠️ Dates overlap with a confirmed booking ({formatDateDMY(overlapConflict.startDate)} to{' '}
+                {formatDateDMY(overlapConflict.endDate)}). Please select different dates.
               </p>
             )}
 
@@ -232,22 +234,22 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
             <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-200/80 space-y-2 text-sm">
               <div className="flex justify-between text-neutral-600">
                 <span>
-                  Rate ({days} {days === 1 ? 'day' : 'days'} × ${item.pricePerDay})
+                  Rate ({days} {days === 1 ? 'day' : 'days'} × {formatINR(item.pricePerDay)})
                 </span>
-                <span className="font-semibold text-neutral-900">${totalPrice.toFixed(2)}</span>
+                <span className="font-semibold text-neutral-900">{formatINR(totalPrice)}</span>
               </div>
               {item.deposit > 0 && (
                 <div className="flex justify-between text-neutral-600">
                   <span>Refundable Security Deposit</span>
                   <span className="font-semibold text-neutral-900">
-                    ${item.deposit.toFixed(2)}
+                    {formatINR(item.deposit)}
                   </span>
                 </div>
               )}
               <div className="pt-2 border-t border-neutral-200 flex justify-between font-bold text-base text-neutral-900">
                 <span>Total Due on Handover</span>
                 <span className="text-primary-600">
-                  ${(totalPrice + (item.deposit ?? 0)).toFixed(2)}
+                  {formatINR(totalPrice + (item.deposit ?? 0))}
                 </span>
               </div>
             </div>

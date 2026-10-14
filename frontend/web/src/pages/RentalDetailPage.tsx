@@ -20,6 +20,9 @@ import {
   type LiveTrackingData,
 } from '../services/rentals.service';
 import { reviewsService, type ReviewStatusResponse } from '../services/reviews.service';
+import { formatINR } from '../utils/currency';
+import { formatDateDMY, formatTime12 } from '../utils/date';
+import { formatPhoneNumber } from '../utils/phone';
 
 function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -38,12 +41,19 @@ function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): 
 function formatPickupTimeWindow(from?: string | null, to?: string | null) {
   if (!from && !to) return null;
   if (from && to) {
-    return `${new Date(from).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} – ${new Date(to).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    const fromDate = formatDateDMY(from);
+    const toDate = formatDateDMY(to);
+    const fromTime = formatTime12(from);
+    const toTime = formatTime12(to);
+    if (fromDate === toDate) {
+      return `${fromDate}, ${fromTime} – ${toTime}`;
+    }
+    return `${fromDate} ${fromTime} – ${toDate} ${toTime}`;
   }
   if (from) {
-    return `From ${new Date(from).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+    return `From ${formatDateDMY(from)} ${formatTime12(from)}`;
   }
-  return `Until ${new Date(to!).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+  return `Until ${formatDateDMY(to!)} ${formatTime12(to!)}`;
 }
 
 export function RentalDetailPage() {
@@ -67,8 +77,8 @@ export function RentalDetailPage() {
   const [showPickupModal, setShowPickupModal] = useState(false);
   const [isEditingPickup, setIsEditingPickup] = useState(false);
   const [pickupFormLocation, setPickupFormLocation] = useState<LocationValue>({
-    latitude: 37.7749,
-    longitude: -122.4194,
+    latitude: 13.0827,
+    longitude: 80.2707,
     address: '',
   });
   const [pickupFormNote, setPickupFormNote] = useState('');
@@ -80,6 +90,7 @@ export function RentalDetailPage() {
   // Borrower location & tracking state
   const [borrowerCoords, setBorrowerCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [copiedPhone, setCopiedPhone] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [trackingError, setTrackingError] = useState('');
@@ -272,8 +283,8 @@ export function RentalDetailPage() {
     if (!rental) return;
     setIsEditingPickup(false);
     setPickupFormLocation({
-      latitude: rental.pickupLatitude ?? user?.latitude ?? 37.7749,
-      longitude: rental.pickupLongitude ?? user?.longitude ?? -122.4194,
+      latitude: rental.pickupLatitude ?? user?.latitude ?? 13.0827,
+      longitude: rental.pickupLongitude ?? user?.longitude ?? 80.2707,
       address: rental.pickupAddress || user?.address || '',
     });
     setPickupFormNote(rental.pickupNote || '');
@@ -287,8 +298,8 @@ export function RentalDetailPage() {
     if (!rental) return;
     setIsEditingPickup(true);
     setPickupFormLocation({
-      latitude: rental.pickupLatitude ?? user?.latitude ?? 37.7749,
-      longitude: rental.pickupLongitude ?? user?.longitude ?? -122.4194,
+      latitude: rental.pickupLatitude ?? user?.latitude ?? 13.0827,
+      longitude: rental.pickupLongitude ?? user?.longitude ?? 80.2707,
       address: rental.pickupAddress || user?.address || '',
     });
     setPickupFormNote(rental.pickupNote || '');
@@ -693,13 +704,13 @@ export function RentalDetailPage() {
                 <div>
                   <p className="text-xs text-neutral-400">Start Date</p>
                   <p className="font-bold text-neutral-900 text-base mt-0.5">
-                    📅 {rental.startDate}
+                    📅 {formatDateDMY(rental.startDate)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-neutral-400">End Date</p>
                   <p className="font-bold text-neutral-900 text-base mt-0.5">
-                    📅 {rental.endDate}
+                    📅 {formatDateDMY(rental.endDate)}
                   </p>
                 </div>
               </div>
@@ -708,27 +719,27 @@ export function RentalDetailPage() {
                 <div className="flex justify-between text-neutral-600">
                   <span>Rental Rate</span>
                   <span className="font-medium text-neutral-900">
-                    ${rental.item.pricePerDay} / day
+                    {formatINR(rental.item.pricePerDay)} / day
                   </span>
                 </div>
                 <div className="flex justify-between text-neutral-600">
                   <span>Total Rental Price</span>
                   <span className="font-bold text-neutral-900">
-                    ${rental.totalPrice.toFixed(2)}
+                    {formatINR(rental.totalPrice)}
                   </span>
                 </div>
                 {rental.depositAmount > 0 && (
                   <div className="flex justify-between text-neutral-600">
                     <span>Security Deposit</span>
                     <span className="font-medium text-neutral-900">
-                      ${rental.depositAmount.toFixed(2)}
+                      {formatINR(rental.depositAmount)}
                     </span>
                   </div>
                 )}
                 <div className="pt-2 border-t border-neutral-100 flex justify-between font-extrabold text-base text-neutral-900">
                   <span>Total Due</span>
                   <span className="text-primary-600">
-                    ${(rental.totalPrice + (rental.depositAmount ?? 0)).toFixed(2)}
+                    {formatINR(rental.totalPrice + (rental.depositAmount ?? 0))}
                   </span>
                 </div>
               </div>
@@ -1196,12 +1207,25 @@ export function RentalDetailPage() {
                     <p className="text-xs font-semibold text-emerald-800">
                       📞 Verified Phone Number
                     </p>
-                    <a
-                      href={`tel:${otherPerson.phone}`}
-                      className="text-sm font-bold text-emerald-700 hover:underline block"
-                    >
-                      {otherPerson.phone}
-                    </a>
+                    <div className="flex items-center justify-between">
+                      <a
+                        href={`tel:${otherPerson.phone}`}
+                        className="text-sm font-bold text-emerald-700 hover:underline block"
+                      >
+                        {formatPhoneNumber(otherPerson.phone)}
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(otherPerson.phone || '');
+                          setCopiedPhone(true);
+                          setTimeout(() => setCopiedPhone(false), 2000);
+                        }}
+                        className="text-xs px-2 py-1 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-semibold transition-colors"
+                      >
+                        {copiedPhone ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
                     <p className="text-[11px] text-emerald-600">
                       Shared for pickup and handover coordination.
                     </p>

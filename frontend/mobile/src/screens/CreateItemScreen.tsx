@@ -53,6 +53,10 @@ export default function CreateItemScreen({ navigation }: Props) {
       Alert.alert('Validation Error', 'Daily rate must be a valid positive number.');
       return;
     }
+    if (rate > 1000000) {
+      Alert.alert('Validation Error', 'Maximum amount is ₹10,00,000.');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -123,22 +127,25 @@ export default function CreateItemScreen({ navigation }: Props) {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Daily Rate ($) *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="15.00"
-              placeholderTextColor={colors.gray[400]}
-              keyboardType="decimal-pad"
-              value={dailyRate}
-              onChangeText={setDailyRate}
-            />
+            <Text style={styles.label}>Price per day (₹) *</Text>
+            <View style={styles.currencyInputRow}>
+              <Text style={styles.currencyPrefix}>₹</Text>
+              <TextInput
+                style={styles.currencyTextInput}
+                placeholder="150"
+                placeholderTextColor={colors.gray[400]}
+                keyboardType="numeric"
+                value={dailyRate}
+                onChangeText={setDailyRate}
+              />
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Neighbourhood / Location *</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Oakwood Heights, Block 4"
+              placeholder="e.g. Anna Nagar, Chennai"
               placeholderTextColor={colors.gray[400]}
               value={location}
               onChangeText={setLocation}
@@ -228,6 +235,27 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.gray[900],
     backgroundColor: '#fff',
+  },
+  currencyInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: colors.gray[300],
+    borderRadius: 10,
+    paddingHorizontal: 14,
+  },
+  currencyPrefix: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.gray[600],
+    marginRight: 6,
+  },
+  currencyTextInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: colors.gray[900],
   },
   catScroll: {
     flexDirection: 'row',

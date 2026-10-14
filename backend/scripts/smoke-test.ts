@@ -621,6 +621,144 @@ async function runSmokeTests() {
     }
     console.log('✓ Privacy checks passed: pickup location never leaked in items or public profiles');
 
+    // ── 20. INDIA LOCALIZATION TESTS ──────────────────────────────────────────
+    console.log('\n======================================================');
+    console.log('🇮🇳 Starting India Localization Smoke Tests...');
+    console.log('======================================================\n');
+
+    // A. Invalid phone numbers return 400
+    console.log('\n[20.1] Testing Invalid Indian Phone Numbers Return 400...');
+    const invalidPhone1 = await postJson('/auth/register', {
+      name: 'Invalid Phone Tester',
+      email: `invalid.phone1.${Date.now()}@example.com`,
+      password: initialPassword,
+      phone: '1234567890', // Starts with 1
+    });
+    if (invalidPhone1.status !== 400 || !invalidPhone1.data.message.includes('10-digit Indian mobile number')) {
+      throw new Error(`Expected 400 for 1234567890, got: ${invalidPhone1.status} ${JSON.stringify(invalidPhone1.data)}`);
+    }
+
+    const invalidPhone2 = await postJson('/auth/register', {
+      name: 'Invalid Phone Tester 2',
+      email: `invalid.phone2.${Date.now()}@example.com`,
+      password: initialPassword,
+      phone: '5123456789', // Starts with 5
+    });
+    if (invalidPhone2.status !== 400 || !invalidPhone2.data.message.includes('10-digit Indian mobile number')) {
+      throw new Error(`Expected 400 for 5123456789, got: ${invalidPhone2.status} ${JSON.stringify(invalidPhone2.data)}`);
+    }
+    console.log('✓ Invalid phone numbers (1234567890, 5xxxxxxxxx) rejected with 400');
+
+    // B. Phone normalization variants
+    console.log('\n[20.2] Testing Phone Normalization Variants...');
+    const phoneVariants = [
+      { input: '9876543210', expected: '+919876543210' },
+      { input: '09876543210', expected: '+919876543210' },
+      { input: '+91 98765 43210', expected: '+919876543210' },
+      { input: '91-9876543210', expected: '+919876543210' },
+    ];
+
+    for (let i = 0; i < phoneVariants.length; i++) {
+      const variant = phoneVariants[i];
+      const variantEmail = `phone.variant.${i}.${Date.now()}@example.com`;
+      const vRegRes = await postJson('/auth/register', {
+        name: `Phone Variant ${i}`,
+        email: variantEmail,
+        password: initialPassword,
+        phone: variant.input,
+      });
+
+      if (vRegRes.status !== 201) {
+        throw new Error(`Variant ${variant.input} registration failed: ${JSON.stringify(vRegRes.data)}`);
+      }
+
+      const createdUser = await prisma.user.findUnique({ where: { email: variantEmail } });
+      if (!createdUser || createdUser.phone !== variant.expected) {
+        throw new Error(`Expected normalized phone ${variant.expected}, got ${createdUser?.phone} for input ${variant.input}`);
+      }
+
+      await prisma.user.delete({ where: { email: variantEmail } });
+    }
+    console.log('✓ All Indian phone variants ("9876543210", "09876543210", "+91 98765 43210", "91-9876543210") normalized to E.164 +919876543210');
+
+    // C. Existing users can still log in
+    console.log('\n[20.3] Testing Existing Seed Users Can Still Log In...');
+    const aliceLoginRes = await postJson('/auth/login', {
+      email: 'alice@example.com',
+      password: 'password123',
+    });
+    if (aliceLoginRes.status !== 200 || !aliceLoginRes.data.data.accessToken) {
+      throw new Error(`Existing seed user login failed: ${aliceLoginRes.status} ${JSON.stringify(aliceLoginRes.data)}`);
+    }
+    console.log('✓ Existing user (alice@example.com) successfully logged in');
+
+    // D. Prices round-trip unchanged and responses include currency "INR"
+    console.log('\n[20.4] Testing Prices Round-Trip Unchanged & Currency "INR"...');
+    const testPricePerDay = 175.5;
+    const testDeposit = 550;
+
+    const createItemWithPrice = await req(
+      '/items',
+      'POST',
+      {
+        title: 'INR Test Drill Item',
+        description: 'Cordless drill for testing Indian rupee localization.',
+        category: 'Tools',
+        pricePerDay: testPricePerDay,
+        deposit: testDeposit,
+      },
+      ownerToken,
+    );
+
+    if (createItemWithPrice.status !== 201) {
+      throw new Error(`Create item with price failed: ${JSON.stringify(createItemWithPrice.data)}`);
+    }
+
+    const createdItemData = createItemWithPrice.data.data;
+    if (createdItemData.currency !== 'INR') {
+      throw new Error(`Expected currency "INR" in item creation, got: ${createdItemData.currency}`);
+    }
+    if (createdItemData.pricePerDay !== testPricePerDay || createdItemData.deposit !== testDeposit) {
+      throw new Error(`Price corrupted on creation: pricePerDay=${createdItemData.pricePerDay}, deposit=${createdItemData.deposit}`);
+    }
+
+    // Retrieve via GET /items/:id
+    const getItemRes = await req(`/items/${createdItemData.id}`, 'GET', undefined, borrowerToken);
+    if (getItemRes.status !== 200) throw new Error(`GET /items/:id failed: ${JSON.stringify(getItemRes.data)}`);
+    const fetchedItem = getItemRes.data.data;
+
+    if (fetchedItem.currency !== 'INR') {
+      throw new Error(`Expected currency "INR" in GET /items/:id, got: ${fetchedItem.currency}`);
+    }
+    if (fetchedItem.pricePerDay !== testPricePerDay || fetchedItem.deposit !== testDeposit) {
+      throw new Error(`Prices did not round-trip unchanged! expected ${testPricePerDay}/${testDeposit}, got ${fetchedItem.pricePerDay}/${fetchedItem.deposit}`);
+    }
+    console.log('✓ Prices round-trip unchanged without corruption');
+    console.log('✓ Item responses include currency: "INR"');
+
+    // Rental response includes currency: "INR"
+    const testRentalRes = await req(
+      '/rentals',
+      'POST',
+      {
+        itemId: createdItemData.id,
+        startDate: '2026-12-01',
+        endDate: '2026-12-03', // 3 days
+      },
+      borrowerToken,
+    );
+    if (testRentalRes.status !== 201) {
+      throw new Error(`Create test rental failed: ${JSON.stringify(testRentalRes.data)}`);
+    }
+    const testRentalData = testRentalRes.data.data;
+    if (testRentalData.currency !== 'INR') {
+      throw new Error(`Expected currency "INR" in rental response, got: ${testRentalData.currency}`);
+    }
+    if (testRentalData.item?.currency !== 'INR') {
+      throw new Error(`Expected currency "INR" in rental.item, got: ${testRentalData.item?.currency}`);
+    }
+    console.log('✓ Rental responses include currency: "INR"');
+
     console.log('\n======================================================');
     console.log('🎉 ALL BACKEND SMOKE TESTS PASSED 100%!');
     console.log('======================================================\n');

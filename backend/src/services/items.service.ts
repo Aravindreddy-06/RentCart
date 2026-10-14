@@ -6,6 +6,7 @@
 
 import prisma from '../prisma/client';
 import { Prisma } from '@prisma/client';
+import { CURRENCY } from '../config/constants';
 
 export interface ItemsQuery {
   search?: string;
@@ -152,6 +153,7 @@ export async function getItems(query: ItemsQuery) {
         images: r.images,
         pricePerDay: Number(r.pricePerDay),
         deposit: Number(r.deposit),
+        currency: CURRENCY,
         isAvailable: Boolean(r.isAvailable),
         // Round coordinates to ~3 decimals for non-owners to protect home location
         latitude:
@@ -223,6 +225,7 @@ export async function getItems(query: ItemsQuery) {
     const isOwner = query.currentUserId && item.ownerId === query.currentUserId;
     return {
       ...item,
+      currency: CURRENCY,
       latitude:
         item.latitude != null
           ? isOwner
@@ -304,6 +307,7 @@ export async function getItemById(id: string, currentUserId?: string) {
   const isOwner = currentUserId && item.ownerId === currentUserId;
   return {
     ...item,
+    currency: CURRENCY,
     averageRating,
     reviewCount,
     latitude:
@@ -329,11 +333,12 @@ export async function getMyItems(ownerId: string) {
       owner: { select: ownerSelect },
     },
   });
-  return attachRatingStats(items);
+  const mapped = items.map((i) => ({ ...i, currency: CURRENCY }));
+  return attachRatingStats(mapped);
 }
 
 export async function createItem(data: CreateItemInput) {
-  return prisma.item.create({
+  const item = await prisma.item.create({
     data: {
       ownerId: data.ownerId,
       title: data.title,
@@ -349,10 +354,11 @@ export async function createItem(data: CreateItemInput) {
       owner: { select: ownerSelect },
     },
   });
+  return { ...item, currency: CURRENCY };
 }
 
 export async function updateItem(id: string, data: UpdateItemInput) {
-  return prisma.item.update({
+  const item = await prisma.item.update({
     where: { id },
     data: {
       ...(data.title !== undefined && { title: data.title }),
@@ -368,6 +374,7 @@ export async function updateItem(id: string, data: UpdateItemInput) {
       owner: { select: ownerSelect },
     },
   });
+  return { ...item, currency: CURRENCY };
 }
 
 export async function deleteItem(id: string) {
@@ -375,13 +382,14 @@ export async function deleteItem(id: string) {
 }
 
 export async function toggleAvailability(id: string, isAvailable: boolean) {
-  return prisma.item.update({
+  const item = await prisma.item.update({
     where: { id },
     data: { isAvailable },
     include: {
       owner: { select: ownerSelect },
     },
   });
+  return { ...item, currency: CURRENCY };
 }
 
 export { getBookedDates } from './rentals.service';

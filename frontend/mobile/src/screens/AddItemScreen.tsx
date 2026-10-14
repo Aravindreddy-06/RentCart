@@ -49,6 +49,8 @@ function validate(title: string, description: string, pricePerDay: string): Form
   const rate = parseFloat(pricePerDay);
   if (!pricePerDay || isNaN(rate) || rate <= 0) {
     errors.pricePerDay = 'Enter a valid positive price';
+  } else if (rate > 1000000) {
+    errors.pricePerDay = 'Maximum amount is ₹10,00,000';
   }
   return errors;
 }
@@ -246,27 +248,33 @@ export default function AddItemScreen({ navigation }: Props) {
             {/* Pricing row */}
             <View style={styles.pricingRow}>
               <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                <Text style={styles.label}>Price/day ($) *</Text>
-                <TextInput
-                  style={[styles.input, errors.pricePerDay && styles.inputError]}
-                  placeholder="15.00"
-                  placeholderTextColor={colors.gray[400]}
-                  keyboardType="decimal-pad"
-                  value={pricePerDay}
-                  onChangeText={(t) => { setPricePerDay(t); setErrors((e) => ({ ...e, pricePerDay: undefined })); }}
-                />
+                <Text style={styles.label}>Price per day (₹) *</Text>
+                <View style={[styles.currencyInputRow, errors.pricePerDay && styles.inputError]}>
+                  <Text style={styles.currencyPrefix}>₹</Text>
+                  <TextInput
+                    style={styles.currencyTextInput}
+                    placeholder="150"
+                    placeholderTextColor={colors.gray[400]}
+                    keyboardType="numeric"
+                    value={pricePerDay}
+                    onChangeText={(t) => { setPricePerDay(t); setErrors((e) => ({ ...e, pricePerDay: undefined })); }}
+                  />
+                </View>
                 {errors.pricePerDay && <Text style={styles.errorText}>{errors.pricePerDay}</Text>}
               </View>
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>Deposit ($)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="0"
-                  placeholderTextColor={colors.gray[400]}
-                  keyboardType="decimal-pad"
-                  value={deposit}
-                  onChangeText={setDeposit}
-                />
+                <Text style={styles.label}>Deposit (₹)</Text>
+                <View style={styles.currencyInputRow}>
+                  <Text style={styles.currencyPrefix}>₹</Text>
+                  <TextInput
+                    style={styles.currencyTextInput}
+                    placeholder="500"
+                    placeholderTextColor={colors.gray[400]}
+                    keyboardType="numeric"
+                    value={deposit}
+                    onChangeText={setDeposit}
+                  />
+                </View>
               </View>
             </View>
           </View>
@@ -382,6 +390,27 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.gray[900],
     backgroundColor: '#fff',
+  },
+  currencyInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: colors.gray[300],
+    borderRadius: 10,
+    paddingHorizontal: 12,
+  },
+  currencyPrefix: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.gray[600],
+    marginRight: 6,
+  },
+  currencyTextInput: {
+    flex: 1,
+    paddingVertical: 11,
+    fontSize: 15,
+    color: colors.gray[900],
   },
   inputError: {
     borderColor: colors.error,

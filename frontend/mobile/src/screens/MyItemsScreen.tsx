@@ -19,6 +19,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/types';
 import { itemsService, Item } from '../services/items.service';
 import { colors } from '../utils/colors';
+import { formatINR } from '../utils/currency';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'MyItems'>;
 
@@ -92,7 +93,7 @@ export default function MyItemsScreen({ navigation }: Props) {
         </View>
 
         <Text style={styles.itemTitle}>{item.title}</Text>
-        <Text style={styles.price}>${item.pricePerDay} / day</Text>
+        <Text style={styles.price}>{formatINR(item.pricePerDay)} / day</Text>
 
         <View style={styles.actionRow}>
           <TouchableOpacity

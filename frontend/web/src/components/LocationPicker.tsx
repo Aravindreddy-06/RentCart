@@ -66,8 +66,8 @@ export function LocationPicker({
   const [locating, setLocating] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
 
-  const lat = typeof value.latitude === 'number' && !isNaN(value.latitude) ? value.latitude : 37.7749;
-  const lng = typeof value.longitude === 'number' && !isNaN(value.longitude) ? value.longitude : -122.4194;
+  const lat = typeof value.latitude === 'number' && !isNaN(value.latitude) ? value.latitude : 13.0827;
+  const lng = typeof value.longitude === 'number' && !isNaN(value.longitude) ? value.longitude : 80.2707;
 
   const eventHandlers = useMemo(
     () => ({
@@ -191,7 +191,7 @@ export function LocationPicker({
           type="text"
           value={value.address || ''}
           onChange={(e) => onChange({ ...value, address: e.target.value })}
-          placeholder="e.g. 742 Evergreen Terrace, Springfield (or street address)"
+          placeholder="e.g. Anna Nagar, Chennai (or street address)"
           className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white shadow-sm"
         />
         {error && <p className="text-xs text-red-600 mt-1">{error}</p>}

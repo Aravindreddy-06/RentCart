@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { StatusBadge } from '../components/StatusBadge';
 import { rentalsService, type Rental, type RentalStatus } from '../services/rentals.service';
+import { formatINR } from '../utils/currency';
+import { formatDateDMY } from '../utils/date';
 
 const TABS: { label: string; value: RentalStatus | '' }[] = [
   { label: 'All', value: '' },
@@ -186,7 +188,7 @@ export function MyRentalsPage() {
                       </h3>
 
                       <p className="text-xs sm:text-sm text-neutral-600 flex items-center gap-1.5">
-                        <span>📅 {rental.startDate} → {rental.endDate}</span>
+                        <span>📅 {formatDateDMY(rental.startDate)} → {formatDateDMY(rental.endDate)}</span>
                       </p>
 
                       <div className="flex items-center gap-3 text-xs text-neutral-500 pt-1">
@@ -195,11 +197,11 @@ export function MyRentalsPage() {
                         </span>
                         <span>•</span>
                         <span className="font-semibold text-primary-600">
-                          ${rental.totalPrice.toFixed(2)} total
+                          {formatINR(rental.totalPrice)} total
                         </span>
                         {rental.depositAmount > 0 && (
                           <span className="text-neutral-400">
-                            (+${rental.depositAmount.toFixed(2)} dep)
+                            (+{formatINR(rental.depositAmount)} dep)
                           </span>
                         )}
                       </div>

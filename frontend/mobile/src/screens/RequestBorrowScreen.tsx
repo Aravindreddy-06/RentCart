@@ -23,6 +23,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/types';
 import { rentalsService, BookedDateRange } from '../services/rentals.service';
 import { colors } from '../utils/colors';
+import { formatINR } from '../utils/currency';
+import { formatDateDMY } from '../utils/date';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'RequestBorrow'>;
 
@@ -102,7 +104,7 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
     }
     if (overlapConflict) {
       setError(
-        `Selected dates overlap with an existing booking (${overlapConflict.startDate} to ${overlapConflict.endDate}).`,
+        `Selected dates overlap with an existing booking (${formatDateDMY(overlapConflict.startDate)} to ${formatDateDMY(overlapConflict.endDate)}).`,
       );
       return;
     }
@@ -259,21 +261,21 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
 
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>
-                Daily Rate ({days} {days === 1 ? 'day' : 'days'} × ${pricePerDay})
+                Daily Rate ({days} {days === 1 ? 'day' : 'days'} × {formatINR(pricePerDay)})
               </Text>
-              <Text style={styles.summaryValue}>${totalPrice.toFixed(2)}</Text>
+              <Text style={styles.summaryValue}>{formatINR(totalPrice)}</Text>
             </View>
 
             {deposit > 0 && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Refundable Security Deposit</Text>
-                <Text style={styles.summaryValue}>${deposit.toFixed(2)}</Text>
+                <Text style={styles.summaryValue}>{formatINR(deposit)}</Text>
               </View>
             )}
 
             <View style={[styles.summaryRow, styles.summaryTotalRow]}>
               <Text style={styles.totalLabel}>Total Due on Handover</Text>
-              <Text style={styles.totalValue}>${(totalPrice + deposit).toFixed(2)}</Text>
+              <Text style={styles.totalValue}>{formatINR(totalPrice + deposit)}</Text>
             </View>
           </View>
 

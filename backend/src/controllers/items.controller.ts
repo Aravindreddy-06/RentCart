@@ -9,6 +9,8 @@ import { z } from 'zod';
 import * as itemsService from '../services/items.service';
 import { success, failure } from '../utils/response';
 
+import { MAX_PRICE_OR_DEPOSIT } from '../config/constants';
+
 // ─── Zod schemas ──────────────────────────────────────────────────────────────
 
 const CreateItemSchema = z.object({
@@ -16,8 +18,15 @@ const CreateItemSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.enum(['Tools', 'Electronics', 'Kitchen', 'Sports', 'Books', 'Other']),
   images: z.array(z.string().url()).default([]),
-  pricePerDay: z.number().positive('Price per day must be positive'),
-  deposit: z.number().min(0).optional(),
+  pricePerDay: z
+    .number()
+    .min(0, 'Price per day must be non-negative')
+    .max(MAX_PRICE_OR_DEPOSIT, 'Price per day must not exceed 10,00,000'),
+  deposit: z
+    .number()
+    .min(0, 'Deposit must be non-negative')
+    .max(MAX_PRICE_OR_DEPOSIT, 'Deposit must not exceed 10,00,000')
+    .optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
 });
@@ -27,8 +36,16 @@ const UpdateItemSchema = z.object({
   description: z.string().min(10).optional(),
   category: z.enum(['Tools', 'Electronics', 'Kitchen', 'Sports', 'Books', 'Other']).optional(),
   images: z.array(z.string().url()).optional(),
-  pricePerDay: z.number().positive().optional(),
-  deposit: z.number().min(0).optional(),
+  pricePerDay: z
+    .number()
+    .min(0, 'Price per day must be non-negative')
+    .max(MAX_PRICE_OR_DEPOSIT, 'Price per day must not exceed 10,00,000')
+    .optional(),
+  deposit: z
+    .number()
+    .min(0, 'Deposit must be non-negative')
+    .max(MAX_PRICE_OR_DEPOSIT, 'Deposit must not exceed 10,00,000')
+    .optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
 });

@@ -13,6 +13,11 @@ import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { usersService } from '../services/users.service';
+import {
+  cleanIndianPhoneInput,
+  isIndianPhoneNumber,
+  getIndianPhoneDigits,
+} from '../utils/phone';
 
 export function ProfilePage() {
   const { user, setUser, logout } = useAuth();
@@ -22,6 +27,8 @@ export function ProfilePage() {
   // Profile fields state
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [isIndianPhone, setIsIndianPhone] = useState(true);
+  const [phoneError, setPhoneError] = useState('');
   const [address, setAddress] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
@@ -54,7 +61,9 @@ export function ProfilePage() {
         const data = await usersService.getMe();
         if (mounted) {
           setName(data.name || '');
-          setPhone(data.phone || '');
+          const isInd = isIndianPhoneNumber(data.phone);
+          setIsIndianPhone(isInd);
+          setPhone(isInd ? getIndianPhoneDigits(data.phone) : (data.phone || ''));
           setAddress(data.address || '');
           setLatitude(data.latitude ?? null);
           setLongitude(data.longitude ?? null);
@@ -160,6 +169,7 @@ export function ProfilePage() {
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileError('');
+    setPhoneError('');
     setProfileSuccess('');
 
     if (!name.trim()) {
@@ -167,11 +177,24 @@ export function ProfilePage() {
       return;
     }
 
+    let finalPhone: string | null = null;
+    if (phone.trim()) {
+      if (isIndianPhone) {
+        if (!/^[6-9]\d{9}$/.test(phone.trim())) {
+          setPhoneError('Enter a valid 10-digit Indian mobile number');
+          return;
+        }
+        finalPhone = `+91${phone.trim()}`;
+      } else {
+        finalPhone = phone.trim();
+      }
+    }
+
     setIsSavingProfile(true);
     try {
       const updated = await usersService.updateMe({
         name: name.trim(),
-        phone: phone.trim() || null,
+        phone: finalPhone,
         address: address.trim() || null,
         latitude: latitude ?? null,
         longitude: longitude ?? null,
@@ -354,16 +377,53 @@ export function ProfilePage() {
                 <label className="block text-xs font-semibold text-neutral-700 uppercase tracking-wider mb-1.5">
                   Phone Number
                 </label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="form-field"
-                  placeholder="e.g. +1-555-0101"
-                />
-                <p className="text-[11px] text-neutral-400 mt-1">
-                  Shared only with approved rental partners.
-                </p>
+                {isIndianPhone ? (
+                  <div>
+                    <div className="relative flex rounded-xl border border-neutral-300 shadow-sm focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent overflow-hidden">
+                      <span className="inline-flex items-center px-3.5 bg-neutral-100 border-r border-neutral-300 text-neutral-600 font-semibold text-sm select-none">
+                        +91
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={10}
+                        value={phone}
+                        onChange={(e) => {
+                          setPhone(cleanIndianPhoneInput(e.target.value));
+                          setPhoneError('');
+                        }}
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          const text = e.clipboardData.getData('text');
+                          setPhone(cleanIndianPhoneInput(text));
+                          setPhoneError('');
+                        }}
+                        className="block w-full px-3.5 py-2 text-sm bg-white focus:outline-none placeholder:text-neutral-400 font-medium"
+                        placeholder="98765 43210"
+                      />
+                    </div>
+                    <p className="text-[11px] text-neutral-400 mt-1">
+                      Indian mobile number · Shared only with approved rental partners.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => {
+                        setPhone(e.target.value);
+                        setPhoneError('');
+                      }}
+                      className="form-field"
+                      placeholder="+44 7911 123456"
+                    />
+                    <p className="text-[11px] text-neutral-400 mt-1">
+                      International phone number · Shared only with approved rental partners.
+                    </p>
+                  </div>
+                )}
+                {phoneError && <p className="mt-1 text-xs text-red-600">{phoneError}</p>}
               </div>
 
               <div>
@@ -375,7 +435,7 @@ export function ProfilePage() {
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   className="form-field"
-                  placeholder="e.g. 12 Maple Street, Springfield"
+                  placeholder="e.g. Anna Nagar, Chennai"
                 />
               </div>
             </div>

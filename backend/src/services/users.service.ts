@@ -6,6 +6,7 @@
 
 import prisma from '../prisma/client';
 import bcrypt from 'bcryptjs';
+import { CURRENCY } from '../config/constants';
 
 export interface UpdateProfileInput {
   name?: string;
@@ -176,6 +177,7 @@ export async function getPublicProfile(userId: string) {
   // Round items coordinates to ~3 decimals to protect exact owner location
   let sanitizedItems: any[] = user.items.map((item) => ({
     ...item,
+    currency: CURRENCY,
     latitude: item.latitude != null ? Math.round(item.latitude * 1000) / 1000 : null,
     longitude: item.longitude != null ? Math.round(item.longitude * 1000) / 1000 : null,
   }));

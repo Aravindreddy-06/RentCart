@@ -28,6 +28,11 @@ import * as Location from 'expo-location';
 import { useAuth } from '../context/AuthContext';
 import { usersService } from '../services/users.service';
 import { colors } from '../utils/colors';
+import {
+  cleanIndianPhoneInput,
+  isIndianPhoneNumber,
+  getIndianPhoneDigits,
+} from '../utils/phone';
 
 export default function ProfileScreen() {
   const { user, logout, updateUser } = useAuth();
@@ -35,6 +40,7 @@ export default function ProfileScreen() {
   // Profile fields state
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [isIndianPhone, setIsIndianPhone] = useState(true);
   const [address, setAddress] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
@@ -60,7 +66,9 @@ export default function ProfileScreen() {
         const data = await usersService.getMe();
         if (mounted) {
           setName(data.name || '');
-          setPhone(data.phone || '');
+          const isInd = isIndianPhoneNumber(data.phone);
+          setIsIndianPhone(isInd);
+          setPhone(isInd ? getIndianPhoneDigits(data.phone) : (data.phone || ''));
           setAddress(data.address || '');
           setLatitude(data.latitude ?? null);
           setLongitude(data.longitude ?? null);
@@ -71,7 +79,9 @@ export default function ProfileScreen() {
         // Fall back to cached user in context
         if (mounted && user) {
           setName(user.name || '');
-          setPhone(user.phone || '');
+          const isInd = isIndianPhoneNumber(user.phone);
+          setIsIndianPhone(isInd);
+          setPhone(isInd ? getIndianPhoneDigits(user.phone) : (user.phone || ''));
           setAddress(user.address || '');
           setLatitude(user.latitude ?? null);
           setLongitude(user.longitude ?? null);
@@ -166,11 +176,24 @@ export default function ProfileScreen() {
       return;
     }
 
+    let finalPhone: string | null = null;
+    if (phone.trim()) {
+      if (isIndianPhone) {
+        if (!/^[6-9]\d{9}$/.test(phone.trim())) {
+          Alert.alert('Validation Error', 'Enter a valid 10-digit Indian mobile number');
+          return;
+        }
+        finalPhone = `+91${phone.trim()}`;
+      } else {
+        finalPhone = phone.trim();
+      }
+    }
+
     setIsSavingProfile(true);
     try {
       const updated = await usersService.updateMe({
         name: name.trim(),
-        phone: phone.trim() || null,
+        phone: finalPhone,
         address: address.trim() || null,
         latitude: latitude ?? null,
         longitude: longitude ?? null,
@@ -306,16 +329,35 @@ export default function ProfileScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Phone Number</Text>
-              <TextInput
-                style={styles.input}
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="+1-555-0101"
-                placeholderTextColor={colors.gray[400]}
-                keyboardType="phone-pad"
-              />
+              {isIndianPhone ? (
+                <View style={styles.phoneInputRow}>
+                  <View style={styles.phonePrefix}>
+                    <Text style={styles.phonePrefixText}>+91</Text>
+                  </View>
+                  <TextInput
+                    style={styles.phoneTextInput}
+                    value={phone}
+                    onChangeText={(text) => setPhone(cleanIndianPhoneInput(text))}
+                    placeholder="98765 43210"
+                    placeholderTextColor={colors.gray[400]}
+                    keyboardType="numeric"
+                    maxLength={10}
+                  />
+                </View>
+              ) : (
+                <TextInput
+                  style={styles.input}
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="+44 7911 123456"
+                  placeholderTextColor={colors.gray[400]}
+                  keyboardType="phone-pad"
+                />
+              )}
               <Text style={styles.helperText}>
-                Only visible to neighbours with APPROVED or ACTIVE rentals.
+                {isIndianPhone
+                  ? 'Indian mobile number · Only visible to neighbours with APPROVED or ACTIVE rentals.'
+                  : 'International phone number · Only visible to neighbours with APPROVED or ACTIVE rentals.'}
               </Text>
             </View>
 
@@ -325,7 +367,7 @@ export default function ProfileScreen() {
                 style={styles.input}
                 value={address}
                 onChangeText={setAddress}
-                placeholder="e.g. 12 Maple Street, Springfield"
+                placeholder="e.g. Anna Nagar, Chennai"
                 placeholderTextColor={colors.gray[400]}
               />
             </View>
@@ -606,6 +648,34 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: colors.gray[900],
+  },
+  phoneInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.gray[50],
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  phonePrefix: {
+    backgroundColor: colors.gray[100],
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRightWidth: 1,
+    borderRightColor: colors.gray[200],
+  },
+  phonePrefixText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.gray[700],
+  },
+  phoneTextInput: {
+    flex: 1,
+    paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 14,
     color: colors.gray[900],

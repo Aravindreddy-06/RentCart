@@ -22,6 +22,7 @@ import { AppStackParamList } from '../navigation/types';
 import { chatsService, type ChatConversation } from '../services/chats.service';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../utils/colors';
+import { formatDateDMY } from '../utils/date';
 
 function formatChatTime(isoString: string): string {
   const date = new Date(isoString);
@@ -36,10 +37,7 @@ function formatChatTime(isoString: string): string {
     });
   }
 
-  return date.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-  });
+  return formatDateDMY(date);
 }
 
 export default function MessagesScreen() {

@@ -41,6 +41,10 @@ import { MapView, openMapNavigation } from '../components/MapView';
 import LocationPicker, { type LocationValue } from '../components/LocationPicker';
 import { connectSocket } from '../services/socket';
 import { colors } from '../utils/colors';
+import * as Clipboard from 'expo-clipboard';
+import { formatINR } from '../utils/currency';
+import { formatDateDMY, formatTime12 } from '../utils/date';
+import { formatPhoneNumber } from '../utils/phone';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'RentalDetail'>;
 
@@ -61,12 +65,19 @@ function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): 
 function formatPickupWindow(from?: string | null, to?: string | null): string | null {
   if (!from && !to) return null;
   if (from && to) {
-    return `${new Date(from).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} - ${new Date(to).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    const fromDate = formatDateDMY(from);
+    const toDate = formatDateDMY(to);
+    const fromTime = formatTime12(from);
+    const toTime = formatTime12(to);
+    if (fromDate === toDate) {
+      return `${fromDate}, ${fromTime} – ${toTime}`;
+    }
+    return `${fromDate} ${fromTime} – ${toDate} ${toTime}`;
   }
   if (from) {
-    return `From ${new Date(from).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+    return `From ${formatDateDMY(from)} ${formatTime12(from)}`;
   }
-  return `Until ${new Date(to!).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+  return `Until ${formatDateDMY(to!)} ${formatTime12(to!)}`;
 }
 
 const TIMELINE_STEPS: { label: string; status: RentalStatus }[] = [
@@ -111,8 +122,8 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
   const [showPickupModal, setShowPickupModal] = useState(false);
   const [isEditingPickup, setIsEditingPickup] = useState(false);
   const [pickupFormLocation, setPickupFormLocation] = useState<LocationValue>({
-    latitude: 37.7749,
-    longitude: -122.4194,
+    latitude: 13.0827,
+    longitude: 80.2707,
     address: '',
   });
   const [pickupFormNote, setPickupFormNote] = useState('');
@@ -351,8 +362,8 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
     if (!rental) return;
     setIsEditingPickup(false);
     setPickupFormLocation({
-      latitude: rental.pickupLatitude ?? user?.latitude ?? 37.7749,
-      longitude: rental.pickupLongitude ?? user?.longitude ?? -122.4194,
+      latitude: rental.pickupLatitude ?? user?.latitude ?? 13.0827,
+      longitude: rental.pickupLongitude ?? user?.longitude ?? 80.2707,
       address: rental.pickupAddress || user?.address || '',
     });
     setPickupFormNote(rental.pickupNote || '');
@@ -366,8 +377,8 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
     if (!rental) return;
     setIsEditingPickup(true);
     setPickupFormLocation({
-      latitude: rental.pickupLatitude ?? user?.latitude ?? 37.7749,
-      longitude: rental.pickupLongitude ?? user?.longitude ?? -122.4194,
+      latitude: rental.pickupLatitude ?? user?.latitude ?? 13.0827,
+      longitude: rental.pickupLongitude ?? user?.longitude ?? 80.2707,
       address: rental.pickupAddress || user?.address || '',
     });
     setPickupFormNote(rental.pickupNote || '');
@@ -712,35 +723,35 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
           <View style={styles.dateBlock}>
             <View style={{ flex: 1 }}>
               <Text style={styles.dateLabel}>Start Date</Text>
-              <Text style={styles.dateValue}>📅 {rental.startDate}</Text>
+              <Text style={styles.dateValue}>📅 {formatDateDMY(rental.startDate)}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.dateLabel}>End Date</Text>
-              <Text style={styles.dateValue}>📅 {rental.endDate}</Text>
+              <Text style={styles.dateValue}>📅 {formatDateDMY(rental.endDate)}</Text>
             </View>
           </View>
 
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Daily Rate</Text>
-            <Text style={styles.priceVal}>${rental.item.pricePerDay} / day</Text>
+            <Text style={styles.priceVal}>{formatINR(rental.item.pricePerDay)} / day</Text>
           </View>
 
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Total Rental Cost</Text>
-            <Text style={styles.priceVal}>${rental.totalPrice.toFixed(2)}</Text>
+            <Text style={styles.priceVal}>{formatINR(rental.totalPrice)}</Text>
           </View>
 
           {rental.depositAmount > 0 && (
             <View style={styles.priceRow}>
               <Text style={styles.priceLabel}>Security Deposit</Text>
-              <Text style={styles.priceVal}>${rental.depositAmount.toFixed(2)}</Text>
+              <Text style={styles.priceVal}>{formatINR(rental.depositAmount)}</Text>
             </View>
           )}
 
           <View style={[styles.priceRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Total Due on Handover</Text>
             <Text style={styles.totalVal}>
-              ${(rental.totalPrice + rental.depositAmount).toFixed(2)}
+              {formatINR(rental.totalPrice + rental.depositAmount)}
             </Text>
           </View>
 
@@ -776,14 +787,30 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
 
           {/* Privacy-gated Phone Number */}
           {otherPerson?.phone ? (
-            <TouchableOpacity
-              style={styles.phoneBox}
-              onPress={() => Linking.openURL(`tel:${otherPerson.phone}`)}
-            >
-              <Text style={styles.phoneLabel}>📞 Contact Phone (Coordination):</Text>
-              <Text style={styles.phoneNumber}>{otherPerson.phone}</Text>
-              <Text style={styles.phoneTap}>Tap to Call</Text>
-            </TouchableOpacity>
+            <View style={styles.phoneBox}>
+              <View style={styles.phoneHeaderRow}>
+                <Text style={styles.phoneLabel}>📞 Contact Phone (Coordination):</Text>
+                <TouchableOpacity
+                  onPress={async () => {
+                    if (otherPerson.phone) {
+                      await Clipboard.setStringAsync(otherPerson.phone);
+                      Alert.alert('Copied!', 'Phone number copied to clipboard.');
+                    }
+                  }}
+                  style={styles.copyPhoneBtn}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.copyPhoneBtnText}>Copy</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                onPress={() => Linking.openURL(`tel:${otherPerson.phone}`)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.phoneNumber}>{formatPhoneNumber(otherPerson.phone)}</Text>
+                <Text style={styles.phoneTap}>Tap to Call</Text>
+              </TouchableOpacity>
+            </View>
           ) : (
             <View style={styles.hiddenPhoneBox}>
               <Text style={styles.hiddenPhoneText}>
@@ -1625,6 +1652,24 @@ const styles = StyleSheet.create({
     borderColor: '#86efac',
     borderRadius: 12,
     padding: 12,
+  },
+  phoneHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  copyPhoneBtn: {
+    backgroundColor: '#bbf7d0',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#86efac',
+  },
+  copyPhoneBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#166534',
   },
   phoneLabel: {
     fontSize: 11,

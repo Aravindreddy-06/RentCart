@@ -11,6 +11,9 @@ import { StatusBadge } from '../components/StatusBadge';
 import { LocationPicker, type LocationValue } from '../components/LocationPicker';
 import { useAuth } from '../context/AuthContext';
 import { rentalsService, type Rental, type RentalStatus } from '../services/rentals.service';
+import { formatINR } from '../utils/currency';
+import { formatDateDMY } from '../utils/date';
+import { formatPhoneNumber } from '../utils/phone';
 
 const TABS: { label: string; value: RentalStatus | '' }[] = [
   { label: 'All', value: '' },
@@ -39,8 +42,8 @@ export function RequestsPage() {
   // Approve pickup confirmation modal state
   const [approvingRental, setApprovingRental] = useState<Rental | null>(null);
   const [pickupLocation, setPickupLocation] = useState<LocationValue>({
-    latitude: 37.7749,
-    longitude: -122.4194,
+    latitude: 13.0827,
+    longitude: 80.2707,
     address: '',
   });
   const [pickupNote, setPickupNote] = useState('');
@@ -48,6 +51,7 @@ export function RequestsPage() {
   const [pickupTimeTo, setPickupTimeTo] = useState('');
   const [isApproving, setIsApproving] = useState(false);
   const [approveError, setApproveError] = useState('');
+  const [copiedPhoneId, setCopiedPhoneId] = useState<string | null>(null);
 
   // Processing indicator for other action buttons (approve/activate/return)
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
@@ -73,8 +77,8 @@ export function RequestsPage() {
   const openApproveModal = (rental: Rental) => {
     setApprovingRental(rental);
     setPickupLocation({
-      latitude: rental.pickupLatitude ?? user?.latitude ?? 37.7749,
-      longitude: rental.pickupLongitude ?? user?.longitude ?? -122.4194,
+      latitude: rental.pickupLatitude ?? user?.latitude ?? 13.0827,
+      longitude: rental.pickupLongitude ?? user?.longitude ?? 80.2707,
       address: rental.pickupAddress || user?.address || '',
     });
     setPickupNote(rental.pickupNote || '');
@@ -302,9 +306,23 @@ export function RequestsPage() {
                           <p className="text-xs text-neutral-500">📍 {rental.borrower.address}</p>
                         )}
                         {rental.borrower.phone && (
-                          <p className="text-xs text-primary-600 font-medium mt-0.5">
-                            📞 <a href={`tel:${rental.borrower.phone}`}>{rental.borrower.phone}</a>
-                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs text-primary-600 font-medium">
+                              📞 <a href={`tel:${rental.borrower.phone}`} className="hover:underline">{formatPhoneNumber(rental.borrower.phone)}</a>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(rental.borrower.phone || '');
+                                setCopiedPhoneId(rental.id);
+                                setTimeout(() => setCopiedPhoneId(null), 2000);
+                              }}
+                              className="text-[11px] px-1.5 py-0.5 rounded bg-neutral-200/80 hover:bg-neutral-300 text-neutral-700 transition-colors"
+                              title="Copy phone number"
+                            >
+                              {copiedPhoneId === rental.id ? 'Copied!' : 'Copy'}
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -312,15 +330,15 @@ export function RequestsPage() {
                     {/* Dates & Financials */}
                     <div className="space-y-1">
                       <p className="text-neutral-700">
-                        📅 <strong>{rental.startDate}</strong> → <strong>{rental.endDate}</strong>
+                        📅 <strong>{formatDateDMY(rental.startDate)}</strong> → <strong>{formatDateDMY(rental.endDate)}</strong>
                       </p>
                       <p className="text-neutral-600 text-xs">
                         Earnings:{' '}
                         <span className="font-bold text-emerald-600 text-sm">
-                          ${rental.totalPrice.toFixed(2)}
+                          {formatINR(rental.totalPrice)}
                         </span>
                         {rental.depositAmount > 0 && (
-                          <span> (Deposit held: ${rental.depositAmount.toFixed(2)})</span>
+                          <span> (Deposit held: {formatINR(rental.depositAmount)})</span>
                         )}
                       </p>
                       {rental.borrowerNote && (

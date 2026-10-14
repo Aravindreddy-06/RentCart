@@ -17,7 +17,9 @@ import {
   Alert,
   Modal,
   TextInput,
+  Linking,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -27,6 +29,9 @@ import { StatusBadge } from '../components/StatusBadge';
 import { useAuth } from '../context/AuthContext';
 import LocationPicker, { LocationValue } from '../components/LocationPicker';
 import { colors } from '../utils/colors';
+import { formatINR } from '../utils/currency';
+import { formatDateDMY } from '../utils/date';
+import { formatPhoneNumber } from '../utils/phone';
 
 const TABS: { label: string; value: RentalStatus | '' }[] = [
   { label: 'All', value: '' },
@@ -55,8 +60,8 @@ export default function RequestsScreen() {
   // Confirm Pickup Point Modal
   const [approvingRental, setApprovingRental] = useState<Rental | null>(null);
   const [pickupLocation, setPickupLocation] = useState<LocationValue>({
-    latitude: 37.7749,
-    longitude: -122.4194,
+    latitude: 13.0827,
+    longitude: 80.2707,
     address: '',
   });
   const [pickupNote, setPickupNote] = useState('');
@@ -90,8 +95,8 @@ export default function RequestsScreen() {
   const handleApproveClick = (rental: Rental) => {
     setApprovingRental(rental);
     setPickupLocation({
-      latitude: rental.pickupLatitude ?? user?.latitude ?? 37.7749,
-      longitude: rental.pickupLongitude ?? user?.longitude ?? -122.4194,
+      latitude: rental.pickupLatitude ?? user?.latitude ?? 13.0827,
+      longitude: rental.pickupLongitude ?? user?.longitude ?? 80.2707,
       address: rental.pickupAddress || user?.address || '',
     });
     setPickupNote(rental.pickupNote || '');
@@ -209,18 +214,38 @@ export default function RequestsScreen() {
             <View style={{ flex: 1, marginLeft: 8 }}>
               <Text style={styles.borrowerName}>{item.borrower.name}</Text>
               {item.borrower.phone ? (
-                <Text style={styles.phoneText}>📞 {item.borrower.phone}</Text>
+                <View style={styles.phoneActionRow}>
+                  <TouchableOpacity
+                    onPress={() => Linking.openURL(`tel:${item.borrower.phone}`)}
+                    style={styles.phoneLink}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.phoneText}>📞 {formatPhoneNumber(item.borrower.phone)}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={async () => {
+                      if (item.borrower.phone) {
+                        await Clipboard.setStringAsync(item.borrower.phone);
+                        Alert.alert('Copied!', 'Phone number copied to clipboard.');
+                      }
+                    }}
+                    style={styles.copyBtn}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.copyBtnText}>Copy</Text>
+                  </TouchableOpacity>
+                </View>
               ) : null}
             </View>
           </View>
 
           <Text style={styles.dates}>
-            📅 {item.startDate} → {item.endDate}
+            📅 {formatDateDMY(item.startDate)} → {formatDateDMY(item.endDate)}
           </Text>
 
           <Text style={styles.earnings}>
-            Earnings: <Text style={styles.earningsValue}>${item.totalPrice.toFixed(2)}</Text>
-            {item.depositAmount > 0 ? ` (+${item.depositAmount} dep)` : ''}
+            Earnings: <Text style={styles.earningsValue}>{formatINR(item.totalPrice)}</Text>
+            {item.depositAmount > 0 ? ` (+${formatINR(item.depositAmount)} dep)` : ''}
           </Text>
 
           {item.borrowerNote ? (
@@ -594,10 +619,32 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.gray[900],
   },
+  phoneActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 2,
+  },
+  phoneLink: {
+    paddingVertical: 2,
+  },
   phoneText: {
     fontSize: 11,
     color: colors.primary[600],
     fontWeight: '600',
+  },
+  copyBtn: {
+    backgroundColor: colors.gray[100],
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+  },
+  copyBtnText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.gray[700],
   },
   dates: {
     fontSize: 12,

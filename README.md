@@ -429,15 +429,46 @@ RentCart enforces email ownership verification on signup and provides a secure, 
 
 ---
 
+## 🇮🇳 India Localization
+
+RentCart is fully localized for India across backend, web, and mobile:
+
+### 1. Currency (INR / ₹)
+- **Shared Formatter**: `formatINR(amount, options?)` in `frontend/web/src/utils/currency.ts` and `frontend/mobile/src/utils/currency.ts`.
+- **Indian Digit Grouping**: Uses `Intl.NumberFormat('en-IN')` with fallback to Indian numbering system (`12,34,567`) and `₹` symbol (compatible with Hermes engine on Android).
+- **Decimals**: Shows paise only when an amount has a non-zero decimal part (e.g. `₹150`, `₹1,250.50`).
+- **Validation**: Enforces non-negative prices and deposits with a maximum cap of ₹10,00,000 (`MAX_PRICE_OR_DEPOSIT = 1_000_000`).
+- **API Responses**: Always include `currency: "INR"` alongside item and rental payloads without altering stored raw database values.
+
+### 2. Indian Phone Numbers
+- **Normalization**: Backend uses `libphonenumber-js` with default region `IN`. Accepts `9876543210`, `09876543210`, `+91 98765 43210`, `91-9876543210` and normalizes to E.164 `+919876543210`.
+- **Validation**: Rejects invalid Indian numbers with 400: *"Enter a valid 10-digit Indian mobile number"* (`^[6-9]\d{9}$`). Valid international numbers starting with `+` are preserved.
+- **Form Inputs**: Fixed `+91` prefix badge with 10-digit numeric input, `98765 43210` placeholder, paste sanitization (strips spaces, dashes, leading 0 or 91), and *"Indian mobile number"* helper text.
+- **Display**: Formatted as `+91 98765 43210` with tap-to-call link (`tel:`) and a one-click Copy button.
+- **Privacy Rules**: Phone numbers are strictly visible only when a rental is `APPROVED` or `ACTIVE`, and are never displayed on public profile cards.
+
+### 3. Data Migration Script
+Safely normalizes all existing phone numbers in PostgreSQL to E.164 format while leaving unparseable rows intact:
+```bash
+cd backend && npm run migrate:phones
+```
+
+### 4. Dates & Times
+- **Date Format**: `dd/MM/yyyy` format across listings, reviews, rental terms, and conflict warnings (`src/utils/date.ts`).
+- **Time Format**: 12-hour format with AM/PM according to local device or browser timezone.
+- **Placeholders**: Default Indian region placeholders (e.g., *"Anna Nagar, Chennai"*).
+
+---
+
 ## 🔒 Demo Accounts (from Seed Data)
 
 After running `npm run seed` in backend:
 
-| Role | Email | Password |
-|---|---|---|
-| **User 1 (Alice)** | `alice@example.com` | `password123` |
-| **User 2 (Bob)** | `bob@example.com` | `password123` |
-| **User 3 (Carol)** | `carol@example.com` | `password123` |
+| Role | Email | Password | Phone (E.164) | Display Phone |
+|---|---|---|---|---|
+| **User 1 (Alice)** | `alice@example.com` | `password123` | `+919876543210` | `+91 98765 43210` |
+| **User 2 (Bob)** | `bob@example.com` | `password123` | `+919876543211` | `+91 98765 43211` |
+| **User 3 (Carol)** | `carol@example.com` | `password123` | `+919876543212` | `+91 98765 43212` |
 
 ---
 

@@ -28,6 +28,8 @@ import { reviewsService, Review } from '../services/reviews.service';
 import { StarRating } from '../components/StarRating';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../utils/colors';
+import { formatINR } from '../utils/currency';
+import { formatDateDMY } from '../utils/date';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'ItemDetail'>;
 
@@ -286,10 +288,10 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
 
           {/* Pricing */}
           <View style={styles.priceRow}>
-            <Text style={styles.price}>${item.pricePerDay}</Text>
+            <Text style={styles.price}>{formatINR(item.pricePerDay)}</Text>
             <Text style={styles.priceUnit}> / day</Text>
             {item.deposit > 0 && (
-              <Text style={styles.deposit}> + ${item.deposit} deposit</Text>
+              <Text style={styles.deposit}> + {formatINR(item.deposit)} deposit</Text>
             )}
           </View>
 
@@ -367,7 +369,7 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
                       <View>
                         <Text style={styles.reviewerName}>{rev.author.name}</Text>
                         <Text style={styles.reviewDate}>
-                          {new Date(rev.createdAt).toLocaleDateString()}
+                          {formatDateDMY(rev.createdAt)}
                         </Text>
                       </View>
                     </TouchableOpacity>

@@ -8,6 +8,7 @@ import prisma from '../prisma/client';
 import { Prisma, RentalStatus, NotificationType } from '@prisma/client';
 import { createNotification } from './notifications.service';
 import { stopTrackingOnStatusChange } from './tracking.service';
+import { CURRENCY } from '../config/constants';
 
 export class ValidationError extends Error {
   statusCode = 400;
@@ -107,6 +108,7 @@ export function sanitizeRentalForUser(rental: any, currentUserId: string) {
 
   const sanitized = {
     ...rental,
+    currency: CURRENCY,
     startDate: rental.startDate instanceof Date ? formatDateOnly(rental.startDate) : rental.startDate,
     endDate: rental.endDate instanceof Date ? formatDateOnly(rental.endDate) : rental.endDate,
     pickupLatitude: canSeePickup ? (rental.pickupLatitude ?? null) : null,
@@ -135,16 +137,19 @@ export function sanitizeRentalForUser(rental: any, currentUserId: string) {
     };
   }
 
-  if (sanitized.item?.owner) {
+  if (sanitized.item) {
     sanitized.item = {
       ...sanitized.item,
-      owner: {
-        id: sanitized.item.owner.id,
-        name: sanitized.item.owner.name,
-        avatarUrl: sanitized.item.owner.avatarUrl,
-        address: sanitized.item.owner.address,
-        phone: isBorrower && canSeePhone ? sanitized.item.owner.phone : null,
-      },
+      currency: CURRENCY,
+      ...(sanitized.item.owner && {
+        owner: {
+          id: sanitized.item.owner.id,
+          name: sanitized.item.owner.name,
+          avatarUrl: sanitized.item.owner.avatarUrl,
+          address: sanitized.item.owner.address,
+          phone: isBorrower && canSeePhone ? sanitized.item.owner.phone : null,
+        },
+      }),
     };
   }
 

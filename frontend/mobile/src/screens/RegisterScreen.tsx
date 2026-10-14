@@ -21,6 +21,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../utils/colors';
+import { cleanIndianPhoneInput } from '../utils/phone';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
@@ -49,16 +50,22 @@ export default function RegisterScreen({ navigation }: Props) {
       return;
     }
 
+    if (phone.trim() && !/^[6-9]\d{9}$/.test(phone.trim())) {
+      setError('Enter a valid 10-digit Indian mobile number');
+      return;
+    }
+
     setError(null);
     setLoading(true);
 
     try {
       const normalizedEmail = email.trim().toLowerCase();
+      const normalizedPhone = phone.trim() ? `+91${phone.trim()}` : undefined;
       await register({
         name: name.trim(),
         email: normalizedEmail,
         password,
-        phone: phone.trim() || undefined,
+        phone: normalizedPhone,
         address: address.trim() || undefined,
       });
 
@@ -160,21 +167,28 @@ export default function RegisterScreen({ navigation }: Props) {
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Phone Number (Optional)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="+1 555-0192"
-                placeholderTextColor={colors.gray[400]}
-                keyboardType="phone-pad"
-                value={phone}
-                onChangeText={setPhone}
-              />
+              <View style={styles.phoneInputRow}>
+                <View style={styles.phonePrefix}>
+                  <Text style={styles.phonePrefixText}>+91</Text>
+                </View>
+                <TextInput
+                  style={styles.phoneTextInput}
+                  placeholder="98765 43210"
+                  placeholderTextColor={colors.gray[400]}
+                  keyboardType="numeric"
+                  maxLength={10}
+                  value={phone}
+                  onChangeText={(text) => setPhone(cleanIndianPhoneInput(text))}
+                />
+              </View>
+              <Text style={styles.helperText}>Indian mobile number</Text>
             </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Neighbourhood / Address (Optional)</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Oakwood Heights, Apt 4B"
+                placeholder="e.g. Anna Nagar, Chennai"
                 placeholderTextColor={colors.gray[400]}
                 value={address}
                 onChangeText={setAddress}
@@ -270,6 +284,39 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 15,
     color: colors.gray[900],
+  },
+  phoneInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: colors.gray[300],
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  phonePrefix: {
+    backgroundColor: colors.gray[100],
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRightWidth: 1,
+    borderRightColor: colors.gray[300],
+  },
+  phonePrefixText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.gray[700],
+  },
+  phoneTextInput: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: colors.gray[900],
+  },
+  helperText: {
+    fontSize: 11,
+    color: colors.gray[400],
+    marginTop: 4,
   },
   hintsBox: {
     marginTop: 8,

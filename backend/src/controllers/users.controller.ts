@@ -21,6 +21,7 @@ const UpdateProfileSchema = z.object({
 });
 
 import { passwordSchema } from '../utils/validators';
+import { normalizePhone, PhoneValidationError } from '../utils/phone';
 
 const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
@@ -54,9 +55,17 @@ export async function updateMe(req: Request, res: Response, next: NextFunction) 
       return failure(res, 'Validation failed', 422, parsed.error.flatten().fieldErrors);
     }
 
-    const updated = await usersService.updateUserProfile(userId, parsed.data);
+    const data = { ...parsed.data };
+    if (data.phone !== undefined) {
+      data.phone = normalizePhone(data.phone);
+    }
+
+    const updated = await usersService.updateUserProfile(userId, data);
     return success(res, updated);
   } catch (err) {
+    if (err instanceof PhoneValidationError) {
+      return failure(res, err.message, 400);
+    }
     next(err);
   }
 }

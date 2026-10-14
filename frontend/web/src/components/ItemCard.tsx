@@ -7,6 +7,7 @@
 import { useNavigate } from 'react-router-dom';
 import type { Item } from '../services/items.service';
 import { StarRating } from './StarRating';
+import { formatINR } from '../utils/currency';
 
 interface ItemCardProps {
   item: Item;
@@ -95,7 +96,7 @@ export function ItemCard({ item }: ItemCardProps) {
         <div className="flex items-center justify-between">
           {/* Price */}
           <div>
-            <span className="text-lg font-bold text-primary-600">${item.pricePerDay}</span>
+            <span className="text-lg font-bold text-primary-600">{formatINR(item.pricePerDay)}</span>
             <span className="text-neutral-400 text-xs font-medium"> / day</span>
           </div>
 

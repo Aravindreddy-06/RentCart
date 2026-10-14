@@ -23,6 +23,8 @@ import { AppStackParamList } from '../navigation/types';
 import { rentalsService, Rental, RentalStatus } from '../services/rentals.service';
 import { StatusBadge } from '../components/StatusBadge';
 import { colors } from '../utils/colors';
+import { formatINR } from '../utils/currency';
+import { formatDateDMY } from '../utils/date';
 
 const TABS: { label: string; value: RentalStatus | '' }[] = [
   { label: 'All', value: '' },
@@ -109,12 +111,12 @@ export default function MyRentalsScreen() {
           </Text>
 
           <Text style={styles.dateText}>
-            📅 {item.startDate} → {item.endDate}
+            📅 {formatDateDMY(item.startDate)} → {formatDateDMY(item.endDate)}
           </Text>
 
           <View style={styles.footerRow}>
             <Text style={styles.priceText}>
-              ${item.totalPrice.toFixed(2)} total
+              {formatINR(item.totalPrice)} total
             </Text>
 
             <View style={styles.actions}>

@@ -37,6 +37,7 @@ import {
 import { connectSocket, disconnectSocket, getSocket } from '../services/socket';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../utils/colors';
+import { formatDateDMY } from '../utils/date';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Chat'>;
 
@@ -61,11 +62,7 @@ function formatDateSeparator(isoString: string): string {
   if (isToday) return 'Today';
   if (isYesterday) return 'Yesterday';
 
-  return date.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
-  });
+  return formatDateDMY(date);
 }
 
 export default function ChatScreen({ route, navigation }: Props) {

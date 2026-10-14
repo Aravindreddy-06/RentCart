@@ -10,6 +10,7 @@ import * as authService from '../services/auth.service';
 import { OtpError } from '../services/otp.service';
 import { success, failure } from '../utils/response';
 import { passwordSchema, emailSchema, otpSchema } from '../utils/validators';
+import { normalizePhone, PhoneValidationError } from '../utils/phone';
 
 // ─── Zod schemas ──────────────────────────────────────────────────────────────
 
@@ -58,9 +59,16 @@ export async function register(req: Request, res: Response, next: NextFunction) 
       return failure(res, 'Validation failed', 422, parsed.error.flatten().fieldErrors);
     }
 
-    const result = await authService.registerUser(parsed.data);
+    const normalizedPhone = parsed.data.phone ? normalizePhone(parsed.data.phone) : undefined;
+    const result = await authService.registerUser({
+      ...parsed.data,
+      phone: normalizedPhone ?? undefined,
+    });
     return success(res, result, 201);
   } catch (err: unknown) {
+    if (err instanceof PhoneValidationError) {
+      return failure(res, err.message, 400);
+    }
     if (err instanceof Error && err.message === 'EMAIL_TAKEN') {
       return failure(res, 'An account with that email already exists', 409);
     }

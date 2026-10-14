@@ -18,6 +18,7 @@ import {
   type ChatConversation,
   type ChatMessage,
 } from '../services/chats.service';
+import { formatDateDMY } from '../utils/date';
 import { connectSocket, getSocket } from '../services/socket';
 
 interface PendingMessage {
@@ -40,11 +41,7 @@ function formatDateSeparator(isoString: string): string {
 
   if (isToday) return 'Today';
   if (isYesterday) return 'Yesterday';
-  return date.toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
+  return formatDateDMY(date);
 }
 
 function formatMessageTime(isoString: string): string {
@@ -67,10 +64,7 @@ function formatChatListTime(isoString: string): string {
       hour12: true,
     });
   }
-  return date.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-  });
+  return formatDateDMY(date);
 }
 
 export function ChatsPage() {

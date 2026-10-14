@@ -31,6 +31,7 @@ import {
   NotificationType,
 } from '../services/notifications.service';
 import { colors, spacing, radius } from '../utils/colors';
+import { formatDateDMY } from '../utils/date';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Notifications'>;
 
@@ -46,7 +47,7 @@ function formatTimeAgo(isoString: string): string {
   if (diffInHours < 24) return `${diffInHours}h ago`;
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) return `${diffInDays}d ago`;
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return formatDateDMY(date);
 }
 
 function getBadgeConfig(type: NotificationType): { icon: string; bg: string; border: string; text: string } {

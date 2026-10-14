@@ -16,9 +16,8 @@ import { RequestBorrowModal } from '../components/RequestBorrowModal';
 
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop';
 
-function formatPrice(n: number) {
-  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-}
+import { formatINR } from '../utils/currency';
+import { formatDateDMY } from '../utils/date';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -267,11 +266,11 @@ export function ItemDetailPage() {
 
           <div className="flex items-end gap-3 mb-4">
             <div>
-              <span className="text-3xl font-extrabold text-primary-600">{formatPrice(item.pricePerDay)}</span>
+              <span className="text-3xl font-extrabold text-primary-600">{formatINR(item.pricePerDay)}</span>
               <span className="text-neutral-400 text-sm font-medium ml-1">/ day</span>
             </div>
             {item.deposit > 0 && (
-              <span className="text-neutral-500 text-sm pb-1">+ {formatPrice(item.deposit)} deposit</span>
+              <span className="text-neutral-500 text-sm pb-1">+ {formatINR(item.deposit)} deposit</span>
             )}
           </div>
 
@@ -325,11 +324,7 @@ export function ItemDetailPage() {
                       <div>
                         <p className="text-xs font-bold text-neutral-900">{rev.author.name}</p>
                         <p className="text-[11px] text-neutral-400">
-                          {new Date(rev.createdAt).toLocaleDateString(undefined, {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
+                          {formatDateDMY(rev.createdAt)}
                         </p>
                       </div>
                     </div>

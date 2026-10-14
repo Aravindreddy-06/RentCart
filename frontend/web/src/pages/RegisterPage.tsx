@@ -10,13 +10,19 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../context/AuthContext';
+import { cleanIndianPhoneInput } from '../utils/phone';
 
 // ─── Validation schema ────────────────────────────────────────────────────────
 const registerSchema = z
   .object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
     email: z.string().email('Please enter a valid email'),
-    phone: z.string().optional(),
+    phone: z
+      .string()
+      .optional()
+      .refine((val) => !val || /^[6-9]\d{9}$/.test(val), {
+        message: 'Enter a valid 10-digit Indian mobile number',
+      }),
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')
@@ -42,6 +48,7 @@ export function RegisterPage() {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({ resolver: zodResolver(registerSchema) });
 
@@ -53,10 +60,11 @@ export function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     setApiError('');
     try {
+      const normalizedPhone = data.phone?.trim() ? `+91${data.phone.trim()}` : undefined;
       await registerUser({
         name: data.name,
         email: data.email,
-        phone: data.phone || undefined,
+        phone: normalizedPhone,
         password: data.password,
       });
       // Redirect to OTP verification with email query param
@@ -133,14 +141,34 @@ export function RegisterPage() {
                 Phone{' '}
                 <span className="text-neutral-400 font-normal">(optional)</span>
               </label>
-              <input
-                id="reg-phone"
-                type="tel"
-                autoComplete="tel"
-                placeholder="+1-555-0100"
-                className="form-field"
-                {...register('phone')}
-              />
+              <div className="relative flex rounded-xl border border-neutral-300 shadow-sm focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent overflow-hidden">
+                <span className="inline-flex items-center px-3.5 bg-neutral-100 border-r border-neutral-300 text-neutral-600 font-semibold text-sm select-none">
+                  +91
+                </span>
+                <input
+                  id="reg-phone"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={10}
+                  autoComplete="tel-national"
+                  placeholder="98765 43210"
+                  className="block w-full px-3.5 py-2.5 text-sm bg-white focus:outline-none placeholder:text-neutral-400 font-medium"
+                  {...register('phone', {
+                    onChange: (e) => {
+                      const cleaned = cleanIndianPhoneInput(e.target.value);
+                      setValue('phone', cleaned, { shouldValidate: true });
+                    },
+                  })}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const text = e.clipboardData.getData('text');
+                    const cleaned = cleanIndianPhoneInput(text);
+                    setValue('phone', cleaned, { shouldValidate: true });
+                  }}
+                />
+              </div>
+              <p className="mt-1 text-xs text-neutral-400">Indian mobile number</p>
+              {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone.message}</p>}
             </div>
 
             {/* Password */}

@@ -52,8 +52,8 @@ export function LocationPicker({
   const [showSettingsBtn, setShowSettingsBtn] = useState(false);
   const [mapError, setMapError] = useState(false);
 
-  const lat = typeof value.latitude === 'number' && !isNaN(value.latitude) ? value.latitude : 37.7749;
-  const lng = typeof value.longitude === 'number' && !isNaN(value.longitude) ? value.longitude : -122.4194;
+  const lat = typeof value.latitude === 'number' && !isNaN(value.latitude) ? value.latitude : 13.0827;
+  const lng = typeof value.longitude === 'number' && !isNaN(value.longitude) ? value.longitude : 80.2707;
 
   const handleUseCurrentLocation = async () => {
     setLocating(true);
@@ -193,7 +193,7 @@ export function LocationPicker({
           style={[styles.input, error ? styles.inputError : null]}
           value={value.address}
           onChangeText={(text) => onChange({ ...value, address: text })}
-          placeholder="e.g. 123 Main St, Apt 4B or landmark"
+          placeholder="e.g. Anna Nagar, Chennai (or landmark)"
           placeholderTextColor={colors.neutral[400]}
         />
       </View>

@@ -35,6 +35,7 @@ import { itemsService, Item } from '../services/items.service';
 import { notificationsService } from '../services/notifications.service';
 import { StarRating } from '../components/StarRating';
 import { colors } from '../utils/colors';
+import { formatINR } from '../utils/currency';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
 
@@ -271,7 +272,7 @@ export default function HomeScreen({ navigation }: Props) {
 
           <View style={styles.cardFooter}>
             <Text style={styles.priceText}>
-              ${price} <Text style={styles.priceUnit}>/ day</Text>
+              {formatINR(price)} <Text style={styles.priceUnit}>/ day</Text>
             </Text>
             {item.owner && (
               <Text style={styles.ownerText} numberOfLines={1}>

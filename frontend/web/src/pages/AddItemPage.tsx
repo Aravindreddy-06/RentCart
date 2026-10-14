@@ -19,8 +19,8 @@ const schema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.enum(CATEGORIES, { required_error: 'Please select a category' }),
-  pricePerDay: z.coerce.number().positive('Must be a positive number'),
-  deposit: z.coerce.number().min(0, 'Cannot be negative').optional(),
+  pricePerDay: z.coerce.number().positive('Must be a positive number').max(1_000_000, 'Maximum amount is ₹10,00,000'),
+  deposit: z.coerce.number().min(0, 'Cannot be negative').max(1_000_000, 'Maximum amount is ₹10,00,000').optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -243,34 +243,46 @@ export function AddItemPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1" htmlFor="pricePerDay">
-                    Price per day ($) *
+                    Price per day (₹) *
                   </label>
-                  <input
-                    id="pricePerDay"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="15.00"
-                    className={`form-field ${errors.pricePerDay ? 'form-field-error' : ''}`}
-                    {...register('pricePerDay')}
-                  />
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-neutral-500 font-medium select-none pointer-events-none">
+                      ₹
+                    </span>
+                    <input
+                      id="pricePerDay"
+                      type="number"
+                      min="0"
+                      max="1000000"
+                      step="1"
+                      placeholder="150"
+                      className={`form-field pl-7 ${errors.pricePerDay ? 'form-field-error' : ''}`}
+                      {...register('pricePerDay')}
+                    />
+                  </div>
                   {errors.pricePerDay && (
                     <p className="text-red-500 text-xs mt-1">{errors.pricePerDay.message}</p>
                   )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1" htmlFor="deposit">
-                    Deposit ($)
+                    Deposit (₹)
                   </label>
-                  <input
-                    id="deposit"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0"
-                    className={`form-field ${errors.deposit ? 'form-field-error' : ''}`}
-                    {...register('deposit')}
-                  />
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-neutral-500 font-medium select-none pointer-events-none">
+                      ₹
+                    </span>
+                    <input
+                      id="deposit"
+                      type="number"
+                      min="0"
+                      max="1000000"
+                      step="1"
+                      placeholder="500"
+                      className={`form-field pl-7 ${errors.deposit ? 'form-field-error' : ''}`}
+                      {...register('deposit')}
+                    />
+                  </div>
                   {errors.deposit && (
                     <p className="text-red-500 text-xs mt-1">{errors.deposit.message}</p>
                   )}

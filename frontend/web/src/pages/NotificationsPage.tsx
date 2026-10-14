@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { notificationsService } from '../services/notifications.service';
 import type { NotificationItem, NotificationType } from '../services/notifications.service';
+import { formatDateDMY } from '../utils/date';
 
 function formatTimeAgo(isoString: string): string {
   const date = new Date(isoString);
@@ -22,7 +23,7 @@ function formatTimeAgo(isoString: string): string {
   if (diffInHours < 24) return `${diffInHours}h ago`;
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) return `${diffInDays}d ago`;
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return formatDateDMY(date);
 }
 
 function getBadge(type: NotificationType) {

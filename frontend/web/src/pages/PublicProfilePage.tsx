@@ -12,6 +12,7 @@ import { ItemCard } from '../components/ItemCard';
 import { StarRating } from '../components/StarRating';
 import { usersService, type PublicUserProfile } from '../services/users.service';
 import { reviewsService, type Review } from '../services/reviews.service';
+import { formatDateDMY } from '../utils/date';
 
 export function PublicProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -228,11 +229,7 @@ export function PublicProfilePage() {
                           <div>
                             <p className="text-sm font-bold text-neutral-900">{rev.author.name}</p>
                             <p className="text-[11px] text-neutral-400">
-                              {new Date(rev.createdAt).toLocaleDateString(undefined, {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
+                              {formatDateDMY(rev.createdAt)}
                             </p>
                           </div>
                         </div>

@@ -25,6 +25,8 @@ import { reviewsService, type Review } from '../services/reviews.service';
 import { StarRating } from '../components/StarRating';
 import { type Item } from '../services/items.service';
 import { colors } from '../utils/colors';
+import { formatINR } from '../utils/currency';
+import { formatDateDMY } from '../utils/date';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'PublicProfile'>;
 
@@ -142,7 +144,7 @@ export default function PublicProfileScreen({ route, navigation }: Props) {
             {item.title}
           </Text>
           <Text style={styles.itemPrice}>
-            ${item.pricePerDay} <Text style={styles.itemPriceUnit}>/ day</Text>
+            {formatINR(item.pricePerDay)} <Text style={styles.itemPriceUnit}>/ day</Text>
           </Text>
         </View>
       </TouchableOpacity>
@@ -259,7 +261,7 @@ export default function PublicProfileScreen({ route, navigation }: Props) {
                     <View>
                       <Text style={styles.reviewerName}>{rev.author.name}</Text>
                       <Text style={styles.reviewDate}>
-                        {new Date(rev.createdAt).toLocaleDateString()}
+                        {formatDateDMY(rev.createdAt)}
                       </Text>
                     </View>
                   </View>
