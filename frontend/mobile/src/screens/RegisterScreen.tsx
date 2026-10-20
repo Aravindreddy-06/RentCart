@@ -1,7 +1,12 @@
 /**
  * src/screens/RegisterScreen.tsx (mobile)
- * Registration screen with password rules (min 8 chars, at least 1 letter, 1 number),
- * password requirement indicators, and navigation to VerifyEmail.
+ * Polished Registration screen:
+ * - Hero icon badge with subtle glow
+ * - Soft tinted background with dark mode support
+ * - Input icons and teal focused state
+ * - Password checklist with checkmark animations/indicators
+ * - Fixed +91 Indian phone number input
+ * - Gradient primary button
  */
 
 import React, { useState } from 'react';
@@ -17,21 +22,28 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
+import { colors, gradients, shadows } from '../utils/colors';
 import { cleanIndianPhoneInput } from '../utils/phone';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 export default function RegisterScreen({ navigation }: Props) {
   const { register } = useAuth();
+  const { isDark, themeColors } = useTheme();
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,7 +81,6 @@ export default function RegisterScreen({ navigation }: Props) {
         address: address.trim() || undefined,
       });
 
-      // Navigate to VerifyEmail screen
       navigation.navigate('VerifyEmail', { email: normalizedEmail });
     } catch (err: any) {
       setError(
@@ -81,135 +92,334 @@ export default function RegisterScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      edges={['top', 'left', 'right', 'bottom']}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header */}
           <View style={styles.headerContainer}>
-            <Text style={styles.title}>Join RentCart</Text>
-            <Text style={styles.subtitle}>
-              Connect with your local community to share and borrow items
+            <View
+              style={[
+                styles.logoBadge,
+                {
+                  backgroundColor: isDark ? 'rgba(15, 157, 138, 0.15)' : colors.primary[50],
+                  borderColor: isDark ? 'rgba(15, 157, 138, 0.3)' : colors.primary[200],
+                },
+              ]}
+            >
+              <Ionicons name="person-add" size={32} color={colors.primary[500]} />
+            </View>
+            <Text style={[styles.title, { color: themeColors.text }]}>Join RentCart</Text>
+            <Text style={[styles.subtitle, { color: themeColors.textMuted }]}>
+              Borrow what you need · Lend what you don't
             </Text>
           </View>
 
-          <View style={styles.formCard}>
+          {/* Form Card */}
+          <View
+            style={[
+              styles.formCard,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
             {error && (
               <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle" size={18} color={colors.danger} />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
 
+            {/* Name */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Jane Doe"
-                placeholderTextColor={colors.gray[400]}
-                value={name}
-                onChangeText={setName}
-              />
+              <Text style={[styles.label, { color: themeColors.text }]}>Full Name *</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: isDark ? colors.dark.background : '#F8FAFC',
+                    borderColor:
+                      focusedField === 'name' ? colors.primary[500] : themeColors.border,
+                  },
+                  focusedField === 'name' && styles.focusedGlow,
+                ]}
+              >
+                <Ionicons
+                  name="person-outline"
+                  size={18}
+                  color={focusedField === 'name' ? colors.primary[500] : themeColors.textMuted}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={[styles.input, { color: themeColors.text }]}
+                  placeholder="e.g. Priya Sharma"
+                  placeholderTextColor={themeColors.textMuted}
+                  value={name}
+                  onChangeText={(val) => {
+                    setName(val);
+                    setError(null);
+                  }}
+                  onFocus={() => setFocusedField('name')}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </View>
             </View>
 
+            {/* Email */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="you@example.com"
-                placeholderTextColor={colors.gray[400]}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-              />
+              <Text style={[styles.label, { color: themeColors.text }]}>Email Address *</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: isDark ? colors.dark.background : '#F8FAFC',
+                    borderColor:
+                      focusedField === 'email' ? colors.primary[500] : themeColors.border,
+                  },
+                  focusedField === 'email' && styles.focusedGlow,
+                ]}
+              >
+                <Ionicons
+                  name="mail-outline"
+                  size={18}
+                  color={focusedField === 'email' ? colors.primary[500] : themeColors.textMuted}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={[styles.input, { color: themeColors.text }]}
+                  placeholder="you@example.com"
+                  placeholderTextColor={themeColors.textMuted}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={(val) => {
+                    setEmail(val);
+                    setError(null);
+                  }}
+                  onFocus={() => setFocusedField('email')}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </View>
             </View>
 
+            {/* Password */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Create a strong password"
-                placeholderTextColor={colors.gray[400]}
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
+              <Text style={[styles.label, { color: themeColors.text }]}>Password *</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: isDark ? colors.dark.background : '#F8FAFC',
+                    borderColor:
+                      focusedField === 'password' ? colors.primary[500] : themeColors.border,
+                  },
+                  focusedField === 'password' && styles.focusedGlow,
+                ]}
+              >
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={18}
+                  color={focusedField === 'password' ? colors.primary[500] : themeColors.textMuted}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={[styles.input, { color: themeColors.text }]}
+                  placeholder="At least 8 characters"
+                  placeholderTextColor={themeColors.textMuted}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={(val) => {
+                    setPassword(val);
+                    setError(null);
+                  }}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeButton}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={18}
+                    color={themeColors.textMuted}
+                  />
+                </TouchableOpacity>
+              </View>
 
-              {/* Password strength hints */}
-              <View style={styles.hintsBox}>
+              {/* Password checklist */}
+              <View
+                style={[
+                  styles.hintsBox,
+                  {
+                    backgroundColor: isDark ? colors.dark.background : '#F8FAFC',
+                    borderColor: themeColors.border,
+                  },
+                ]}
+              >
                 <View style={styles.hintRow}>
-                  <Text style={[styles.hintDot, hasMinLength && styles.hintDotActive]}>
-                    {hasMinLength ? '✓' : '•'}
-                  </Text>
-                  <Text style={[styles.hintText, hasMinLength && styles.hintTextActive]}>
+                  <Ionicons
+                    name={hasMinLength ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={14}
+                    color={hasMinLength ? colors.success : themeColors.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.hintText,
+                      { color: hasMinLength ? colors.success : themeColors.textMuted },
+                    ]}
+                  >
                     At least 8 characters
                   </Text>
                 </View>
                 <View style={styles.hintRow}>
-                  <Text style={[styles.hintDot, hasLetter && styles.hintDotActive]}>
-                    {hasLetter ? '✓' : '•'}
-                  </Text>
-                  <Text style={[styles.hintText, hasLetter && styles.hintTextActive]}>
+                  <Ionicons
+                    name={hasLetter ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={14}
+                    color={hasLetter ? colors.success : themeColors.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.hintText,
+                      { color: hasLetter ? colors.success : themeColors.textMuted },
+                    ]}
+                  >
                     At least one letter (a-z, A-Z)
                   </Text>
                 </View>
                 <View style={styles.hintRow}>
-                  <Text style={[styles.hintDot, hasNumber && styles.hintDotActive]}>
-                    {hasNumber ? '✓' : '•'}
-                  </Text>
-                  <Text style={[styles.hintText, hasNumber && styles.hintTextActive]}>
+                  <Ionicons
+                    name={hasNumber ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={14}
+                    color={hasNumber ? colors.success : themeColors.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.hintText,
+                      { color: hasNumber ? colors.success : themeColors.textMuted },
+                    ]}
+                  >
                     At least one number (0-9)
                   </Text>
                 </View>
               </View>
             </View>
 
+            {/* Phone Number */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone Number (Optional)</Text>
-              <View style={styles.phoneInputRow}>
-                <View style={styles.phonePrefix}>
-                  <Text style={styles.phonePrefixText}>+91</Text>
+              <Text style={[styles.label, { color: themeColors.text }]}>Phone Number (Optional)</Text>
+              <View
+                style={[
+                  styles.phoneInputRow,
+                  {
+                    backgroundColor: isDark ? colors.dark.background : '#F8FAFC',
+                    borderColor:
+                      focusedField === 'phone' ? colors.primary[500] : themeColors.border,
+                  },
+                  focusedField === 'phone' && styles.focusedGlow,
+                ]}
+              >
+                <View
+                  style={[
+                    styles.phonePrefix,
+                    {
+                      backgroundColor: isDark ? colors.dark.surfaceHover : '#EEF2F6',
+                      borderRightColor: themeColors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.phonePrefixText, { color: themeColors.text }]}>+91</Text>
                 </View>
                 <TextInput
-                  style={styles.phoneTextInput}
+                  style={[styles.phoneTextInput, { color: themeColors.text }]}
                   placeholder="98765 43210"
-                  placeholderTextColor={colors.gray[400]}
+                  placeholderTextColor={themeColors.textMuted}
                   keyboardType="numeric"
                   maxLength={10}
                   value={phone}
-                  onChangeText={(text) => setPhone(cleanIndianPhoneInput(text))}
+                  onChangeText={(text) => {
+                    setPhone(cleanIndianPhoneInput(text));
+                    setError(null);
+                  }}
+                  onFocus={() => setFocusedField('phone')}
+                  onBlur={() => setFocusedField(null)}
                 />
               </View>
-              <Text style={styles.helperText}>Indian mobile number</Text>
+              <Text style={[styles.helperText, { color: themeColors.textMuted }]}>
+                Indian mobile number · Shared only with confirmed rental partners
+              </Text>
             </View>
 
+            {/* Address */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Neighbourhood / Address (Optional)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. Anna Nagar, Chennai"
-                placeholderTextColor={colors.gray[400]}
-                value={address}
-                onChangeText={setAddress}
-              />
+              <Text style={[styles.label, { color: themeColors.text }]}>Neighbourhood / Area (Optional)</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: isDark ? colors.dark.background : '#F8FAFC',
+                    borderColor:
+                      focusedField === 'address' ? colors.primary[500] : themeColors.border,
+                  },
+                  focusedField === 'address' && styles.focusedGlow,
+                ]}
+              >
+                <Ionicons
+                  name="location-outline"
+                  size={18}
+                  color={focusedField === 'address' ? colors.primary[500] : themeColors.textMuted}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={[styles.input, { color: themeColors.text }]}
+                  placeholder="e.g. Anna Nagar, Chennai"
+                  placeholderTextColor={themeColors.textMuted}
+                  value={address}
+                  onChangeText={setAddress}
+                  onFocus={() => setFocusedField('address')}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </View>
             </View>
 
+            {/* Gradient Primary Button */}
             <TouchableOpacity
-              style={styles.primaryButton}
               onPress={handleRegister}
               disabled={loading}
-              activeOpacity={0.8}
+              activeOpacity={0.88}
+              style={styles.buttonWrapper}
             >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.primaryButtonText}>Create Account</Text>
-              )}
+              <LinearGradient
+                colors={gradients.brand as unknown as [string, string, ...string[]]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.primaryButton}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.primaryButtonText}>Create Account</Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
 
+            {/* Footer Row */}
             <View style={styles.footerRow}>
-              <Text style={styles.footerText}>Already have an account? </Text>
+              <Text style={[styles.footerText, { color: themeColors.textMuted }]}>
+                Already have an account?{' '}
+              </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                 <Text style={styles.linkText}>Sign in</Text>
               </TouchableOpacity>
@@ -224,140 +434,150 @@ export default function RegisterScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
   },
   scrollContent: {
-    padding: 24,
+    padding: 20,
     justifyContent: 'center',
     flexGrow: 1,
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
+  },
+  logoBadge: {
+    width: 68,
+    height: 68,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+    ...shadows.sm,
   },
   title: {
     fontSize: 26,
-    fontWeight: '700',
-    color: colors.gray[900],
-    marginBottom: 8,
+    fontWeight: '800',
+    marginBottom: 6,
     textAlign: 'center',
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 14,
-    color: colors.gray[500],
     textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 280,
   },
   formCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    ...shadows.md,
   },
   errorContainer: {
-    backgroundColor: '#fef2f2',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(229, 72, 77, 0.1)',
     borderWidth: 1,
-    borderColor: '#fca5a5',
-    borderRadius: 8,
+    borderColor: 'rgba(229, 72, 77, 0.25)',
+    borderRadius: 12,
     padding: 12,
     marginBottom: 16,
+    gap: 8,
   },
   errorText: {
-    color: '#b91c1c',
+    color: colors.danger,
     fontSize: 13,
+    fontWeight: '500',
+    flex: 1,
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.gray[700],
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: 6,
   },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+  },
+  focusedGlow: {
+    borderColor: colors.primary[500],
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
   input: {
-    backgroundColor: colors.gray[50],
-    borderWidth: 1,
-    borderColor: colors.gray[200],
-    borderRadius: 10,
-    paddingHorizontal: 14,
+    flex: 1,
     paddingVertical: 12,
     fontSize: 15,
-    color: colors.gray[900],
+  },
+  eyeButton: {
+    padding: 4,
   },
   phoneInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: colors.gray[300],
-    borderRadius: 10,
+    borderWidth: 1.5,
+    borderRadius: 14,
     overflow: 'hidden',
   },
   phonePrefix: {
-    backgroundColor: colors.gray[100],
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 12,
     borderRightWidth: 1,
-    borderRightColor: colors.gray[300],
   },
   phonePrefixText: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.gray[700],
   },
   phoneTextInput: {
     flex: 1,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 15,
-    color: colors.gray[900],
   },
   helperText: {
     fontSize: 11,
-    color: colors.gray[400],
     marginTop: 4,
   },
   hintsBox: {
     marginTop: 8,
-    backgroundColor: colors.gray[50],
-    borderRadius: 8,
+    borderRadius: 12,
+    borderWidth: 1,
     padding: 10,
-    gap: 4,
+    gap: 6,
   },
   hintRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  hintDot: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.gray[400],
-    width: 14,
-  },
-  hintDotActive: {
-    color: colors.primary[600],
-  },
   hintText: {
     fontSize: 12,
-    color: colors.gray[500],
+    fontWeight: '500',
   },
-  hintTextActive: {
-    color: colors.primary[700],
-    fontWeight: '600',
+  buttonWrapper: {
+    marginTop: 10,
+    marginBottom: 16,
+    borderRadius: 14,
+    overflow: 'hidden',
+    ...shadows.sm,
   },
   primaryButton: {
-    backgroundColor: colors.primary[600],
-    borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
+    justifyContent: 'center',
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '700',
   },
   footerRow: {
@@ -367,11 +587,10 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    color: colors.gray[500],
   },
   linkText: {
     fontSize: 14,
-    color: colors.primary[600],
+    color: colors.primary[500],
     fontWeight: '700',
   },
 });

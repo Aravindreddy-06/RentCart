@@ -1,14 +1,12 @@
 /**
  * src/screens/ChatScreen.tsx (mobile)
- * 1-on-1 rental chat between borrower and owner.
- * Features:
- * - Inverted FlatList for performance and instant auto-scroll to bottom
- * - Mine vs theirs message bubbles, timestamps, date separators
- * - "Seen" indicator for recipient read receipts
- * - Older messages pagination on pull/scroll up
- * - Socket.IO realtime with JWT handshake and AppState lifecycle
- * - Read-only banner for closed/expired rentals
- * - KeyboardAvoidingView with react-native-safe-area-context
+ * 1-on-1 rental chat with:
+ * - My bubbles in brand gradient with white text
+ * - Their bubbles in neutral card with dark mode support
+ * - Coloured "Seen" indicator (✓✓ Seen) in teal
+ * - Tinted pill date separators
+ * - Round send button in teal with Ionicons
+ * - Full dark mode support via useTheme
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -28,15 +26,18 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { AppStackParamList } from '../navigation/types';
 import {
   chatsService,
   ChatMessage,
   MessagesResponse,
 } from '../services/chats.service';
-import { connectSocket, disconnectSocket, getSocket } from '../services/socket';
+import { connectSocket } from '../services/socket';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
+import { colors, gradients, radius, shadows } from '../utils/colors';
 import { formatDateDMY } from '../utils/date';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Chat'>;
@@ -68,9 +69,10 @@ function formatDateSeparator(isoString: string): string {
 export default function ChatScreen({ route, navigation }: Props) {
   const { rentalId, otherUserName, title } = route.params;
   const { user } = useAuth();
+  const { isDark, themeColors } = useTheme();
   const insets = useSafeAreaInsets();
 
-  // Messages are stored in DESCENDING order (index 0 is newest) for inverted FlatList
+  // Messages in DESCENDING order for inverted FlatList
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -97,7 +99,6 @@ export default function ChatScreen({ route, navigation }: Props) {
         const res: MessagesResponse = await chatsService.getRentalMessages(rentalId, {
           limit: 30,
         });
-        // Backend returns oldest-to-newest; reverse for inverted FlatList
         const desc = [...res.messages].reverse();
         setMessages(desc);
         setHasMore(res.hasMore);
@@ -121,7 +122,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     loadInitialMessages(true);
   }, [loadInitialMessages]);
 
-  // Older messages pagination (on scroll up)
+  // Older messages pagination
   const handleLoadOlder = async () => {
     if (!hasMore || loadingOlder || messages.length === 0) return;
     const oldestMessage = messages[messages.length - 1];
@@ -158,24 +159,17 @@ export default function ChatScreen({ route, navigation }: Props) {
             if (prev.some((m) => m.id === newMsg.id)) return prev;
             return [newMsg, ...prev];
           });
-
-          // If incoming message from other party, mark as read
-          if (newMsg.senderId !== user?.id) {
-            chatsService.markMessagesAsRead(rentalId).catch(() => {});
-          }
+          chatsService.markMessagesAsRead(rentalId).catch(() => {});
         }
       });
 
-      socketInstance.on('message:read', (data: { rentalId: string; readAt: string }) => {
+      socketInstance.on('messages:read', ({ rentalId: rId, readAt }: { rentalId: string; readAt: string }) => {
         if (!isMounted) return;
-        if (data.rentalId === rentalId) {
+        if (rId === rentalId) {
           setMessages((prev) =>
-            prev.map((m) => {
-              if (m.senderId === user?.id && !m.readAt) {
-                return { ...m, readAt: data.readAt };
-              }
-              return m;
-            }),
+            prev.map((m) =>
+              m.senderId === user?.id && !m.readAt ? { ...m, readAt } : m
+            )
           );
         }
       });
@@ -183,87 +177,46 @@ export default function ChatScreen({ route, navigation }: Props) {
 
     initSocket();
 
-    // AppState lifecycle: connect when active, disconnect in background
-    const appStateSub = AppState.addEventListener('change', (nextState: AppStateStatus) => {
-      if (nextState === 'active') {
-        connectSocket().then(() => {
-          loadInitialMessages(false);
-        });
-      } else if (nextState === 'background' || nextState === 'inactive') {
-        disconnectSocket();
-      }
-    });
-
-    // Fallback polling every 10 seconds if socket is disconnected
-    const pollInterval = setInterval(() => {
-      const s = getSocket();
-      if (!s || !s.connected) {
+    const appStateSub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'active') {
         loadInitialMessages(false);
       }
-    }, 10000);
+    });
 
     return () => {
       isMounted = false;
       appStateSub.remove();
-      clearInterval(pollInterval);
       if (socketInstance) {
         socketInstance.off('message:new');
-        socketInstance.off('message:read');
+        socketInstance.off('messages:read');
       }
     };
   }, [rentalId, user?.id, loadInitialMessages]);
 
-  // Send message
   const handleSend = async () => {
-    const trimmed = inputText.trim();
-    if (!trimmed || isSending || isReadOnly) return;
-
-    if (trimmed.length > 1000) {
-      Alert.alert('Too Long', 'Messages must be 1,000 characters or less.');
-      return;
-    }
+    const text = inputText.trim();
+    if (!text || isSending || isReadOnly) return;
 
     setIsSending(true);
+    setInputText('');
+
     try {
-      const newMsg = await chatsService.sendMessage(rentalId, trimmed);
-      setInputText('');
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === newMsg.id)) return prev;
-        return [newMsg, ...prev];
-      });
+      const sentMsg = await chatsService.sendMessage(rentalId, text);
+      setMessages((prev) => [sentMsg, ...prev]);
     } catch (err: any) {
-      const status = err.response?.status;
-      if (status === 403) {
-        setIsReadOnly(true);
-        setReadOnlyReason(err.response?.data?.message || 'Chat is read-only.');
-        Alert.alert(
-          'Read-Only',
-          err.response?.data?.message || 'This conversation is read-only.',
-        );
-      } else if (status === 429) {
-        Alert.alert(
-          'Slow Down',
-          'You are sending messages too quickly (max 30 per minute). Please wait a moment.',
-        );
-      } else {
-        Alert.alert(
-          'Error',
-          err.response?.data?.message || 'Could not send message. Please try again.',
-        );
-      }
+      setInputText(text);
+      Alert.alert('Failed to send', err?.response?.data?.message || 'Could not send message.');
     } finally {
       setIsSending(false);
     }
   };
 
-  // Find latest message sent by current user to attach "Seen" indicator
   const latestMyMessageId = messages.find((m) => m.senderId === user?.id)?.id;
 
   const renderMessageItem = ({ item, index }: { item: ChatMessage; index: number }) => {
     const isMine = item.senderId === user?.id;
     const isLatestMyMessage = item.id === latestMyMessageId;
 
-    // Check if this message starts a new day compared to the chronologically older message (index + 1)
     const olderMessage = messages[index + 1];
     const isFirstOfDay =
       !olderMessage ||
@@ -272,14 +225,34 @@ export default function ChatScreen({ route, navigation }: Props) {
 
     return (
       <View style={styles.messageRowContainer}>
-        {/* Date separator (rendered above item) */}
+        {/* Date separator with tinted pill */}
         {isFirstOfDay && (
           <View style={styles.dateSeparator}>
-            <View style={styles.dateSeparatorLine} />
-            <Text style={styles.dateSeparatorText}>
-              {formatDateSeparator(item.createdAt)}
-            </Text>
-            <View style={styles.dateSeparatorLine} />
+            <View
+              style={[
+                styles.dateSeparatorLine,
+                { backgroundColor: themeColors.border },
+              ]}
+            />
+            <View
+              style={[
+                styles.dateSeparatorPill,
+                {
+                  backgroundColor: isDark ? 'rgba(15, 157, 138, 0.15)' : colors.primary[50],
+                  borderColor: isDark ? 'rgba(15, 157, 138, 0.3)' : colors.primary[100],
+                },
+              ]}
+            >
+              <Text style={styles.dateSeparatorText}>
+                {formatDateSeparator(item.createdAt)}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.dateSeparatorLine,
+                { backgroundColor: themeColors.border },
+              ]}
+            />
           </View>
         )}
 
@@ -289,38 +262,54 @@ export default function ChatScreen({ route, navigation }: Props) {
             isMine ? styles.myBubbleRow : styles.theirBubbleRow,
           ]}
         >
-          <View
-            style={[
-              styles.bubble,
-              isMine ? styles.myBubble : styles.theirBubble,
-            ]}
-          >
-            <Text
-              style={[
-                styles.bubbleText,
-                isMine ? styles.myBubbleText : styles.theirBubbleText,
-              ]}
-              selectable
+          {isMine ? (
+            /* My Bubble with Brand Gradient */
+            <LinearGradient
+              colors={gradients.brand as unknown as [string, string, ...string[]]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.bubble, styles.myBubble]}
             >
-              {item.body}
-            </Text>
-
-            <View style={styles.bubbleFooter}>
-              <Text
-                style={[
-                  styles.timestampText,
-                  isMine ? styles.myTimestampText : styles.theirTimestampText,
-                ]}
-              >
-                {formatMessageTime(item.createdAt)}
+              <Text style={styles.myBubbleText} selectable>
+                {item.body}
               </Text>
+              <View style={styles.bubbleFooter}>
+                <Text style={styles.myTimestampText}>
+                  {formatMessageTime(item.createdAt)}
+                </Text>
+              </View>
+            </LinearGradient>
+          ) : (
+            /* Their Bubble in Neutral / Dark Surface */
+            <View
+              style={[
+                styles.bubble,
+                styles.theirBubble,
+                {
+                  backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[100],
+                  borderColor: isDark ? colors.dark.border : colors.neutral[200],
+                },
+              ]}
+            >
+              <Text
+                style={[styles.theirBubbleText, { color: themeColors.text }]}
+                selectable
+              >
+                {item.body}
+              </Text>
+              <View style={styles.bubbleFooter}>
+                <Text style={[styles.theirTimestampText, { color: themeColors.textMuted }]}>
+                  {formatMessageTime(item.createdAt)}
+                </Text>
+              </View>
             </View>
-          </View>
+          )}
         </View>
 
-        {/* Seen indicator for recipient read receipt */}
+        {/* Coloured Seen Indicator (✓✓ Seen) */}
         {isMine && isLatestMyMessage && item.readAt && (
           <View style={styles.seenContainer}>
+            <Ionicons name="checkmark-done" size={13} color={colors.primary[500]} />
             <Text style={styles.seenText}>Seen</Text>
           </View>
         )}
@@ -329,7 +318,10 @@ export default function ChatScreen({ route, navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      edges={['left', 'right']}
+    >
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -337,16 +329,25 @@ export default function ChatScreen({ route, navigation }: Props) {
       >
         {/* Item context banner */}
         {title && (
-          <View style={styles.contextBanner}>
-            <Text style={styles.contextText} numberOfLines={1}>
-              📦 Rental: <Text style={styles.contextTitle}>{title}</Text>
+          <View
+            style={[
+              styles.contextBanner,
+              {
+                backgroundColor: isDark ? 'rgba(15, 157, 138, 0.15)' : colors.primary[50],
+                borderBottomColor: isDark ? 'rgba(15, 157, 138, 0.3)' : colors.primary[100],
+              },
+            ]}
+          >
+            <Ionicons name="cube-outline" size={15} color={colors.primary[500]} />
+            <Text style={[styles.contextText, { color: colors.primary[600] }]} numberOfLines={1}>
+              Rental: <Text style={styles.contextTitle}>{title}</Text>
             </Text>
           </View>
         )}
 
         {isLoading ? (
           <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color={colors.primary[600]} />
+            <ActivityIndicator size="large" color={colors.primary[500]} />
           </View>
         ) : (
           <FlatList
@@ -360,15 +361,24 @@ export default function ChatScreen({ route, navigation }: Props) {
             ListFooterComponent={
               loadingOlder ? (
                 <View style={styles.loadingOlderContainer}>
-                  <ActivityIndicator size="small" color={colors.primary[600]} />
+                  <ActivityIndicator size="small" color={colors.primary[500]} />
                 </View>
               ) : null
             }
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyEmoji}>💬</Text>
-                <Text style={styles.emptyTitle}>No messages yet</Text>
-                <Text style={styles.emptySubtitle}>
+                <View
+                  style={[
+                    styles.emptyIconBg,
+                    { backgroundColor: isDark ? colors.dark.surfaceHover : colors.primary[50] },
+                  ]}
+                >
+                  <Ionicons name="chatbubbles" size={36} color={colors.primary[500]} />
+                </View>
+                <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
+                  No messages yet
+                </Text>
+                <Text style={[styles.emptySubtitle, { color: themeColors.textMuted }]}>
                   Say hello and coordinate rental handover details!
                 </Text>
               </View>
@@ -378,11 +388,22 @@ export default function ChatScreen({ route, navigation }: Props) {
 
         {/* Read-Only Notice or Message Input Area */}
         {isReadOnly ? (
-          <View style={[styles.readOnlyBanner, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-            <Text style={styles.readOnlyIcon}>🔒</Text>
+          <View
+            style={[
+              styles.readOnlyBanner,
+              {
+                backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[100],
+                borderTopColor: themeColors.border,
+                paddingBottom: Math.max(insets.bottom, 12),
+              },
+            ]}
+          >
+            <Ionicons name="lock-closed" size={18} color={themeColors.textMuted} />
             <View style={{ flex: 1, marginLeft: 8 }}>
-              <Text style={styles.readOnlyTitle}>Conversation is read-only</Text>
-              <Text style={styles.readOnlySubtitle}>
+              <Text style={[styles.readOnlyTitle, { color: themeColors.text }]}>
+                Conversation is read-only
+              </Text>
+              <Text style={[styles.readOnlySubtitle, { color: themeColors.textMuted }]}>
                 {readOnlyReason ||
                   'This rental has concluded or was cancelled. Sending new messages is disabled.'}
               </Text>
@@ -392,22 +413,34 @@ export default function ChatScreen({ route, navigation }: Props) {
           <View
             style={[
               styles.inputContainer,
-              { paddingBottom: Math.max(insets.bottom, 10) },
+              {
+                backgroundColor: themeColors.surface,
+                borderTopColor: themeColors.border,
+                paddingBottom: Math.max(insets.bottom, 10),
+              },
             ]}
           >
             <TextInput
-              style={styles.textInput}
-              placeholder="Type a message (Shift+Enter or button to send)..."
-              placeholderTextColor={colors.gray[400]}
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                  borderColor: themeColors.border,
+                  color: themeColors.text,
+                },
+              ]}
+              placeholder="Type a message..."
+              placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
               value={inputText}
               onChangeText={setInputText}
               multiline
               maxLength={1000}
               editable={!isSending}
             />
+            {/* Round Send Button in Teal */}
             <TouchableOpacity
               style={[
-                styles.sendButton,
+                styles.roundSendButton,
                 (!inputText.trim() || isSending) && styles.sendButtonDisabled,
               ]}
               onPress={handleSend}
@@ -417,7 +450,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               {isSending ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
-                <Text style={styles.sendButtonText}>Send</Text>
+                <Ionicons name="send" size={17} color="#ffffff" style={{ marginLeft: 2 }} />
               )}
             </TouchableOpacity>
           </View>
@@ -430,21 +463,20 @@ export default function ChatScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   keyboardAvoid: {
     flex: 1,
   },
   contextBanner: {
-    backgroundColor: colors.primary[50],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: colors.primary[100],
   },
   contextText: {
     fontSize: 13,
-    color: colors.primary[700],
   },
   contextTitle: {
     fontWeight: '700',
@@ -474,14 +506,18 @@ const styles = StyleSheet.create({
   dateSeparatorLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.gray[200],
+  },
+  dateSeparatorPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    marginHorizontal: 10,
   },
   dateSeparatorText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.gray[500],
-    paddingHorizontal: 10,
-    backgroundColor: '#f8fafc',
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.primary[600],
   },
   bubbleRow: {
     flexDirection: 'row',
@@ -498,26 +534,23 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: 10,
+    ...shadows.sm,
   },
   myBubble: {
-    backgroundColor: colors.primary[600],
     borderBottomRightRadius: 4,
   },
   theirBubble: {
-    backgroundColor: '#ffffff',
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: colors.gray[200],
-  },
-  bubbleText: {
-    fontSize: 15,
-    lineHeight: 20,
   },
   myBubbleText: {
     color: '#ffffff',
+    fontSize: 15,
+    lineHeight: 20,
   },
   theirBubbleText: {
-    color: colors.gray[900],
+    fontSize: 15,
+    lineHeight: 20,
   },
   bubbleFooter: {
     flexDirection: 'row',
@@ -525,108 +558,95 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 4,
   },
-  timestampText: {
+  myTimestampText: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontWeight: '500',
+  },
+  theirTimestampText: {
     fontSize: 10,
     fontWeight: '500',
   },
-  myTimestampText: {
-    color: 'rgba(255, 255, 255, 0.75)',
-  },
-  theirTimestampText: {
-    color: colors.gray[400],
-  },
   seenContainer: {
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 3,
     paddingRight: 6,
     marginTop: 2,
   },
   seenText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: colors.primary[600],
+    fontWeight: '700',
+    color: colors.primary[500],
   },
   emptyContainer: {
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
-    transform: [{ scaleY: -1 }], // Untransform empty state inside inverted FlatList
+    transform: [{ scaleY: -1 }],
   },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 10,
+  emptyIconBg: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   emptyTitle: {
     fontSize: 17,
-    fontWeight: '700',
-    color: colors.gray[900],
+    fontWeight: '800',
     marginBottom: 4,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: colors.gray[500],
     textAlign: 'center',
   },
   readOnlyBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.gray[100],
     paddingHorizontal: 16,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
-  },
-  readOnlyIcon: {
-    fontSize: 20,
   },
   readOnlyTitle: {
     fontSize: 13,
-    fontWeight: '700',
-    color: colors.gray[800],
+    fontWeight: '800',
   },
   readOnlySubtitle: {
     fontSize: 12,
-    color: colors.gray[600],
     marginTop: 1,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor: '#ffffff',
     paddingHorizontal: 12,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
   },
   textInput: {
     flex: 1,
-    backgroundColor: colors.gray[50],
-    borderRadius: 20,
-    paddingHorizontal: 14,
+    borderRadius: 22,
+    paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 10,
-    fontSize: 15,
+    fontSize: 14,
     maxHeight: 100,
-    color: colors.gray[900],
     borderWidth: 1,
-    borderColor: colors.gray[200],
   },
-  sendButton: {
-    backgroundColor: colors.primary[600],
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+  roundSendButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.primary[500],
     marginLeft: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 40,
+    ...shadows.sm,
   },
   sendButtonDisabled: {
-    backgroundColor: colors.gray[300],
-  },
-  sendButtonText: {
-    color: '#ffffff',
-    fontWeight: '700',
-    fontSize: 14,
+    opacity: 0.45,
   },
 });

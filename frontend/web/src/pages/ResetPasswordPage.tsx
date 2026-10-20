@@ -1,7 +1,12 @@
 /**
- * src/pages/ResetPasswordPage.tsx
- * Reset password screen with 6-box OTP input, new password with strength checklist,
- * confirm password, show/hide toggles, resend code timer, and redirect to /login on success.
+ * src/pages/ResetPasswordPage.tsx (web)
+ * Polished reset password screen:
+ * - Hero illustration made from simple SVG & emojis
+ * - Soft tinted gradient background with dark mode support
+ * - Icons inside inputs (Mail, Lock)
+ * - Teal active OTP box highlight with soft glow
+ * - Brand gradient primary button
+ * - Preserved reset password logic, cooldown, and navigation
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -10,6 +15,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { authService } from '../services/auth.service';
+import { Mail, Lock, KeyRound, Eye, EyeOff, AlertCircle, CheckCircle2, Check, RefreshCw } from 'lucide-react';
 
 const resetSchema = z
   .object({
@@ -46,7 +52,6 @@ export function ResetPasswordPage() {
   const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
   const [infoMessage, setInfoMessage] = useState(initialInfoMessage);
 
-  // Resend cooldown timer (60s)
   const [cooldownSeconds, setCooldownSeconds] = useState(60);
   const [isResending, setIsResending] = useState(false);
 
@@ -68,7 +73,6 @@ export function ResetPasswordPage() {
   const hasNumber = /[0-9]/.test(passwordValue);
 
   useEffect(() => {
-    // Focus first OTP box if email is already present, otherwise focus email input
     if (initialEmail) {
       inputRefs.current[0]?.focus();
     }
@@ -123,26 +127,23 @@ export function ResetPasswordPage() {
   };
 
   const onSubmit = async (data: ResetFormData) => {
-    const fullOtp = otp.join('');
-    if (fullOtp.length !== 6) {
-      setApiError('Please enter the 6-digit verification code.');
+    const code = otp.join('');
+    if (code.length !== 6) {
+      setApiError('Please enter the full 6-digit verification code.');
       return;
     }
 
     setApiError('');
-    setAttemptsLeft(null);
-
     try {
       await authService.resetPassword({
         email: data.email,
-        otp: fullOtp,
+        otp: code,
         newPassword: data.newPassword,
       });
 
-      // Redirect to login with confirmation message
       navigate('/login', {
         state: {
-          message: 'Password reset successfully! Please sign in with your new password.',
+          message: 'Password reset successful! You can now log in with your new password.',
         },
       });
     } catch (err: any) {
@@ -180,43 +181,44 @@ export function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 flex items-center justify-center p-4 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-[#E6F7F4]/60 via-neutral-50 to-white dark:from-dark-bg dark:via-dark-bg dark:to-dark-surface flex items-center justify-center p-4 py-12 transition-colors duration-200">
       <div className="w-full max-w-md animate-slide-up">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-500 shadow-lg mb-4 text-white">
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-            </svg>
+        {/* Header with Illustration */}
+        <div className="text-center mb-6">
+          <div className="relative inline-flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary-600 to-[#12C2A8] shadow-glow flex items-center justify-center text-white">
+              <KeyRound className="w-8 h-8" />
+            </div>
+            <span className="absolute -top-1.5 -right-2 text-base select-none">✨</span>
+            <span className="absolute -bottom-1 -left-2 text-sm select-none">🛡️</span>
           </div>
-          <h1 className="text-3xl font-bold text-neutral-900">Set new password</h1>
-          <p className="text-neutral-500 mt-1 text-sm">
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-dark-text tracking-tight">
+            Set new password
+          </h1>
+          <p className="text-neutral-500 dark:text-dark-muted mt-1 text-sm max-w-xs mx-auto">
             Enter the 6-digit code sent to your email along with your new password.
           </p>
         </div>
 
         {/* Card */}
-        <div className="card p-8">
+        <div className="card p-6 sm:p-8 shadow-card dark:shadow-card-dark">
           {/* Info notification */}
           {infoMessage && (
-            <div className="mb-5 px-4 py-3 rounded-xl bg-primary-50 border border-primary-200 text-primary-800 text-sm flex items-start gap-2">
-              <svg className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clipRule="evenodd" />
-              </svg>
+            <div className="mb-5 px-4 py-3 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/30 text-primary-800 dark:text-primary-300 text-sm flex items-start gap-2.5">
+              <CheckCircle2 className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
               <span>{infoMessage}</span>
             </div>
           )}
 
           {/* Error Banner */}
           {apiError && (
-            <div className="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-2">
-              <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-              </svg>
+            <div className="mb-5 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400 text-sm flex items-start gap-2.5">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium">{apiError}</p>
+                <p className="font-semibold">{apiError}</p>
                 {attemptsLeft !== null && attemptsLeft > 0 && (
-                  <p className="text-xs text-red-600 mt-0.5">
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
                     {attemptsLeft} attempt{attemptsLeft === 1 ? '' : 's'} remaining.
                   </p>
                 )}
@@ -227,25 +229,30 @@ export function ResetPasswordPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             {/* Email */}
             <div>
-              <label htmlFor="reset-email" className="block text-sm font-medium text-neutral-700 mb-1.5">
+              <label htmlFor="reset-email" className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-dark-muted mb-1.5">
                 Email address
               </label>
-              <input
-                id="reset-email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                className={`form-field ${errors.email ? 'form-field-error' : ''}`}
-                {...register('email')}
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400 dark:text-neutral-500">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <input
+                  id="reset-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  className={`form-field pl-10 ${errors.email ? 'form-field-error' : ''}`}
+                  {...register('email')}
+                />
+              </div>
               {errors.email && (
-                <p className="mt-1.5 text-xs text-red-600">{errors.email.message}</p>
+                <p className="mt-1.5 text-xs text-danger font-medium">{errors.email.message}</p>
               )}
             </div>
 
             {/* 6-box OTP input */}
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-dark-muted mb-1.5">
                 6-digit reset code
               </label>
               <div className="flex justify-between gap-2 sm:gap-2.5">
@@ -266,10 +273,10 @@ export function ResetPasswordPage() {
                     onPaste={handlePaste}
                     className={`w-11 h-13 sm:w-13 sm:h-14 text-center text-xl font-bold rounded-xl border-2 transition-all outline-none ${
                       apiError
-                        ? 'border-red-300 bg-red-50/50 text-red-700 focus:border-red-500'
+                        ? 'border-red-300 dark:border-red-500/50 bg-red-50/50 dark:bg-red-500/10 text-red-700 dark:text-red-400 focus:border-red-500'
                         : digit
-                        ? 'border-primary-500 bg-primary-50/40 text-neutral-900 focus:border-primary-600'
-                        : 'border-neutral-200 bg-white text-neutral-900 focus:border-primary-500 focus:ring-4 focus:ring-primary-100'
+                        ? 'border-primary-500 bg-primary-50/40 dark:bg-primary-500/10 text-neutral-900 dark:text-dark-text focus:border-primary-600 dark:focus:border-primary-400 focus:ring-4 focus:ring-primary-500/20'
+                        : 'border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text focus:border-primary-500 dark:focus:border-primary-400 focus:ring-4 focus:ring-primary-500/20'
                     }`}
                   />
                 ))}
@@ -278,109 +285,99 @@ export function ResetPasswordPage() {
 
             {/* New Password */}
             <div>
-              <label htmlFor="reset-new-password" className="block text-sm font-medium text-neutral-700 mb-1.5">
+              <label htmlFor="reset-new-password" className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-dark-muted mb-1.5">
                 New password
               </label>
               <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400 dark:text-neutral-500">
+                  <Lock className="w-4 h-4" />
+                </div>
                 <input
                   id="reset-new-password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   placeholder="At least 8 characters"
-                  className={`form-field pr-11 ${errors.newPassword ? 'form-field-error' : ''}`}
+                  className={`form-field pl-10 pr-11 ${errors.newPassword ? 'form-field-error' : ''}`}
                   {...register('newPassword')}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-dark-text transition-colors"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                    </svg>
-                  )}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
 
               {/* Password strength checklist */}
-              <div className="mt-2.5 p-3 rounded-xl bg-neutral-50 border border-neutral-100 space-y-1.5 text-xs">
+              <div className="mt-2.5 p-3 rounded-xl bg-neutral-50 dark:bg-dark-card border border-neutral-100 dark:border-dark-border space-y-1.5 text-xs">
                 <div className="flex items-center gap-2">
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${hasMinLength ? 'bg-primary-500 text-white' : 'bg-neutral-200 text-neutral-500'}`}>
-                    {hasMinLength ? '✓' : '•'}
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${hasMinLength ? 'bg-primary-500 text-white' : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-500'}`}>
+                    {hasMinLength ? <Check className="w-3 h-3 stroke-[3]" /> : '•'}
                   </span>
-                  <span className={hasMinLength ? 'text-primary-700 font-medium' : 'text-neutral-500'}>
+                  <span className={hasMinLength ? 'text-primary-700 dark:text-primary-400 font-medium' : 'text-neutral-500 dark:text-dark-muted'}>
                     At least 8 characters
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${hasLetter ? 'bg-primary-500 text-white' : 'bg-neutral-200 text-neutral-500'}`}>
-                    {hasLetter ? '✓' : '•'}
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${hasLetter ? 'bg-primary-500 text-white' : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-500'}`}>
+                    {hasLetter ? <Check className="w-3 h-3 stroke-[3]" /> : '•'}
                   </span>
-                  <span className={hasLetter ? 'text-primary-700 font-medium' : 'text-neutral-500'}>
+                  <span className={hasLetter ? 'text-primary-700 dark:text-primary-400 font-medium' : 'text-neutral-500 dark:text-dark-muted'}>
                     At least one letter (a-z, A-Z)
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${hasNumber ? 'bg-primary-500 text-white' : 'bg-neutral-200 text-neutral-500'}`}>
-                    {hasNumber ? '✓' : '•'}
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${hasNumber ? 'bg-primary-500 text-white' : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-500'}`}>
+                    {hasNumber ? <Check className="w-3 h-3 stroke-[3]" /> : '•'}
                   </span>
-                  <span className={hasNumber ? 'text-primary-700 font-medium' : 'text-neutral-500'}>
+                  <span className={hasNumber ? 'text-primary-700 dark:text-primary-400 font-medium' : 'text-neutral-500 dark:text-dark-muted'}>
                     At least one number (0-9)
                   </span>
                 </div>
               </div>
 
               {errors.newPassword && (
-                <p className="mt-1.5 text-xs text-red-600">{errors.newPassword.message}</p>
+                <p className="mt-1.5 text-xs text-danger font-medium">{errors.newPassword.message}</p>
               )}
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label htmlFor="reset-confirm-password" className="block text-sm font-medium text-neutral-700 mb-1.5">
+              <label htmlFor="reset-confirm-password" className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-dark-muted mb-1.5">
                 Confirm new password
               </label>
               <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400 dark:text-neutral-500">
+                  <Lock className="w-4 h-4" />
+                </div>
                 <input
                   id="reset-confirm-password"
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   placeholder="Repeat your new password"
-                  className={`form-field pr-11 ${errors.confirmPassword ? 'form-field-error' : ''}`}
+                  className={`form-field pl-10 pr-11 ${errors.confirmPassword ? 'form-field-error' : ''}`}
                   {...register('confirmPassword')}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-dark-text transition-colors"
                   aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showConfirmPassword ? (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                    </svg>
-                  )}
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="mt-1.5 text-xs text-red-600">{errors.confirmPassword.message}</p>
+                <p className="mt-1.5 text-xs text-danger font-medium">{errors.confirmPassword.message}</p>
               )}
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting || otp.some((d) => !d)}
-              className="btn-primary w-full py-3 text-base mt-2"
+              className="btn-primary w-full py-3 text-sm font-bold mt-2 shadow-sm"
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
@@ -394,27 +391,28 @@ export function ResetPasswordPage() {
           </form>
 
           {/* Resend Cooldown Section */}
-          <div className="mt-6 pt-5 border-t border-neutral-100 text-center">
+          <div className="mt-6 pt-5 border-t border-neutral-100 dark:border-dark-border text-center">
             {cooldownSeconds > 0 ? (
-              <p className="text-xs font-medium text-neutral-400">
-                Resend code in <span className="text-neutral-700 font-bold">{cooldownSeconds}s</span>
+              <p className="text-xs font-medium text-neutral-400 dark:text-dark-muted">
+                Resend code in <span className="text-primary-600 dark:text-primary-400 font-bold">{cooldownSeconds}s</span>
               </p>
             ) : (
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={isResending}
-                className="text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline disabled:opacity-50"
               >
-                {isResending ? 'Sending…' : 'Resend reset code'}
+                <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
+                <span>{isResending ? 'Sending…' : 'Resend reset code'}</span>
               </button>
             )}
           </div>
         </div>
 
-        <p className="text-center mt-6 text-sm text-neutral-500">
+        <p className="text-center mt-6 text-sm text-neutral-500 dark:text-dark-muted">
           Remember your password?{' '}
-          <Link to="/login" className="text-primary-600 font-semibold hover:text-primary-700 transition-colors">
+          <Link to="/login" className="text-primary-600 dark:text-primary-400 font-bold hover:underline transition-colors">
             Back to sign in
           </Link>
         </p>

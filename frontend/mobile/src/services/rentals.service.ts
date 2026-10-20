@@ -193,8 +193,18 @@ export const rentalsService = {
     return res.data.data;
   },
 
-  async activate(id: string): Promise<Rental> {
-    const res = await api.patch(`/rentals/${id}/activate`);
+  async activate(id: string, body?: { confirmWithoutPin?: boolean }): Promise<Rental> {
+    const res = await api.patch(`/rentals/${id}/activate`, body);
+    return res.data.data;
+  },
+
+  async getHandoverPin(id: string): Promise<{ pin: string; createdAt: string }> {
+    const res = await api.get(`/rentals/${id}/handover-pin`);
+    return res.data.data;
+  },
+
+  async verifyHandover(id: string, pin: string): Promise<Rental> {
+    const res = await api.post(`/rentals/${id}/handover/verify`, { pin });
     return res.data.data;
   },
 

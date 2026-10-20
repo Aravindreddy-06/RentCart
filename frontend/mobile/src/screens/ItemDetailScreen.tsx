@@ -1,8 +1,13 @@
 /**
  * src/screens/ItemDetailScreen.tsx (mobile)
- * Item Details — swipeable image gallery, owner card, availability badge,
- * owner management (edit, delete, availability toggle), and borrower action.
- * Uses react-native-safe-area-context and pull-to-refresh.
+ * Vibrant, modern item details:
+ * - Swipeable image gallery with indicator dots
+ * - Price in orange with "per day" caption
+ * - Deposit in a tinted info chip
+ * - Owner card with avatar and initials
+ * - Verified/rating details
+ * - Sticky bottom action bar with brand gradient "Request to Borrow" button
+ * - Full dark mode support
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -22,12 +27,24 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { AppStackParamList } from '../navigation/types';
 import { itemsService, Item } from '../services/items.service';
 import { reviewsService, Review } from '../services/reviews.service';
 import { StarRating } from '../components/StarRating';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
+import {
+  colors,
+  gradients,
+  radius,
+  shadows,
+  CATEGORY_THEMES,
+  CategoryKey,
+  getAvatarColor,
+  getInitials,
+} from '../utils/colors';
 import { formatINR } from '../utils/currency';
 import { formatDateDMY } from '../utils/date';
 
@@ -35,8 +52,6 @@ type Props = NativeStackScreenProps<AppStackParamList, 'ItemDetail'>;
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop';
-
-// ─── Image Gallery ────────────────────────────────────────────────────────────
 
 interface GalleryProps {
   images: string[];
@@ -63,7 +78,7 @@ function ImageGallery({ images, onIndexChange }: GalleryProps) {
       renderItem={({ item: uri }) => (
         <Image
           source={{ uri }}
-          style={{ width: SCREEN_WIDTH, height: 280 }}
+          style={{ width: SCREEN_WIDTH, height: 300 }}
           resizeMode="cover"
         />
       )}
@@ -73,11 +88,10 @@ function ImageGallery({ images, onIndexChange }: GalleryProps) {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-
 export default function ItemDetailScreen({ route, navigation }: Props) {
   const { itemId } = route.params;
   const { user } = useAuth();
+  const { isDark, themeColors } = useTheme();
 
   const [item, setItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,7 +115,7 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
       if (page === 1) {
         setReviews(res.reviews);
       } else {
-        setReviews(prev => [...prev, ...res.reviews]);
+        setReviews((prev) => [...prev, ...res.reviews]);
       }
       setReviewsPage(page);
       setTotalReviews(res.pagination.total);
@@ -182,26 +196,30 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
     }
   };
 
-  // ── Loading ─────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.primary[600]} />
+      <SafeAreaView
+        style={[styles.centerContainer, { backgroundColor: themeColors.background }]}
+      >
+        <ActivityIndicator size="large" color={colors.primary[500]} />
       </SafeAreaView>
     );
   }
 
-  // ── Error ───────────────────────────────────────────────────────────────────
   if (error || !item) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <Text style={styles.errorEmoji}>⚠️</Text>
-        <Text style={styles.errorTitle}>{error || 'Something went wrong'}</Text>
+      <SafeAreaView
+        style={[styles.centerContainer, { backgroundColor: themeColors.background }]}
+      >
+        <Ionicons name="alert-circle" size={48} color={colors.danger} style={{ marginBottom: 12 }} />
+        <Text style={[styles.errorTitle, { color: themeColors.text }]}>
+          {error || 'Something went wrong'}
+        </Text>
         <TouchableOpacity style={styles.retryButton} onPress={() => fetchItem()}>
           <Text style={styles.retryButtonText}>Try Again</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+          <Text style={[styles.backButtonText, { color: themeColors.textMuted }]}>Go Back</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -209,9 +227,15 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
 
   const isOwner = user?.id === item.ownerId;
   const images = item.images.length > 0 ? item.images : [PLACEHOLDER];
+  const catKey = (item.category in CATEGORY_THEMES ? item.category : 'Other') as CategoryKey;
+  const catTheme = CATEGORY_THEMES[catKey];
+  const ownerName = item.owner?.name || 'Item Owner';
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      edges={['bottom']}
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -219,8 +243,8 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[colors.primary[600]]}
-            tintColor={colors.primary[600]}
+            colors={[colors.primary[500]]}
+            tintColor={colors.primary[500]}
           />
         }
       >
@@ -233,15 +257,16 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
             <View
               style={[
                 styles.availabilityBadge,
-                { backgroundColor: item.isAvailable ? '#22c55e' : '#6b7280' },
+                {
+                  backgroundColor: item.isAvailable
+                    ? colors.success
+                    : isDark
+                    ? colors.neutral[600]
+                    : colors.neutral[500],
+                },
               ]}
             >
-              <View
-                style={[
-                  styles.availabilityDot,
-                  { backgroundColor: item.isAvailable ? '#fff' : '#d1d5db' },
-                ]}
-              />
+              <View style={styles.availabilityDot} />
               <Text style={styles.availabilityText}>
                 {item.isAvailable ? 'Available' : 'Unavailable'}
               </Text>
@@ -250,12 +275,25 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
 
           {/* Dots indicator */}
           {images.length > 1 && (
-            <View style={styles.dotsContainer}>
+            <View
+              style={[
+                styles.dotsContainer,
+                { backgroundColor: themeColors.surface },
+              ]}
+            >
               {images.map((_, i) => (
                 <View
                   key={i}
                   style={[
                     styles.dot,
+                    {
+                      backgroundColor:
+                        i === activeImageIndex
+                          ? colors.primary[500]
+                          : isDark
+                          ? colors.dark.border
+                          : colors.neutral[300],
+                    },
                     i === activeImageIndex && styles.dotActive,
                   ]}
                 />
@@ -265,12 +303,26 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
         </View>
 
         {/* ── Content ───────────────────────────────────────────────────────── */}
-        <View style={styles.content}>
-          {/* Category + title */}
+        <View style={[styles.content, { backgroundColor: themeColors.surface }]}>
+          {/* Category Chip */}
           <View style={styles.tagRow}>
-            <Text style={styles.categoryBadge}>{item.category}</Text>
+            <View
+              style={[
+                styles.categoryBadge,
+                {
+                  backgroundColor: isDark ? catTheme.darkTint : catTheme.tint,
+                  borderColor: isDark ? catTheme.darkBorder : catTheme.border,
+                },
+              ]}
+            >
+              <Ionicons name={catTheme.ioniconName} size={13} color={catTheme.primary} />
+              <Text style={[styles.categoryBadgeText, { color: catTheme.primary }]}>
+                {item.category}
+              </Text>
+            </View>
           </View>
-          <Text style={styles.title}>{item.title}</Text>
+
+          <Text style={[styles.title, { color: themeColors.text }]}>{item.title}</Text>
 
           {/* Rating summary */}
           <View style={styles.ratingSummaryRow}>
@@ -282,36 +334,72 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
                 reviewCount={item.reviewCount}
               />
             ) : (
-              <Text style={styles.noRatingText}>No reviews yet</Text>
+              <Text style={[styles.noRatingText, { color: themeColors.textMuted }]}>
+                No reviews yet
+              </Text>
             )}
           </View>
 
-          {/* Pricing */}
+          {/* Pricing Row in Orange */}
           <View style={styles.priceRow}>
-            <Text style={styles.price}>{formatINR(item.pricePerDay)}</Text>
-            <Text style={styles.priceUnit}> / day</Text>
+            <View style={styles.pricePill}>
+              <Text style={styles.price}>{formatINR(item.pricePerDay)}</Text>
+              <Text style={styles.priceUnit}> / day</Text>
+            </View>
             {item.deposit > 0 && (
-              <Text style={styles.deposit}> + {formatINR(item.deposit)} deposit</Text>
+              <View
+                style={[
+                  styles.depositChip,
+                  {
+                    backgroundColor: isDark
+                      ? 'rgba(91, 91, 214, 0.15)'
+                      : colors.secondary[50],
+                    borderColor: isDark
+                      ? 'rgba(91, 91, 214, 0.3)'
+                      : colors.secondary[200],
+                  },
+                ]}
+              >
+                <Ionicons name="shield-checkmark-outline" size={13} color={colors.secondary[500]} />
+                <Text style={styles.depositText}>
+                  {formatINR(item.deposit)} refundable deposit
+                </Text>
+              </View>
             )}
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: themeColors.border }]} />
 
           {/* Description */}
-          <Text style={styles.sectionLabel}>Description</Text>
-          <Text style={styles.description}>{item.description}</Text>
+          <Text style={[styles.sectionLabel, { color: themeColors.textMuted }]}>
+            Description
+          </Text>
+          <Text style={[styles.description, { color: themeColors.text }]}>
+            {item.description}
+          </Text>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: themeColors.border }]} />
 
           {/* Owner card */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <Text style={styles.sectionLabel}>Owner</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('PublicProfile', { userId: item.owner.id })}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary[600] }}>View Profile →</Text>
+          <View style={styles.ownerHeaderRow}>
+            <Text style={[styles.sectionLabel, { color: themeColors.textMuted }]}>Owner</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('PublicProfile', { userId: item.owner.id })}
+            >
+              <Text style={[styles.viewProfileText, { color: colors.primary[500] }]}>
+                View Profile →
+              </Text>
             </TouchableOpacity>
           </View>
+
           <TouchableOpacity
-            style={styles.ownerCard}
+            style={[
+              styles.ownerCard,
+              {
+                backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                borderColor: themeColors.border,
+              },
+            ]}
             activeOpacity={0.8}
             onPress={() => navigation.navigate('PublicProfile', { userId: item.owner.id })}
           >
@@ -322,36 +410,60 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
                 resizeMode="cover"
               />
             ) : (
-              <View style={[styles.ownerAvatar, styles.ownerAvatarFallback]}>
-                <Text style={styles.ownerAvatarText}>
-                  {item.owner.name.charAt(0).toUpperCase()}
-                </Text>
+              <View
+                style={[
+                  styles.ownerAvatar,
+                  { backgroundColor: getAvatarColor(ownerName) },
+                ]}
+              >
+                <Text style={styles.ownerAvatarText}>{getInitials(ownerName)}</Text>
               </View>
             )}
             <View style={{ flex: 1 }}>
-              <Text style={styles.ownerName}>{item.owner.name}</Text>
+              <Text style={[styles.ownerName, { color: themeColors.text }]}>
+                {ownerName}
+              </Text>
               {item.owner.address ? (
-                <Text style={styles.ownerAddress}>📍 {item.owner.address}</Text>
-              ) : null}
+                <Text style={[styles.ownerAddress, { color: themeColors.textMuted }]}>
+                  📍 {item.owner.address}
+                </Text>
+              ) : (
+                <Text style={[styles.ownerAddress, { color: themeColors.textMuted }]}>
+                  Verified Member
+                </Text>
+              )}
             </View>
-            <Text style={{ color: colors.gray[400], fontSize: 16 }}>›</Text>
+            <Ionicons name="chevron-forward" size={18} color={themeColors.textMuted} />
           </TouchableOpacity>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: themeColors.border }]} />
 
           {/* Reviews list */}
           <View style={styles.reviewsSectionHeader}>
-            <Text style={styles.sectionLabel}>Reviews ({totalReviews || item.reviewCount || 0})</Text>
+            <Text style={[styles.sectionLabel, { color: themeColors.textMuted }]}>
+              Reviews ({totalReviews || item.reviewCount || 0})
+            </Text>
           </View>
 
           {isLoadingReviews ? (
-            <ActivityIndicator color={colors.primary[600]} style={{ marginVertical: 16 }} />
+            <ActivityIndicator color={colors.primary[500]} style={{ marginVertical: 16 }} />
           ) : reviews.length === 0 ? (
-            <Text style={styles.emptyReviewsText}>No reviews for this item yet.</Text>
+            <Text style={[styles.emptyReviewsText, { color: themeColors.textMuted }]}>
+              No reviews for this item yet.
+            </Text>
           ) : (
             <View style={styles.reviewsList}>
               {reviews.map((rev) => (
-                <View key={rev.id} style={styles.reviewItem}>
+                <View
+                  key={rev.id}
+                  style={[
+                    styles.reviewItem,
+                    {
+                      backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                      borderColor: themeColors.border,
+                    },
+                  ]}
+                >
                   <View style={styles.reviewHeaderRow}>
                     <TouchableOpacity
                       style={styles.reviewerInfo}
@@ -360,15 +472,22 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
                       {rev.author.avatarUrl ? (
                         <Image source={{ uri: rev.author.avatarUrl }} style={styles.reviewerAvatar} />
                       ) : (
-                        <View style={[styles.reviewerAvatar, styles.reviewerAvatarFallback]}>
+                        <View
+                          style={[
+                            styles.reviewerAvatar,
+                            { backgroundColor: getAvatarColor(rev.author.name) },
+                          ]}
+                        >
                           <Text style={styles.reviewerAvatarText}>
-                            {rev.author.name.charAt(0).toUpperCase()}
+                            {getInitials(rev.author.name)}
                           </Text>
                         </View>
                       )}
                       <View>
-                        <Text style={styles.reviewerName}>{rev.author.name}</Text>
-                        <Text style={styles.reviewDate}>
+                        <Text style={[styles.reviewerName, { color: themeColors.text }]}>
+                          {rev.author.name}
+                        </Text>
+                        <Text style={[styles.reviewDate, { color: themeColors.textMuted }]}>
                           {formatDateDMY(rev.createdAt)}
                         </Text>
                       </View>
@@ -376,21 +495,30 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
                     <StarRating rating={rev.rating} size="sm" />
                   </View>
                   {rev.comment ? (
-                    <Text style={styles.reviewCommentText}>{rev.comment}</Text>
+                    <Text style={[styles.reviewCommentText, { color: themeColors.text }]}>
+                      {rev.comment}
+                    </Text>
                   ) : null}
                 </View>
               ))}
 
               {reviews.length < totalReviews && (
                 <TouchableOpacity
-                  style={styles.loadMoreReviewsBtn}
+                  style={[
+                    styles.loadMoreReviewsBtn,
+                    {
+                      backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[100],
+                    },
+                  ]}
                   onPress={handleLoadMoreReviews}
                   disabled={isLoadingMoreReviews}
                 >
                   {isLoadingMoreReviews ? (
-                    <ActivityIndicator size="small" color={colors.primary[600]} />
+                    <ActivityIndicator size="small" color={colors.primary[500]} />
                   ) : (
-                    <Text style={styles.loadMoreReviewsBtnText}>Load more reviews</Text>
+                    <Text style={[styles.loadMoreReviewsBtnText, { color: colors.primary[500] }]}>
+                      Load more reviews
+                    </Text>
                   )}
                 </TouchableOpacity>
               )}
@@ -400,25 +528,43 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
       </ScrollView>
 
       {/* ── Bottom Action Bar ─────────────────────────────────────────────────── */}
-      <View style={styles.bottomBar}>
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor: themeColors.surface,
+            borderTopColor: themeColors.border,
+          },
+        ]}
+      >
         {isOwner ? (
           <View style={styles.ownerActions}>
-            {/* Toggle availability */}
             <TouchableOpacity
               style={[
                 styles.toggleButton,
-                item.isAvailable ? styles.toggleButtonUnavailable : styles.toggleButtonAvailable,
+                item.isAvailable
+                  ? {
+                      backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : '#fffbeb',
+                      borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#fcd34d',
+                    }
+                  : {
+                      backgroundColor: isDark ? 'rgba(22, 163, 74, 0.15)' : '#f0fdf4',
+                      borderColor: isDark ? 'rgba(22, 163, 74, 0.3)' : '#86efac',
+                    },
               ]}
               onPress={handleToggleAvailability}
               disabled={isTogglingAvailability}
             >
               {isTogglingAvailability ? (
-                <ActivityIndicator color={item.isAvailable ? '#b45309' : '#15803d'} size="small" />
+                <ActivityIndicator
+                  color={item.isAvailable ? '#b45309' : '#15803d'}
+                  size="small"
+                />
               ) : (
                 <Text
                   style={[
                     styles.toggleButtonText,
-                    { color: item.isAvailable ? '#b45309' : '#15803d' },
+                    { color: item.isAvailable ? '#d97706' : '#16a34a' },
                   ]}
                 >
                   {item.isAvailable ? 'Mark Unavailable' : 'Mark Available'}
@@ -426,18 +572,15 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
               )}
             </TouchableOpacity>
 
-            {/* Delete */}
             <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-              <Text style={styles.deleteButtonText}>🗑 Delete</Text>
+              <Ionicons name="trash-outline" size={16} color={colors.danger} />
+              <Text style={styles.deleteButtonText}>Delete</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <TouchableOpacity
-            style={[
-              styles.borrowButton,
-              !item.isAvailable && styles.borrowButtonDisabled,
-            ]}
             disabled={!item.isAvailable}
+            activeOpacity={0.85}
             onPress={() => {
               navigation.navigate('RequestBorrow', {
                 itemId: item.id,
@@ -448,14 +591,33 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
               });
             }}
           >
-            <Text
-              style={[
-                styles.borrowButtonText,
-                !item.isAvailable && styles.borrowButtonTextDisabled,
-              ]}
-            >
-              {item.isAvailable ? 'Request to Borrow' : 'Currently Unavailable'}
-            </Text>
+            {item.isAvailable ? (
+              <LinearGradient
+                colors={gradients.brand as unknown as [string, string, ...string[]]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.borrowButtonGradient}
+              >
+                <Ionicons name="hand-right-outline" size={18} color="#ffffff" />
+                <Text style={styles.borrowButtonText}>Request to Borrow</Text>
+              </LinearGradient>
+            ) : (
+              <View
+                style={[
+                  styles.borrowButtonGradient,
+                  { backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[300] },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.borrowButtonText,
+                    { color: isDark ? colors.dark.textMuted : colors.neutral[500] },
+                  ]}
+                >
+                  Currently Unavailable
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
         )}
       </View>
@@ -466,17 +628,15 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.gray[50],
     padding: 24,
   },
   scrollContent: {
-    paddingBottom: 12,
+    paddingBottom: 20,
   },
 
   // ── Gallery ──────────────────────────────────────────────────────────────────
@@ -485,48 +645,52 @@ const styles = StyleSheet.create({
   },
   availabilityBadgeContainer: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: 14,
+    right: 14,
   },
   availabilityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: radius.full,
+    ...shadows.sm,
   },
   availabilityDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
+    backgroundColor: '#ffffff',
   },
   availabilityText: {
     color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 8,
-    backgroundColor: '#ffffff',
+    paddingVertical: 10,
   },
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.gray[300],
   },
   dotActive: {
-    backgroundColor: colors.primary[600],
-    width: 18,
+    width: 20,
   },
 
   // ── Content ──────────────────────────────────────────────────────────────────
   content: {
     padding: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    marginTop: -16,
+    ...shadows.sm,
   },
   tagRow: {
     flexDirection: 'row',
@@ -534,220 +698,142 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   categoryBadge: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.primary[700],
-    backgroundColor: colors.primary[50],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
-    overflow: 'hidden',
+    borderRadius: radius.sm,
+    borderWidth: 1,
+  },
+  categoryBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
-    color: colors.gray[900],
     marginBottom: 8,
-    lineHeight: 30,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 16,
-  },
-  price: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.primary[600],
-  },
-  priceUnit: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: colors.gray[500],
-  },
-  deposit: {
-    fontSize: 13,
-    color: colors.gray[500],
-    marginLeft: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.gray[200],
-    marginVertical: 16,
-  },
-  sectionLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.gray[500],
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 10,
-  },
-  description: {
-    fontSize: 15,
-    lineHeight: 24,
-    color: colors.gray[700],
-  },
-
-  // ── Owner ─────────────────────────────────────────────────────────────────────
-  ownerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  ownerAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.gray[200],
-  },
-  ownerAvatarFallback: {
-    backgroundColor: colors.primary[100],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ownerAvatarText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.primary[700],
-  },
-  ownerName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.gray[900],
-  },
-  ownerAddress: {
-    fontSize: 13,
-    color: colors.gray[500],
-    marginTop: 2,
-  },
-
-  // ── Bottom bar ────────────────────────────────────────────────────────────────
-  bottomBar: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
-    backgroundColor: '#ffffff',
-  },
-  ownerActions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 13,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  toggleButtonAvailable: {
-    backgroundColor: '#f0fdf4',
-    borderColor: '#86efac',
-  },
-  toggleButtonUnavailable: {
-    backgroundColor: '#fffbeb',
-    borderColor: '#fcd34d',
-  },
-  toggleButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  deleteButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fef2f2',
-    borderWidth: 1,
-    borderColor: '#fecaca',
-  },
-  deleteButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#ef4444',
-  },
-  borrowButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: colors.primary[600],
-    borderRadius: 14,
-    paddingVertical: 16,
-  },
-  borrowButtonDisabled: {
-    backgroundColor: colors.gray[200],
-  },
-  borrowButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  borrowButtonTextDisabled: {
-    color: colors.gray[400],
-  },
-
-  // ── Error state ───────────────────────────────────────────────────────────────
-  errorEmoji: {
-    fontSize: 40,
-    marginBottom: 12,
-  },
-  errorTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.gray[900],
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  retryButton: {
-    backgroundColor: colors.primary[600],
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginBottom: 10,
-  },
-  retryButtonText: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  backButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-  },
-  backButtonText: {
-    color: colors.gray[500],
-    fontSize: 14,
+    lineHeight: 28,
   },
   ratingSummaryRow: {
     marginVertical: 4,
   },
   noRatingText: {
     fontSize: 12,
-    color: colors.gray[500],
   },
-  reviewsSectionHeader: {
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 10,
+    marginBottom: 16,
+  },
+  pricePill: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    backgroundColor: 'rgba(255, 138, 31, 0.12)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.md,
+  },
+  price: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: colors.accent[500],
+  },
+  priceUnit: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.accent[600],
+  },
+  depositChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radius.full,
+    borderWidth: 1,
+  },
+  depositText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.secondary[500],
+  },
+  divider: {
+    height: 1,
+    marginVertical: 16,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  description: {
+    fontSize: 15,
+    lineHeight: 23,
+  },
+
+  // ── Owner ─────────────────────────────────────────────────────────────────────
+  ownerHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
+  },
+  viewProfileText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  ownerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+  },
+  ownerAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ownerAvatarText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  ownerName: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  ownerAddress: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  // ── Reviews ───────────────────────────────────────────────────────────────────
+  reviewsSectionHeader: {
+    marginBottom: 10,
   },
   emptyReviewsText: {
     fontSize: 13,
-    color: colors.gray[500],
     fontStyle: 'italic',
     paddingVertical: 8,
   },
   reviewsList: {
-    gap: 12,
+    gap: 10,
   },
   reviewItem: {
-    backgroundColor: colors.gray[50],
-    borderRadius: 12,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.gray[200],
     padding: 12,
   },
   reviewHeaderRow: {
@@ -762,32 +848,26 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   reviewerAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  reviewerAvatarFallback: {
-    backgroundColor: colors.primary[100],
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
   reviewerAvatarText: {
-    color: colors.primary[700],
-    fontWeight: '700',
-    fontSize: 13,
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 12,
   },
   reviewerName: {
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.gray[900],
+    fontWeight: '700',
   },
   reviewDate: {
     fontSize: 11,
-    color: colors.gray[400],
   },
   reviewCommentText: {
     fontSize: 13,
-    color: colors.gray[700],
     lineHeight: 18,
     marginTop: 4,
   },
@@ -795,13 +875,92 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.gray[100],
-    borderRadius: 10,
+    borderRadius: radius.md,
     marginTop: 6,
   },
   loadMoreReviewsBtnText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.primary[600],
+    fontWeight: '700',
+  },
+
+  // ── Bottom Bar ────────────────────────────────────────────────────────────────
+  bottomBar: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    ...shadows.lg,
+  },
+  ownerActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  toggleButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+    backgroundColor: '#fee2e2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  deleteButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.danger,
+  },
+  borrowButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: radius.md,
+    paddingVertical: 14,
+    ...shadows.sm,
+  },
+  borrowButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+
+  // ── States ────────────────────────────────────────────────────────────────────
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: colors.primary[500],
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    marginBottom: 8,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  backButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  backButtonText: {
+    fontSize: 14,
   },
 });

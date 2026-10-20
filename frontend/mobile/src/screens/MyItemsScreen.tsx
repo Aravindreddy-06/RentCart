@@ -1,5 +1,10 @@
 /**
  * src/screens/MyItemsScreen.tsx (mobile)
+ * Displays items listed by the logged-in user:
+ * - Category badges with theme pairing
+ * - Orange price pills
+ * - Add and delete actions
+ * - Full dark theme support
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -16,14 +21,23 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import { AppStackParamList } from '../navigation/types';
 import { itemsService, Item } from '../services/items.service';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
+import {
+  colors,
+  radius,
+  shadows,
+  CATEGORY_THEMES,
+  CategoryKey,
+} from '../utils/colors';
 import { formatINR } from '../utils/currency';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'MyItems'>;
 
 export default function MyItemsScreen({ navigation }: Props) {
+  const { isDark, themeColors } = useTheme();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,70 +82,126 @@ export default function MyItemsScreen({ navigation }: Props) {
     ]);
   };
 
-  const renderItemCard = ({ item }: { item: Item }) => (
-    <View style={styles.card}>
-      <Image
-        source={{
-          uri:
-            item.images && item.images.length > 0
-              ? item.images[0]
-              : 'https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?auto=format&fit=crop&w=600&q=80',
-        }}
-        style={styles.cardImage}
-      />
-      <View style={styles.cardBody}>
-        <View style={styles.headerRow}>
-          <Text style={styles.categoryBadge}>{item.category}</Text>
+  const renderItemCard = ({ item }: { item: Item }) => {
+    const catKey = (item.category in CATEGORY_THEMES ? item.category : 'Other') as CategoryKey;
+    const catTheme = CATEGORY_THEMES[catKey];
+
+    return (
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: themeColors.surface,
+            borderColor: themeColors.border,
+          },
+        ]}
+      >
+        <Image
+          source={{
+            uri:
+              item.images && item.images.length > 0
+                ? item.images[0]
+                : 'https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?auto=format&fit=crop&w=600&q=80',
+          }}
+          style={styles.cardImage}
+        />
+        <View style={styles.cardBody}>
+          <View style={styles.headerRow}>
+            <View
+              style={[
+                styles.categoryBadge,
+                {
+                  backgroundColor: isDark ? catTheme.darkTint : catTheme.tint,
+                  borderColor: isDark ? catTheme.darkBorder : catTheme.border,
+                },
+              ]}
+            >
+              <Text style={[styles.categoryBadgeText, { color: catTheme.primary }]}>
+                {item.category}
+              </Text>
+            </View>
+            <Text
+              style={[
+                styles.statusText,
+                { color: item.isAvailable ? colors.success : colors.warning },
+              ]}
+            >
+              {item.isAvailable ? 'Available' : 'Borrowed'}
+            </Text>
+          </View>
+
           <Text
-            style={[
-              styles.statusText,
-              { color: item.isAvailable ? colors.success : colors.warning },
-            ]}
+            style={[styles.itemTitle, { color: themeColors.text }]}
+            numberOfLines={1}
           >
-            {item.isAvailable ? 'Available' : 'Borrowed'}
+            {item.title}
           </Text>
-        </View>
 
-        <Text style={styles.itemTitle}>{item.title}</Text>
-        <Text style={styles.price}>{formatINR(item.pricePerDay)} / day</Text>
+          <View style={styles.pricePill}>
+            <Text style={styles.pricePillAmount}>{formatINR(item.pricePerDay)}</Text>
+            <Text style={styles.pricePillUnit}>/ day</Text>
+          </View>
 
-        <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={styles.viewButton}
-            onPress={() => navigation.navigate('ItemDetail', { itemId: item.id })}
-          >
-            <Text style={styles.viewButtonText}>View Details</Text>
-          </TouchableOpacity>
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={[
+                styles.viewButton,
+                {
+                  backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[100],
+                },
+              ]}
+              onPress={() => navigation.navigate('ItemDetail', { itemId: item.id })}
+            >
+              <Text style={[styles.viewButtonText, { color: themeColors.text }]}>
+                View Details
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => handleDelete(item)}
-          >
-            <Text style={styles.deleteButtonText}>Delete</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleDelete(item)}
+            >
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      edges={['top']}
+    >
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: themeColors.surface,
+            borderBottomColor: themeColors.border,
+          },
+        ]}
+      >
         <View>
-          <Text style={styles.headerTitle}>My Listings</Text>
-          <Text style={styles.headerSubtitle}>Items you are sharing with neighbours</Text>
+          <Text style={[styles.headerTitle, { color: themeColors.text }]}>My Listings</Text>
+          <Text style={[styles.headerSubtitle, { color: themeColors.textMuted }]}>
+            Items you are sharing with neighbours
+          </Text>
         </View>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => navigation.navigate('CreateItem')}
+          onPress={() => navigation.navigate('AddItem')}
+          activeOpacity={0.8}
         >
-          <Text style={styles.addButtonText}>+ Add</Text>
+          <Ionicons name="add" size={16} color="#ffffff" />
+          <Text style={styles.addButtonText}>Add</Text>
         </TouchableOpacity>
       </View>
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary[600]} />
+          <ActivityIndicator size="large" color={colors.primary[500]} />
         </View>
       ) : (
         <FlatList
@@ -143,19 +213,30 @@ export default function MyItemsScreen({ navigation }: Props) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              colors={[colors.primary[600]]}
+              colors={[colors.primary[500]]}
+              tintColor={colors.primary[500]}
             />
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>🛠️</Text>
-              <Text style={styles.emptyTitle}>No listings yet</Text>
-              <Text style={styles.emptySubtitle}>
-                Got items lying around? List them to start sharing!
+              <View
+                style={[
+                  styles.emptyIconBg,
+                  { backgroundColor: isDark ? colors.dark.surfaceHover : colors.primary[50] },
+                ]}
+              >
+                <Ionicons name="cube-outline" size={36} color={colors.primary[500]} />
+              </View>
+              <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
+                No listings yet
+              </Text>
+              <Text style={[styles.emptySubtitle, { color: themeColors.textMuted }]}>
+                Got tools, kitchen gear, or electronics lying around? List them to start sharing!
               </Text>
               <TouchableOpacity
                 style={styles.createFirstButton}
-                onPress={() => navigation.navigate('CreateItem')}
+                onPress={() => navigation.navigate('AddItem')}
+                activeOpacity={0.85}
               >
                 <Text style={styles.createFirstText}>List Your First Item</Text>
               </TouchableOpacity>
@@ -170,35 +251,35 @@ export default function MyItemsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: colors.gray[900],
   },
   headerSubtitle: {
     fontSize: 12,
-    color: colors.gray[500],
+    marginTop: 2,
   },
   addButton: {
-    backgroundColor: colors.primary[600],
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.primary[500],
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: radius.md,
   },
   addButtonText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
   listContent: {
@@ -206,17 +287,15 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: radius.lg,
     overflow: 'hidden',
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    ...shadows.sm,
   },
   cardImage: {
-    width: 100,
+    width: 96,
     height: '100%',
-    backgroundColor: colors.gray[200],
   },
   cardBody: {
     flex: 1,
@@ -225,58 +304,75 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 4,
   },
   categoryBadge: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: colors.primary[700],
-    backgroundColor: colors.primary[50],
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+  },
+  categoryBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   statusText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   itemTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.gray[900],
-  },
-  price: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.primary[600],
-    marginVertical: 4,
+  },
+  pricePill: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    backgroundColor: 'rgba(255, 138, 31, 0.12)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+    alignSelf: 'flex-start',
+    marginVertical: 6,
+  },
+  pricePillAmount: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.accent[500],
+  },
+  pricePillUnit: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.accent[600],
+    marginLeft: 2,
   },
   actionRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     gap: 8,
-    marginTop: 6,
+    marginTop: 4,
   },
   viewButton: {
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: colors.gray[100],
+    paddingVertical: 5,
+    borderRadius: radius.sm,
   },
   viewButtonText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: colors.gray[700],
+    fontWeight: '700',
   },
   deleteButton: {
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: '#fef2f2',
+    paddingVertical: 5,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    backgroundColor: 'transparent',
   },
   deleteButtonText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.danger,
   },
   center: {
@@ -287,30 +383,36 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     paddingVertical: 60,
+    paddingHorizontal: 24,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 12,
+  emptyIconBg: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: colors.gray[800],
+    fontWeight: '800',
+    marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: colors.gray[500],
-    marginBottom: 16,
+    textAlign: 'center',
+    marginBottom: 18,
+    lineHeight: 18,
   },
   createFirstButton: {
-    backgroundColor: colors.primary[600],
+    backgroundColor: colors.primary[500],
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 11,
+    borderRadius: radius.md,
   },
   createFirstText: {
     color: '#ffffff',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });

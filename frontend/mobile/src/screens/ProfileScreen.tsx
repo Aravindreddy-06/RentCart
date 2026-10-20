@@ -1,11 +1,12 @@
 /**
  * src/screens/ProfileScreen.tsx (mobile)
- * Full profile management matching web features:
- * - Avatar upload with expo-image-picker
- * - Edit name, phone, address
- * - "Use my current location" with expo-location (handles permission denied gracefully)
- * - Change password form (min 8 chars, validates current password)
- * - Sign out
+ * Vibrant profile and settings:
+ * - Brand gradient banner behind large avatar
+ * - Stats row in coloured chips (items, rating, member since)
+ * - Appearance switcher card (System, Light, Dark)
+ * - Personal details with Indian phone input and GPS auto-fill
+ * - Change password section
+ * - Full dark mode support via useTheme
  */
 
 import React, { useState, useEffect } from 'react';
@@ -25,9 +26,20 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { useTheme, ThemeMode } from '../context/ThemeContext';
 import { usersService } from '../services/users.service';
-import { colors } from '../utils/colors';
+import { itemsService } from '../services/items.service';
+import {
+  colors,
+  gradients,
+  radius,
+  shadows,
+  getAvatarColor,
+  getInitials,
+} from '../utils/colors';
 import {
   cleanIndianPhoneInput,
   isIndianPhoneNumber,
@@ -36,6 +48,7 @@ import {
 
 export default function ProfileScreen() {
   const { user, logout, updateUser } = useAuth();
+  const { isDark, theme, setTheme, themeColors } = useTheme();
 
   // Profile fields state
   const [name, setName] = useState('');
@@ -45,6 +58,7 @@ export default function ProfileScreen() {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [itemCount, setItemCount] = useState<number>(0);
 
   // Status flags
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -63,7 +77,10 @@ export default function ProfileScreen() {
     let mounted = true;
     const loadProfile = async () => {
       try {
-        const data = await usersService.getMe();
+        const [data, myItems] = await Promise.all([
+          usersService.getMe(),
+          itemsService.getMyItems().catch(() => []),
+        ]);
         if (mounted) {
           setName(data.name || '');
           const isInd = isIndianPhoneNumber(data.phone);
@@ -73,10 +90,10 @@ export default function ProfileScreen() {
           setLatitude(data.latitude ?? null);
           setLongitude(data.longitude ?? null);
           setAvatarUri(data.avatarUrl ?? null);
+          setItemCount(myItems.length);
           await updateUser(data);
         }
       } catch {
-        // Fall back to cached user in context
         if (mounted && user) {
           setName(user.name || '');
           const isInd = isIndianPhoneNumber(user.phone);
@@ -158,50 +175,62 @@ export default function ProfileScreen() {
 
       const lat = Math.round(loc.coords.latitude * 100000) / 100000;
       const lng = Math.round(loc.coords.longitude * 100000) / 100000;
-
       setLatitude(lat);
       setLongitude(lng);
-      Alert.alert('Location Detected', `Coordinates set to ${lat}, ${lng}`);
-    } catch (err: any) {
-      Alert.alert('Location Error', err?.message || 'Failed to detect location.');
+
+      try {
+        const [geo] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+        if (geo) {
+          const parts = [geo.name, geo.street, geo.subregion || geo.district, geo.city]
+            .filter(Boolean)
+            .join(', ');
+          if (parts) setAddress(parts);
+        }
+      } catch {
+        // Reverse geocode optional
+      }
+
+      Alert.alert('Location Detected! 📍', `Coordinates updated to ${lat}, ${lng}.`);
+    } catch {
+      Alert.alert('Error', 'Unable to retrieve your current location.');
     } finally {
       setIsLocating(false);
     }
   };
 
-  // ── Save Profile ──────────────────────────────────────────────────────────
+  // ── Save Personal Details ─────────────────────────────────────────────────
   const handleSaveProfile = async () => {
     if (!name.trim()) {
-      Alert.alert('Validation Error', 'Name cannot be empty.');
+      Alert.alert('Validation Error', 'Full name is required.');
       return;
     }
 
-    let finalPhone: string | null = null;
-    if (phone.trim()) {
+    let formattedPhone = phone.trim();
+    if (formattedPhone) {
       if (isIndianPhone) {
-        if (!/^[6-9]\d{9}$/.test(phone.trim())) {
-          Alert.alert('Validation Error', 'Enter a valid 10-digit Indian mobile number');
+        if (formattedPhone.length !== 10) {
+          Alert.alert('Validation Error', 'Indian phone number must be 10 digits.');
           return;
         }
-        finalPhone = `+91${phone.trim()}`;
-      } else {
-        finalPhone = phone.trim();
+        formattedPhone = `+91${formattedPhone}`;
       }
+    } else {
+      formattedPhone = '';
     }
 
     setIsSavingProfile(true);
     try {
       const updated = await usersService.updateMe({
         name: name.trim(),
-        phone: finalPhone,
+        phone: formattedPhone || null,
         address: address.trim() || null,
-        latitude: latitude ?? null,
-        longitude: longitude ?? null,
+        latitude: latitude != null && !isNaN(latitude) ? latitude : null,
+        longitude: longitude != null && !isNaN(longitude) ? longitude : null,
       });
       await updateUser(updated);
-      Alert.alert('Success', 'Profile details saved successfully!');
+      Alert.alert('Saved! ✓', 'Your profile details have been saved.');
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Failed to save changes.');
+      Alert.alert('Save Failed', err?.response?.data?.message || 'Could not update profile.');
     } finally {
       setIsSavingProfile(false);
     }
@@ -213,8 +242,8 @@ export default function ProfileScreen() {
       Alert.alert('Validation Error', 'Please enter your current password.');
       return;
     }
-    if (newPassword.length < 8) {
-      Alert.alert('Validation Error', 'New password must be at least 8 characters long.');
+    if (!newPassword || newPassword.length < 8) {
+      Alert.alert('Validation Error', 'New password must be at least 8 characters.');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -225,18 +254,17 @@ export default function ProfileScreen() {
     setIsChangingPassword(true);
     try {
       await usersService.changePassword(currentPassword, newPassword);
-      Alert.alert('Success', 'Password changed successfully!');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      Alert.alert('Success', 'Your password has been changed.');
     } catch (err: any) {
-      Alert.alert('Password Error', err?.response?.data?.message || 'Failed to change password.');
+      Alert.alert('Password Error', err?.response?.data?.message || 'Could not update password.');
     } finally {
       setIsChangingPassword(false);
     }
   };
 
-  // ── Sign Out ──────────────────────────────────────────────────────────────
   const handleLogout = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out of RentCart?', [
       { text: 'Cancel', style: 'cancel' },
@@ -246,248 +274,532 @@ export default function ProfileScreen() {
 
   if (isLoadingProfile) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.primary[600]} />
-        <Text style={styles.loadingText}>Loading profile...</Text>
+      <SafeAreaView
+        style={[styles.centerContainer, { backgroundColor: themeColors.background }]}
+      >
+        <ActivityIndicator size="large" color={colors.primary[500]} />
+        <Text style={[styles.loadingText, { color: themeColors.textMuted }]}>
+          Loading profile...
+        </Text>
       </SafeAreaView>
     );
   }
 
+  const memberYear = user?.createdAt
+    ? new Date(user.createdAt).getFullYear()
+    : new Date().getFullYear();
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      edges={['top']}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Header Title */}
-          <View style={styles.titleSection}>
-            <Text style={styles.pageTitle}>Profile & Settings</Text>
-            <Text style={styles.pageSubtitle}>
-              Update your neighbourhood details and account security.
-            </Text>
-          </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* ── Gradient Banner with Avatar ──────────────────────────────── */}
+          <View style={styles.bannerContainer}>
+            <LinearGradient
+              colors={gradients.brand as unknown as [string, string, ...string[]]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.gradientBanner}
+            />
 
-          {/* ── Avatar Section ────────────────────────────────────────────── */}
-          <View style={styles.card}>
-            <View style={styles.avatarRow}>
+            {/* Overlapping Avatar */}
+            <View style={styles.avatarWrapper}>
               <TouchableOpacity
                 onPress={handlePickAvatar}
                 disabled={isUploadingAvatar}
                 style={styles.avatarTouchable}
+                activeOpacity={0.85}
               >
                 {avatarUri ? (
                   <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
                 ) : (
-                  <View style={styles.avatarPlaceholder}>
+                  <View
+                    style={[
+                      styles.avatarPlaceholder,
+                      { backgroundColor: getAvatarColor(name || 'Neighbor') },
+                    ]}
+                  >
                     <Text style={styles.avatarInitial}>
-                      {(name || 'U').charAt(0).toUpperCase()}
+                      {getInitials(name || 'Neighbor')}
                     </Text>
                   </View>
                 )}
+
                 {isUploadingAvatar ? (
                   <View style={styles.avatarOverlay}>
                     <ActivityIndicator size="small" color="#ffffff" />
                   </View>
                 ) : (
                   <View style={styles.cameraBadge}>
-                    <Text style={styles.cameraIcon}>📷</Text>
+                    <Ionicons name="camera" size={14} color="#ffffff" />
                   </View>
                 )}
               </TouchableOpacity>
 
-              <View style={styles.avatarTextContainer}>
-                <Text style={styles.profileName}>{name || 'Neighbour'}</Text>
-                <Text style={styles.profileEmail}>{user?.email}</Text>
-                <TouchableOpacity
-                  onPress={handlePickAvatar}
-                  disabled={isUploadingAvatar}
-                  style={styles.changePhotoButton}
-                >
-                  <Text style={styles.changePhotoText}>
-                    {isUploadingAvatar ? 'Uploading...' : 'Change Photo'}
-                  </Text>
-                </TouchableOpacity>
+              <Text style={[styles.profileName, { color: themeColors.text }]}>
+                {name || 'Neighbor'}
+              </Text>
+              <Text style={[styles.profileEmail, { color: themeColors.textMuted }]}>
+                {user?.email}
+              </Text>
+            </View>
+          </View>
+
+          {/* ── Stats Row in Coloured Chips ──────────────────────────────── */}
+          <View style={styles.statsRow}>
+            {/* Items Listed */}
+            <View
+              style={[
+                styles.statChip,
+                {
+                  backgroundColor: isDark ? 'rgba(15, 157, 138, 0.15)' : colors.primary[50],
+                  borderColor: isDark ? 'rgba(15, 157, 138, 0.3)' : colors.primary[100],
+                },
+              ]}
+            >
+              <Ionicons name="cube-outline" size={16} color={colors.primary[500]} />
+              <View>
+                <Text style={[styles.statValue, { color: colors.primary[600] }]}>
+                  {itemCount}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.primary[700] }]}>
+                  {itemCount === 1 ? 'Item' : 'Items'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Rating */}
+            <View
+              style={[
+                styles.statChip,
+                {
+                  backgroundColor: isDark ? 'rgba(245, 179, 1, 0.15)' : '#fef3c7',
+                  borderColor: isDark ? 'rgba(245, 179, 1, 0.3)' : '#fde68a',
+                },
+              ]}
+            >
+              <Ionicons name="star" size={16} color={colors.gold} />
+              <View>
+                <Text style={[styles.statValue, { color: '#b45309' }]}>
+                  {(user as any)?.rating ? (user as any).rating.toFixed(1) : '5.0'}
+                </Text>
+                <Text style={[styles.statLabel, { color: '#92400e' }]}>Rating</Text>
+              </View>
+            </View>
+
+            {/* Member Since */}
+            <View
+              style={[
+                styles.statChip,
+                {
+                  backgroundColor: isDark ? 'rgba(91, 91, 214, 0.15)' : colors.secondary[50],
+                  borderColor: isDark ? 'rgba(91, 91, 214, 0.3)' : colors.secondary[100],
+                },
+              ]}
+            >
+              <Ionicons name="calendar-outline" size={16} color={colors.secondary[500]} />
+              <View>
+                <Text style={[styles.statValue, { color: colors.secondary[500] }]}>
+                  {memberYear}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.secondary[600] }]}>Member</Text>
               </View>
             </View>
           </View>
 
+          {/* ── Appearance / Dark Mode Toggle ────────────────────────────── */}
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <View style={styles.cardHeaderRow}>
+              <Ionicons name="moon-outline" size={18} color={colors.primary[500]} />
+              <Text style={[styles.cardTitle, { color: themeColors.text }]}>Appearance</Text>
+            </View>
+
+            <View style={styles.themeToggleRow}>
+              {(['system', 'light', 'dark'] as ThemeMode[]).map((mode) => {
+                const isActive = theme === mode;
+                const iconMap: Record<ThemeMode, any> = {
+                  system: 'phone-portrait-outline',
+                  light: 'sunny-outline',
+                  dark: 'moon',
+                };
+                const labelMap: Record<ThemeMode, string> = {
+                  system: 'System',
+                  light: 'Light',
+                  dark: 'Dark',
+                };
+
+                return (
+                  <TouchableOpacity
+                    key={mode}
+                    style={[
+                      styles.themeModeBtn,
+                      {
+                        backgroundColor: isActive
+                          ? colors.primary[500]
+                          : isDark
+                          ? colors.dark.surfaceHover
+                          : colors.neutral[100],
+                        borderColor: isActive ? colors.primary[600] : themeColors.border,
+                      },
+                    ]}
+                    onPress={() => setTheme(mode)}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons
+                      name={iconMap[mode]}
+                      size={16}
+                      color={isActive ? '#ffffff' : themeColors.textMuted}
+                    />
+                    <Text
+                      style={[
+                        styles.themeModeLabel,
+                        {
+                          color: isActive ? '#ffffff' : themeColors.text,
+                          fontWeight: isActive ? '700' : '600',
+                        },
+                      ]}
+                    >
+                      {labelMap[mode]}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
           {/* ── Personal Details ──────────────────────────────────────────── */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Personal Details</Text>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <View style={styles.cardHeaderRow}>
+              <Ionicons name="person-outline" size={18} color={colors.primary[500]} />
+              <Text style={[styles.cardTitle, { color: themeColors.text }]}>
+                Personal Details
+              </Text>
+            </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name *</Text>
+              <Text style={[styles.label, { color: themeColors.text }]}>Full Name *</Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                    borderColor: themeColors.border,
+                    color: themeColors.text,
+                  },
+                ]}
                 value={name}
                 onChangeText={setName}
                 placeholder="Your full name"
-                placeholderTextColor={colors.gray[400]}
+                placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone Number</Text>
+              <Text style={[styles.label, { color: themeColors.text }]}>Phone Number</Text>
               {isIndianPhone ? (
-                <View style={styles.phoneInputRow}>
+                <View
+                  style={[
+                    styles.phoneInputRow,
+                    {
+                      backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                      borderColor: themeColors.border,
+                    },
+                  ]}
+                >
                   <View style={styles.phonePrefix}>
                     <Text style={styles.phonePrefixText}>+91</Text>
                   </View>
                   <TextInput
-                    style={styles.phoneTextInput}
+                    style={[styles.phoneTextInput, { color: themeColors.text }]}
                     value={phone}
                     onChangeText={(text) => setPhone(cleanIndianPhoneInput(text))}
                     placeholder="98765 43210"
-                    placeholderTextColor={colors.gray[400]}
+                    placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
                     keyboardType="numeric"
                     maxLength={10}
                   />
                 </View>
               ) : (
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                      borderColor: themeColors.border,
+                      color: themeColors.text,
+                    },
+                  ]}
                   value={phone}
                   onChangeText={setPhone}
                   placeholder="+44 7911 123456"
-                  placeholderTextColor={colors.gray[400]}
+                  placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
                   keyboardType="phone-pad"
                 />
               )}
-              <Text style={styles.helperText}>
+              <Text style={[styles.helperText, { color: themeColors.textMuted }]}>
                 {isIndianPhone
-                  ? 'Indian mobile number · Only visible to neighbours with APPROVED or ACTIVE rentals.'
-                  : 'International phone number · Only visible to neighbours with APPROVED or ACTIVE rentals.'}
+                  ? 'Indian mobile number · Visible to confirmed borrowers/lenders.'
+                  : 'International phone number · Visible to confirmed borrowers/lenders.'}
               </Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Street Address</Text>
+              <Text style={[styles.label, { color: themeColors.text }]}>Street Address</Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                    borderColor: themeColors.border,
+                    color: themeColors.text,
+                  },
+                ]}
                 value={address}
                 onChangeText={setAddress}
                 placeholder="e.g. Anna Nagar, Chennai"
-                placeholderTextColor={colors.gray[400]}
+                placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
               />
             </View>
 
             {/* Location Coordinates */}
-            <View style={styles.locationContainer}>
+            <View
+              style={[
+                styles.locationContainer,
+                {
+                  backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                  borderColor: themeColors.border,
+                },
+              ]}
+            >
               <View style={styles.locationHeader}>
                 <View>
-                  <Text style={styles.locationTitle}>📍 Home Location</Text>
-                  <Text style={styles.locationSubtitle}>
-                    Used to find nearby items when GPS is unavailable.
+                  <Text style={[styles.locationTitle, { color: themeColors.text }]}>
+                    📍 Neighbourhood Location
+                  </Text>
+                  <Text style={[styles.locationSubtitle, { color: themeColors.textMuted }]}>
+                    Used for nearby search when device GPS is idle.
                   </Text>
                 </View>
                 <TouchableOpacity
-                  style={styles.gpsButton}
+                  style={[
+                    styles.gpsButton,
+                    {
+                      backgroundColor: isDark ? 'rgba(15, 157, 138, 0.2)' : colors.primary[50],
+                      borderColor: isDark ? 'rgba(15, 157, 138, 0.4)' : colors.primary[100],
+                    },
+                  ]}
                   onPress={handleUseCurrentLocation}
                   disabled={isLocating}
                 >
                   {isLocating ? (
-                    <ActivityIndicator size="small" color={colors.primary[600]} />
+                    <ActivityIndicator size="small" color={colors.primary[500]} />
                   ) : (
-                    <Text style={styles.gpsButtonText}>🎯 GPS</Text>
+                    <Text style={[styles.gpsButtonText, { color: colors.primary[600] }]}>
+                      🎯 GPS
+                    </Text>
                   )}
                 </TouchableOpacity>
               </View>
 
               <View style={styles.coordsRow}>
                 <View style={styles.coordField}>
-                  <Text style={styles.coordLabel}>Latitude</Text>
+                  <Text style={[styles.coordLabel, { color: themeColors.textMuted }]}>
+                    Latitude
+                  </Text>
                   <TextInput
-                    style={styles.coordInput}
+                    style={[
+                      styles.coordInput,
+                      {
+                        backgroundColor: themeColors.surface,
+                        borderColor: themeColors.border,
+                        color: themeColors.text,
+                      },
+                    ]}
                     value={latitude != null ? String(latitude) : ''}
                     onChangeText={(t) => setLatitude(t ? parseFloat(t) : null)}
-                    placeholder="37.7749"
-                    placeholderTextColor={colors.gray[400]}
+                    placeholder="13.0827"
+                    placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
                     keyboardType="numeric"
                   />
                 </View>
                 <View style={styles.coordField}>
-                  <Text style={styles.coordLabel}>Longitude</Text>
+                  <Text style={[styles.coordLabel, { color: themeColors.textMuted }]}>
+                    Longitude
+                  </Text>
                   <TextInput
-                    style={styles.coordInput}
+                    style={[
+                      styles.coordInput,
+                      {
+                        backgroundColor: themeColors.surface,
+                        borderColor: themeColors.border,
+                        color: themeColors.text,
+                      },
+                    ]}
                     value={longitude != null ? String(longitude) : ''}
                     onChangeText={(t) => setLongitude(t ? parseFloat(t) : null)}
-                    placeholder="-122.4194"
-                    placeholderTextColor={colors.gray[400]}
+                    placeholder="80.2707"
+                    placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
                     keyboardType="numeric"
                   />
                 </View>
               </View>
             </View>
 
+            {/* Save Details CTA with Brand Gradient */}
             <TouchableOpacity
-              style={styles.saveButton}
               onPress={handleSaveProfile}
               disabled={isSavingProfile}
+              activeOpacity={0.85}
+              style={{ marginTop: 6 }}
             >
-              {isSavingProfile ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Text style={styles.saveButtonText}>Save Details</Text>
-              )}
+              <LinearGradient
+                colors={gradients.brand as unknown as [string, string, ...string[]]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.saveButton}
+              >
+                {isSavingProfile ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Save Details</Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </View>
 
           {/* ── Security & Change Password ───────────────────────────────── */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Change Password</Text>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <View style={styles.cardHeaderRow}>
+              <Ionicons name="shield-checkmark-outline" size={18} color={colors.primary[500]} />
+              <Text style={[styles.cardTitle, { color: themeColors.text }]}>
+                Change Password
+              </Text>
+            </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Current Password *</Text>
+              <Text style={[styles.label, { color: themeColors.text }]}>
+                Current Password *
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                    borderColor: themeColors.border,
+                    color: themeColors.text,
+                  },
+                ]}
                 secureTextEntry
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
                 placeholder="Enter current password"
-                placeholderTextColor={colors.gray[400]}
+                placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>New Password * (min 8 chars)</Text>
+              <Text style={[styles.label, { color: themeColors.text }]}>
+                New Password * (min 8 chars)
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                    borderColor: themeColors.border,
+                    color: themeColors.text,
+                  },
+                ]}
                 secureTextEntry
                 value={newPassword}
                 onChangeText={setNewPassword}
                 placeholder="At least 8 characters"
-                placeholderTextColor={colors.gray[400]}
+                placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Confirm New Password *</Text>
+              <Text style={[styles.label, { color: themeColors.text }]}>
+                Confirm New Password *
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                    borderColor: themeColors.border,
+                    color: themeColors.text,
+                  },
+                ]}
                 secureTextEntry
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Re-enter new password"
-                placeholderTextColor={colors.gray[400]}
+                placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
               />
             </View>
 
             <TouchableOpacity
-              style={styles.passwordButton}
+              style={[
+                styles.passwordButton,
+                {
+                  backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[100],
+                  borderColor: themeColors.border,
+                },
+              ]}
               onPress={handleChangePassword}
               disabled={isChangingPassword}
             >
               {isChangingPassword ? (
-                <ActivityIndicator size="small" color={colors.gray[700]} />
+                <ActivityIndicator size="small" color={colors.primary[500]} />
               ) : (
-                <Text style={styles.passwordButtonText}>Update Password</Text>
+                <Text style={[styles.passwordButtonText, { color: themeColors.text }]}>
+                  Update Password
+                </Text>
               )}
             </TouchableOpacity>
           </View>
 
           {/* ── Sign Out ─────────────────────────────────────────────────── */}
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="log-out-outline" size={18} color={colors.danger} />
             <Text style={styles.logoutText}>Sign Out</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -499,201 +811,207 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.gray[50],
     padding: 24,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: colors.gray[500],
   },
   scrollContent: {
-    padding: 16,
     paddingBottom: 40,
   },
-  titleSection: {
+
+  // ── Banner with Avatar ──────────────────────────────────────────────────────
+  bannerContainer: {
+    position: 'relative',
     marginBottom: 16,
   },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: colors.gray[900],
+  gradientBanner: {
+    height: 100,
+    width: '100%',
   },
-  pageSubtitle: {
-    fontSize: 13,
-    color: colors.gray[500],
-    marginTop: 4,
-  },
-
-  // ── Card ────────────────────────────────────────────────────────────────────
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.gray[900],
-    marginBottom: 14,
-  },
-
-  // ── Avatar ──────────────────────────────────────────────────────────────────
-  avatarRow: {
-    flexDirection: 'row',
+  avatarWrapper: {
     alignItems: 'center',
-    gap: 16,
+    marginTop: -44,
   },
   avatarTouchable: {
     position: 'relative',
   },
   avatarImage: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: colors.gray[100],
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    borderWidth: 3,
+    borderColor: '#ffffff',
   },
   avatarPlaceholder: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: colors.primary[100],
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#ffffff',
   },
   avatarInitial: {
     fontSize: 32,
     fontWeight: '800',
-    color: colors.primary[700],
+    color: '#ffffff',
   },
   avatarOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 38,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cameraBadge: {
     position: 'absolute',
-    bottom: -2,
-    right: -2,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    width: 24,
-    height: 24,
+    bottom: 0,
+    right: 0,
+    backgroundColor: colors.primary[500],
+    borderRadius: 14,
+    width: 28,
+    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
-  },
-  cameraIcon: {
-    fontSize: 12,
-  },
-  avatarTextContainer: {
-    flex: 1,
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    ...shadows.sm,
   },
   profileName: {
     fontSize: 18,
-    fontWeight: '700',
-    color: colors.gray[900],
+    fontWeight: '800',
+    marginTop: 8,
   },
   profileEmail: {
     fontSize: 13,
-    color: colors.gray[500],
-    marginBottom: 8,
-  },
-  changePhotoButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.gray[100],
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  changePhotoText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.gray[700],
+    marginTop: 2,
   },
 
-  // ── Form Inputs ─────────────────────────────────────────────────────────────
-  inputGroup: {
+  // ── Stats Row ───────────────────────────────────────────────────────────────
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  statChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  statValue: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
+  // ── Section Cards ───────────────────────────────────────────────────────────
+  card: {
+    borderRadius: radius.lg,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    ...shadows.sm,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 14,
   },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+
+  // ── Theme Mode Buttons ──────────────────────────────────────────────────────
+  themeToggleRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  themeModeBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  themeModeLabel: {
+    fontSize: 13,
+  },
+
+  // ── Inputs ──────────────────────────────────────────────────────────────────
+  inputGroup: {
+    marginBottom: 12,
+  },
   label: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
-    color: colors.gray[700],
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
     marginBottom: 6,
   },
   input: {
-    backgroundColor: colors.gray[50],
-    borderColor: colors.gray[200],
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: radius.md,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 11,
     fontSize: 14,
-    color: colors.gray[900],
   },
   phoneInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.gray[50],
     borderWidth: 1,
-    borderColor: colors.gray[200],
-    borderRadius: 12,
+    borderRadius: radius.md,
     overflow: 'hidden',
   },
   phonePrefix: {
-    backgroundColor: colors.gray[100],
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 11,
     borderRightWidth: 1,
-    borderRightColor: colors.gray[200],
+    borderRightColor: colors.border,
+    backgroundColor: 'rgba(15, 157, 138, 0.08)',
   },
   phonePrefixText: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.gray[700],
+    color: colors.primary[600],
   },
   phoneTextInput: {
     flex: 1,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 11,
     fontSize: 14,
-    color: colors.gray[900],
   },
   helperText: {
     fontSize: 11,
-    color: colors.gray[400],
     marginTop: 4,
+    lineHeight: 15,
   },
 
   // ── Location ────────────────────────────────────────────────────────────────
   locationContainer: {
-    backgroundColor: colors.gray[50],
-    borderColor: colors.gray[200],
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: radius.md,
     padding: 12,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   locationHeader: {
     flexDirection: 'row',
@@ -704,89 +1022,81 @@ const styles = StyleSheet.create({
   locationTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.gray[800],
   },
   locationSubtitle: {
     fontSize: 11,
-    color: colors.gray[400],
-    marginTop: 2,
+    marginTop: 1,
   },
   gpsButton: {
-    backgroundColor: '#ffffff',
-    borderColor: colors.gray[300],
-    borderWidth: 1,
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingVertical: 5,
+    borderRadius: radius.sm,
+    borderWidth: 1,
   },
   gpsButtonText: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.primary[700],
   },
   coordsRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   coordField: {
     flex: 1,
   },
   coordLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.gray[500],
+    fontSize: 11,
+    fontWeight: '600',
     marginBottom: 4,
   },
   coordInput: {
-    backgroundColor: '#ffffff',
-    borderColor: colors.gray[200],
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     paddingHorizontal: 10,
-    paddingVertical: 8,
-    fontSize: 12,
-    color: colors.gray[800],
+    paddingVertical: 7,
+    fontSize: 13,
   },
 
   // ── Buttons ─────────────────────────────────────────────────────────────────
   saveButton: {
-    backgroundColor: colors.primary[600],
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: radius.md,
     alignItems: 'center',
-    marginTop: 4,
+    justifyContent: 'center',
+    ...shadows.sm,
   },
   saveButtonText: {
     color: '#ffffff',
-    fontWeight: '700',
     fontSize: 15,
+    fontWeight: '800',
   },
   passwordButton: {
-    backgroundColor: colors.gray[100],
-    borderColor: colors.gray[300],
     borderWidth: 1,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: radius.md,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 4,
   },
   passwordButtonText: {
-    color: colors.gray[800],
-    fontWeight: '700',
     fontSize: 14,
+    fontWeight: '700',
   },
   logoutButton: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#fca5a5',
-    borderWidth: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    justifyContent: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.danger,
+    marginTop: 8,
   },
   logoutText: {
-    color: '#dc2626',
-    fontWeight: '700',
+    color: colors.danger,
     fontSize: 15,
+    fontWeight: '800',
   },
 });

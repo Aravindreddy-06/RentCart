@@ -457,8 +457,6 @@ export function ChatsPage() {
     });
   });
 
-  // Last sent message by user (to render Seen label)
-  const lastMyMessage = [...messages].reverse().find((m) => m.senderId === user?.id);
 
   return (
     <div className="min-h-screen bg-neutral-100 flex flex-col h-screen overflow-hidden">
@@ -686,7 +684,7 @@ export function ChatsPage() {
                     if (item.type === 'date') {
                       return (
                         <div key={item.key} className="flex items-center justify-center my-3">
-                          <span className="text-[11px] font-medium text-neutral-400 bg-neutral-200/60 px-2.5 py-0.5 rounded-full">
+                          <span className="text-[11px] font-bold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-500/15 border border-primary-200/60 dark:border-primary-500/30 px-3 py-0.5 rounded-full shadow-2xs">
                             {item.label}
                           </span>
                         </div>
@@ -703,21 +701,21 @@ export function ChatsPage() {
                           className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
                         >
                           <div
-                            className={`max-w-[85%] sm:max-w-[70%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words shadow-2xs ${
+                            className={`max-w-[85%] sm:max-w-[70%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words shadow-2xs ${
                               isMine
-                                ? 'bg-primary-600 text-white rounded-tr-xs'
-                                : 'bg-white text-neutral-900 border border-neutral-200/80 rounded-tl-xs'
+                                ? 'bg-gradient-to-r from-primary-600 to-[#12C2A8] text-white rounded-tr-xs shadow-xs'
+                                : 'bg-white dark:bg-dark-card text-neutral-900 dark:text-dark-text border border-neutral-200/80 dark:border-dark-border rounded-tl-xs'
                             }`}
                           >
                             {msg.body}
                           </div>
                           <div className="flex items-center gap-1.5 mt-1 px-1">
-                            <span className="text-[10px] text-neutral-400">
+                            <span className="text-[10px] text-neutral-400 dark:text-dark-muted font-medium">
                               {formatMessageTime(msg.createdAt)}
                             </span>
-                            {isMine && lastMyMessage?.id === msg.id && msg.readAt && (
-                              <span className="text-[10px] font-semibold text-primary-600 flex items-center gap-0.5">
-                                ✓✓ Seen
+                            {isMine && (
+                              <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 flex items-center gap-0.5">
+                                {msg.readAt ? '✓✓ Seen' : '✓ Sent'}
                               </span>
                             )}
                           </div>
@@ -729,7 +727,7 @@ export function ChatsPage() {
                       const pending = item.pending;
                       return (
                         <div key={item.key} className="flex flex-col items-end">
-                          <div className="max-w-[85%] sm:max-w-[70%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words shadow-2xs bg-primary-500/70 text-white rounded-tr-xs">
+                          <div className="max-w-[85%] sm:max-w-[70%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words shadow-2xs bg-gradient-to-r from-primary-600/70 to-[#12C2A8]/70 text-white rounded-tr-xs">
                             {pending.body}
                           </div>
                           <div className="flex items-center gap-1 mt-1 px-1">
@@ -739,11 +737,11 @@ export function ChatsPage() {
                                 Sending...
                               </span>
                             ) : (
-                              <span className="text-[10px] text-red-500 flex items-center gap-1">
+                              <span className="text-[10px] text-danger flex items-center gap-1">
                                 <span>Failed to send.</span>
                                 <button
                                   onClick={() => handleRetry(pending)}
-                                  className="underline font-semibold"
+                                  className="underline font-bold"
                                 >
                                   Retry
                                 </button>
@@ -762,15 +760,15 @@ export function ChatsPage() {
 
               {/* Chat Input Bar / Read-only Notice */}
               {isReadOnly ? (
-                <div className="p-4 bg-amber-50/80 border-t border-amber-200/60 text-center">
-                  <p className="text-xs font-semibold text-amber-900 flex items-center justify-center gap-1.5">
+                <div className="p-4 bg-amber-50/80 dark:bg-amber-500/10 border-t border-amber-200/60 dark:border-amber-500/20 text-center">
+                  <p className="text-xs font-semibold text-amber-900 dark:text-amber-300 flex items-center justify-center gap-1.5">
                     <span>🔒</span>
                     <span>{readOnlyReason || 'This conversation is read-only.'}</span>
                   </p>
                 </div>
               ) : (
-                <div className="p-3 bg-white border-t border-neutral-100">
-                  <div className="flex items-end gap-2 bg-neutral-50 rounded-2xl p-2 border border-neutral-200/80 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
+                <div className="p-3 bg-white dark:bg-dark-surface border-t border-neutral-100 dark:border-dark-border">
+                  <div className="flex items-center gap-2 bg-neutral-50 dark:bg-dark-card rounded-2xl p-2 border border-neutral-200/80 dark:border-dark-border focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all">
                     <textarea
                       ref={textareaRef}
                       value={inputText}
@@ -779,16 +777,17 @@ export function ChatsPage() {
                       placeholder="Write a message... (Enter to send, Shift+Enter for new line)"
                       maxLength={1000}
                       rows={1}
-                      className="flex-1 bg-transparent border-0 focus:ring-0 text-sm text-neutral-900 placeholder-neutral-400 resize-none max-h-32 px-1 py-1 leading-normal"
+                      className="flex-1 bg-transparent border-0 focus:ring-0 text-sm text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-500 resize-none max-h-32 px-2 py-1 leading-normal outline-none"
                     />
 
+                    {/* Round Send Button in Teal */}
                     <button
                       onClick={handleSend}
                       disabled={!inputText.trim()}
-                      className="p-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-2xs flex-shrink-0"
+                      className="w-9 h-9 rounded-full bg-primary-500 hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center shadow-sm hover:shadow-glow transition-all active:scale-95 flex-shrink-0"
                       title="Send message"
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-4 h-4 translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -798,7 +797,7 @@ export function ChatsPage() {
                       </svg>
                     </button>
                   </div>
-                  <div className="flex justify-between items-center px-1 mt-1 text-[10px] text-neutral-400">
+                  <div className="flex justify-between items-center px-1 mt-1 text-[10px] text-neutral-400 dark:text-dark-muted font-medium">
                     <span>Press Enter to send</span>
                     <span>{inputText.length}/1000</span>
                   </div>

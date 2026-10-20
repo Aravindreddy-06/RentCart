@@ -1,17 +1,41 @@
 /**
  * src/components/Navbar.tsx (web)
- * Universal navigation bar across RentCart web.
- * Includes notification bell with unread badge, interactive dropdown (latest 10),
- * mark all as read, and 30s polling / tab focus refresh.
+ * Universal navigation bar across RentCart web:
+ * - Subtle gradient / glassmorphism with teal active underline
+ * - Dark mode toggle button (Sun/Moon)
+ * - Notification bell with unread badge and dropdown with colored category circles
+ * - Consistent avatar initials & color palette
+ * - 30s polling / tab focus refresh
  */
 
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { rentalsService } from '../services/rentals.service';
 import { notificationsService } from '../services/notifications.service';
 import { chatsService } from '../services/chats.service';
 import type { NotificationItem, NotificationType } from '../services/notifications.service';
+import { getAvatarColor, getInitials } from '../utils/colors';
+import {
+  Sun,
+  Moon,
+  Bell,
+  Plus,
+  LogOut,
+  ClipboardList,
+  CheckCircle2,
+  XCircle,
+  Ban,
+  Rocket,
+  PackageCheck,
+  MessageSquare,
+  Star,
+  MapPin,
+  Car,
+  PartyPopper,
+  ChevronRight,
+} from 'lucide-react';
 
 function formatTimeAgo(isoString: string): string {
   const date = new Date(isoString);
@@ -28,37 +52,74 @@ function formatTimeAgo(isoString: string): string {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-function getBadgeIcon(type: NotificationType): { icon: string; bg: string } {
+function getNotificationBadge(type: NotificationType) {
   switch (type) {
     case 'RENTAL_REQUESTED':
-      return { icon: '📋', bg: 'bg-amber-100 text-amber-800' };
+      return {
+        icon: <ClipboardList className="w-4 h-4 text-amber-600 dark:text-amber-400" />,
+        bg: 'bg-amber-100 dark:bg-amber-500/20 border-amber-200 dark:border-amber-500/30',
+      };
     case 'RENTAL_APPROVED':
-      return { icon: '✅', bg: 'bg-emerald-100 text-emerald-800' };
+      return {
+        icon: <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
+        bg: 'bg-emerald-100 dark:bg-emerald-500/20 border-emerald-200 dark:border-emerald-500/30',
+      };
     case 'RENTAL_REJECTED':
-      return { icon: '❌', bg: 'bg-rose-100 text-rose-800' };
+      return {
+        icon: <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />,
+        bg: 'bg-red-100 dark:bg-red-500/20 border-red-200 dark:border-red-500/30',
+      };
     case 'RENTAL_CANCELLED':
-      return { icon: '🚫', bg: 'bg-neutral-100 text-neutral-700' };
+      return {
+        icon: <Ban className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />,
+        bg: 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700',
+      };
     case 'RENTAL_ACTIVATED':
-      return { icon: '🚀', bg: 'bg-blue-100 text-blue-800' };
+      return {
+        icon: <Rocket className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
+        bg: 'bg-blue-100 dark:bg-blue-500/20 border-blue-200 dark:border-blue-500/30',
+      };
     case 'RENTAL_RETURNED':
-      return { icon: '📦', bg: 'bg-teal-100 text-teal-800' };
+      return {
+        icon: <PackageCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
+        bg: 'bg-indigo-100 dark:bg-indigo-500/20 border-indigo-200 dark:border-indigo-500/30',
+      };
     case 'NEW_MESSAGE':
-      return { icon: '💬', bg: 'bg-primary-100 text-primary-800' };
+      return {
+        icon: <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
+        bg: 'bg-blue-100 dark:bg-blue-500/20 border-blue-200 dark:border-blue-500/30',
+      };
     case 'REVIEW_RECEIVED':
-      return { icon: '⭐', bg: 'bg-amber-100 text-amber-800' };
+      return {
+        icon: <Star className="w-4 h-4 text-[#F5B301] fill-[#F5B301]" />,
+        bg: 'bg-amber-100 dark:bg-amber-500/20 border-amber-200 dark:border-amber-500/30',
+      };
     case 'PICKUP_LOCATION_SHARED':
-      return { icon: '📍', bg: 'bg-emerald-100 text-emerald-800' };
+      return {
+        icon: <MapPin className="w-4 h-4 text-primary-600 dark:text-primary-400" />,
+        bg: 'bg-primary-100 dark:bg-primary-500/20 border-primary-200 dark:border-primary-500/30',
+      };
     case 'BORROWER_ON_THE_WAY':
-      return { icon: '🚗', bg: 'bg-blue-100 text-blue-800' };
+      return {
+        icon: <Car className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
+        bg: 'bg-blue-100 dark:bg-blue-500/20 border-blue-200 dark:border-blue-500/30',
+      };
     case 'BORROWER_ARRIVED':
-      return { icon: '🎉', bg: 'bg-emerald-100 text-emerald-800' };
+      return {
+        icon: <PartyPopper className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
+        bg: 'bg-emerald-100 dark:bg-emerald-500/20 border-emerald-200 dark:border-emerald-500/30',
+      };
     default:
-      return { icon: '🔔', bg: 'bg-neutral-100 text-neutral-700' };
+      return {
+        icon: <Bell className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />,
+        bg: 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700',
+      };
   }
 }
 
 export function Navbar() {
   const { user, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const [pendingCount, setPendingCount] = useState<number>(0);
@@ -100,46 +161,41 @@ export function Navbar() {
     const handleFocus = () => {
       fetchCounts();
     };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchCounts();
-      }
-    };
-
     window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       mounted = false;
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [user]);
 
   // Close dropdown on outside click
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
       }
-    }
+    };
     if (dropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('mousedown', handleOutsideClick);
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleOutsideClick);
     };
   }, [dropdownOpen]);
 
   const loadDropdownNotifications = async () => {
     setDropdownLoading(true);
     try {
-      const data = await notificationsService.getNotifications({ limit: 10 });
-      setDropdownNotifications(data.notifications);
+      const [res, count] = await Promise.all([
+        notificationsService.getNotifications({ page: 1, limit: 10 }),
+        notificationsService.getUnreadCount(),
+      ]);
+      setDropdownNotifications(res.notifications);
+      setUnreadCount(count);
     } catch {
-      // Silently ignore
+      // Ignore
     } finally {
       setDropdownLoading(false);
     }
@@ -188,25 +244,28 @@ export function Navbar() {
   };
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+    `relative inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold transition-all ${
       isActive
-        ? 'bg-primary-50 text-primary-700 font-semibold'
-        : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+        ? 'text-primary-600 dark:text-primary-400 after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:bg-primary-500 after:rounded-full'
+        : 'text-neutral-600 dark:text-dark-muted hover:text-neutral-900 dark:hover:text-dark-text hover:bg-neutral-100/70 dark:hover:bg-dark-card rounded-xl'
     }`;
 
+  const avatarColor = getAvatarColor(user?.name);
+  const initials = getInitials(user?.name);
+
   return (
-    <header className="bg-white border-b border-neutral-200 sticky top-0 z-30 shadow-sm backdrop-blur-md bg-white/95">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+    <header className="bg-white/95 dark:bg-dark-surface/95 border-b border-neutral-200 dark:border-dark-border sticky top-0 z-30 shadow-xs backdrop-blur-md transition-colors duration-200">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
         {/* Left: Brand */}
         <div className="flex items-center gap-6">
           <NavLink to="/home" className="flex items-center gap-2.5 flex-shrink-0 group">
-            <div className="w-9 h-9 rounded-xl bg-primary-500 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary-600 to-[#12C2A8] flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
               <svg
                 className="w-5 h-5 text-white"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
-                strokeWidth={1.5}
+                strokeWidth={2}
               >
                 <path
                   strokeLinecap="round"
@@ -215,11 +274,13 @@ export function Navbar() {
                 />
               </svg>
             </div>
-            <span className="font-bold text-neutral-900 text-lg tracking-tight">RentCart</span>
+            <span className="font-extrabold text-neutral-900 dark:text-dark-text text-xl tracking-tight">
+              Rent<span className="text-primary-500">Cart</span>
+            </span>
           </NavLink>
 
-          {/* Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1.5">
+          {/* Navigation Links with Teal Underline */}
+          <nav className="hidden md:flex items-center gap-1">
             <NavLink to="/home" className={navLinkClass}>
               Explore
             </NavLink>
@@ -249,22 +310,29 @@ export function Navbar() {
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle dark mode"
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="p-2 rounded-xl text-neutral-600 dark:text-dark-muted hover:text-neutral-900 dark:hover:text-dark-text hover:bg-neutral-100 dark:hover:bg-dark-card transition-colors active:scale-95"
+          >
+            {isDark ? (
+              <Sun className="w-5 h-5 text-amber-400" />
+            ) : (
+              <Moon className="w-5 h-5 text-neutral-600" />
+            )}
+          </button>
+
+          {/* Add Item Button */}
           <button
             onClick={() => navigate('/items/new')}
             className="btn-primary text-xs sm:text-sm px-3.5 py-2 shadow-sm"
             title="List an item for rent"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            <span>Add Item</span>
+            <Plus className="w-4 h-4" />
+            <span className="hidden xs:inline">Add Item</span>
           </button>
 
           {/* Notification Bell Dropdown Container */}
@@ -274,28 +342,16 @@ export function Navbar() {
               aria-label="Notifications"
               className={`relative p-2 rounded-xl transition-all ${
                 dropdownOpen
-                  ? 'bg-primary-50 text-primary-700'
-                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                  ? 'bg-primary-50 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
+                  : 'text-neutral-600 dark:text-dark-muted hover:text-neutral-900 dark:hover:text-dark-text hover:bg-neutral-100 dark:hover:bg-dark-card'
               }`}
               title="Notifications"
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.75}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
-                />
-              </svg>
+              <Bell className="w-5 h-5" />
 
-              {/* Unread Badge */}
+              {/* Unread Badge (Red) */}
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white animate-pulse shadow-xs">
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center border-2 border-white dark:border-dark-surface animate-pulse shadow-xs">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
@@ -303,13 +359,13 @@ export function Navbar() {
 
             {/* Dropdown Menu */}
             {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-neutral-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-dark-surface rounded-2xl shadow-xl border border-neutral-200 dark:border-dark-border overflow-hidden z-50 animate-fade-in">
                 {/* Dropdown Header */}
-                <div className="p-3.5 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/70">
+                <div className="p-3.5 border-b border-neutral-100 dark:border-dark-border flex items-center justify-between bg-neutral-50/70 dark:bg-dark-card/50">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-neutral-900 text-sm">Notifications</span>
+                    <span className="font-bold text-neutral-900 dark:text-dark-text text-sm">Notifications</span>
                     {unreadCount > 0 && (
-                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-primary-100 text-primary-800">
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300">
                         {unreadCount} new
                       </span>
                     )}
@@ -318,7 +374,7 @@ export function Navbar() {
                     <button
                       onClick={handleMarkAllRead}
                       disabled={markingAll}
-                      className="text-xs font-semibold text-primary-600 hover:text-primary-700 disabled:opacity-50"
+                      className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline disabled:opacity-50"
                     >
                       {markingAll ? 'Marking…' : 'Mark all as read'}
                     </button>
@@ -326,40 +382,42 @@ export function Navbar() {
                 </div>
 
                 {/* Dropdown Body */}
-                <div className="max-h-[360px] overflow-y-auto divide-y divide-neutral-100">
+                <div className="max-h-[360px] overflow-y-auto divide-y divide-neutral-100 dark:divide-dark-border">
                   {dropdownLoading ? (
                     <div className="p-4 space-y-3">
                       {[1, 2, 3].map((i) => (
                         <div key={i} className="animate-pulse flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-neutral-200" />
+                          <div className="w-8 h-8 rounded-lg bg-neutral-200 dark:bg-dark-card" />
                           <div className="flex-1 space-y-1.5">
-                            <div className="h-3.5 bg-neutral-200 rounded w-1/2" />
-                            <div className="h-3 bg-neutral-100 rounded w-3/4" />
+                            <div className="h-3.5 bg-neutral-200 dark:bg-dark-card rounded w-1/2" />
+                            <div className="h-3 bg-neutral-100 dark:bg-dark-card/50 rounded w-3/4" />
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : dropdownNotifications.length === 0 ? (
                     <div className="p-8 text-center">
-                      <div className="text-2xl mb-1">🔔</div>
-                      <p className="text-xs font-semibold text-neutral-800">No notifications yet</p>
-                      <p className="text-[11px] text-neutral-500 mt-0.5">
+                      <div className="w-12 h-12 mx-auto mb-2 rounded-2xl bg-neutral-100 dark:bg-dark-card flex items-center justify-center text-xl text-neutral-400">
+                        🔔
+                      </div>
+                      <p className="text-xs font-semibold text-neutral-800 dark:text-dark-text">No notifications yet</p>
+                      <p className="text-[11px] text-neutral-500 dark:text-dark-muted mt-0.5">
                         You will be notified when someone rents your items.
                       </p>
                     </div>
                   ) : (
                     dropdownNotifications.map((n) => {
-                      const badge = getBadgeIcon(n.type);
+                      const badge = getNotificationBadge(n.type);
                       return (
                         <div
                           key={n.id}
                           onClick={() => handleNotificationClick(n)}
-                          className={`p-3.5 transition-colors cursor-pointer flex items-start gap-3 hover:bg-neutral-50 ${
-                            !n.isRead ? 'bg-primary-50/40' : 'bg-white'
+                          className={`p-3.5 transition-colors cursor-pointer flex items-start gap-3 hover:bg-neutral-50 dark:hover:bg-dark-card/60 ${
+                            !n.isRead ? 'bg-primary-50/40 dark:bg-primary-500/10' : 'bg-transparent'
                           }`}
                         >
                           <div
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm border ${badge.bg}`}
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm border shadow-xs ${badge.bg}`}
                           >
                             {badge.icon}
                           </div>
@@ -369,19 +427,21 @@ export function Navbar() {
                               <span
                                 className={`text-xs truncate ${
                                   !n.isRead
-                                    ? 'font-bold text-neutral-900'
-                                    : 'font-semibold text-neutral-700'
+                                    ? 'font-bold text-neutral-900 dark:text-dark-text'
+                                    : 'font-semibold text-neutral-700 dark:text-dark-muted'
                                 }`}
                               >
                                 {n.title}
                               </span>
-                              <span className="text-[10px] text-neutral-400 flex-shrink-0">
+                              <span className="text-[10px] text-neutral-400 dark:text-dark-muted flex-shrink-0">
                                 {formatTimeAgo(n.createdAt)}
                               </span>
                             </div>
                             <p
                               className={`text-xs mt-0.5 line-clamp-2 ${
-                                !n.isRead ? 'text-neutral-800 font-medium' : 'text-neutral-500'
+                                !n.isRead
+                                  ? 'text-neutral-800 dark:text-neutral-200 font-medium'
+                                  : 'text-neutral-500 dark:text-dark-muted'
                               }`}
                             >
                               {n.body}
@@ -389,7 +449,7 @@ export function Navbar() {
                           </div>
 
                           {!n.isRead && (
-                            <div className="w-2 h-2 rounded-full bg-primary-600 flex-shrink-0 mt-1.5" />
+                            <div className="w-2 h-2 rounded-full bg-primary-600 dark:bg-primary-400 flex-shrink-0 mt-1.5" />
                           )}
                         </div>
                       );
@@ -398,16 +458,14 @@ export function Navbar() {
                 </div>
 
                 {/* Dropdown Footer */}
-                <div className="p-2.5 bg-neutral-50/80 border-t border-neutral-100 text-center">
+                <div className="p-2.5 bg-neutral-50/80 dark:bg-dark-card/50 border-t border-neutral-100 dark:border-dark-border text-center">
                   <Link
                     to="/notifications"
                     onClick={() => setDropdownOpen(false)}
-                    className="text-xs font-bold text-primary-600 hover:text-primary-700 inline-flex items-center gap-1"
+                    className="text-xs font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 inline-flex items-center gap-1"
                   >
                     <span>View all notifications</span>
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>
@@ -418,21 +476,24 @@ export function Navbar() {
           {user && (
             <NavLink
               to="/profile"
-              className="hidden sm:flex items-center gap-2 pl-2 border-l border-neutral-200 hover:opacity-85 transition-opacity"
+              className="hidden sm:flex items-center gap-2 pl-2 border-l border-neutral-200 dark:border-dark-border hover:opacity-85 transition-opacity"
               title="My Profile"
             >
               {user.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
                   alt={user.name}
-                  className="w-8 h-8 rounded-full border border-neutral-200 object-cover"
+                  className="w-8 h-8 rounded-full border border-neutral-200 dark:border-dark-border object-cover"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center font-bold text-primary-700 text-xs">
-                  {user.name.charAt(0).toUpperCase()}
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-xs shadow-xs"
+                  style={{ backgroundColor: avatarColor }}
+                >
+                  {initials}
                 </div>
               )}
-              <span className="text-sm font-medium text-neutral-800 max-w-[120px] truncate">
+              <span className="text-sm font-semibold text-neutral-800 dark:text-dark-text max-w-[120px] truncate">
                 {user.name.split(' ')[0]}
               </span>
             </NavLink>
@@ -440,29 +501,17 @@ export function Navbar() {
 
           <button
             onClick={handleLogout}
-            className="btn-ghost text-xs sm:text-sm px-2.5 py-2 text-neutral-500 hover:text-red-600"
+            className="btn-ghost text-xs sm:text-sm px-2.5 py-2 text-neutral-500 dark:text-dark-muted hover:text-danger dark:hover:text-danger"
             title="Logout"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
-              />
-            </svg>
+            <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
       </div>
 
       {/* Mobile nav bar below header */}
-      <div className="flex md:hidden border-t border-neutral-100 px-4 py-2 bg-neutral-50 justify-around">
+      <div className="flex md:hidden border-t border-neutral-100 dark:border-dark-border px-4 py-2 bg-neutral-50 dark:bg-dark-card justify-around">
         <NavLink to="/home" className={navLinkClass}>
           Explore
         </NavLink>
@@ -488,7 +537,7 @@ export function Navbar() {
         <NavLink to="/notifications" className={navLinkClass}>
           <span>Alerts</span>
           {unreadCount > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white">
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-danger text-white">
               {unreadCount}
             </span>
           )}

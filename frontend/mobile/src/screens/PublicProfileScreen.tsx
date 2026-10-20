@@ -1,8 +1,11 @@
 /**
  * src/screens/PublicProfileScreen.tsx (mobile)
- * Public view of another user's profile.
- * Displays name, avatar, general area, member since, item count, and available listings.
- * Never exposes email, phone, or exact coordinates.
+ * Public view of another user's profile:
+ * - Brand gradient banner behind large avatar
+ * - Stats row in coloured chips (items, rating, member since)
+ * - Section cards for available listings and reviews
+ * - Consistent avatar initials with palette colors
+ * - Full dark mode support via useTheme
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -19,12 +22,22 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { AppStackParamList } from '../navigation/types';
 import { usersService, type PublicUserProfile } from '../services/users.service';
 import { reviewsService, type Review } from '../services/reviews.service';
 import { StarRating } from '../components/StarRating';
 import { type Item } from '../services/items.service';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
+import {
+  colors,
+  gradients,
+  radius,
+  shadows,
+  getAvatarColor,
+  getInitials,
+} from '../utils/colors';
 import { formatINR } from '../utils/currency';
 import { formatDateDMY } from '../utils/date';
 
@@ -32,6 +45,7 @@ type Props = NativeStackScreenProps<AppStackParamList, 'PublicProfile'>;
 
 export default function PublicProfileScreen({ route, navigation }: Props) {
   const { userId } = route.params;
+  const { isDark, themeColors } = useTheme();
 
   const [profile, setProfile] = useState<PublicUserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +67,7 @@ export default function PublicProfileScreen({ route, navigation }: Props) {
       if (page === 1) {
         setReviews(res.reviews);
       } else {
-        setReviews(prev => [...prev, ...res.reviews]);
+        setReviews((prev) => [...prev, ...res.reviews]);
       }
       setReviewsPage(page);
       setTotalReviews(res.pagination.total);
@@ -95,35 +109,44 @@ export default function PublicProfileScreen({ route, navigation }: Props) {
     }
   };
 
-  const formatDate = (isoString: string) => {
+  const formatMemberYear = (isoString?: string) => {
     try {
+      if (!isoString) return 'Member';
       const d = new Date(isoString);
-      return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short' });
+      return String(d.getFullYear());
     } catch {
-      return 'Recently';
+      return 'Member';
     }
   };
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.primary[600]} />
-        <Text style={styles.loadingText}>Loading profile...</Text>
+      <SafeAreaView
+        style={[styles.centerContainer, { backgroundColor: themeColors.background }]}
+      >
+        <ActivityIndicator size="large" color={colors.primary[500]} />
+        <Text style={[styles.loadingText, { color: themeColors.textMuted }]}>
+          Loading profile...
+        </Text>
       </SafeAreaView>
     );
   }
 
   if (error || !profile) {
     return (
-      <SafeAreaView style={styles.centerContainer}>
-        <Text style={styles.errorEmoji}>⚠️</Text>
-        <Text style={styles.errorTitle}>User Not Found</Text>
-        <Text style={styles.errorSubtitle}>{error || 'Unable to retrieve this user.'}</Text>
+      <SafeAreaView
+        style={[styles.centerContainer, { backgroundColor: themeColors.background }]}
+      >
+        <Ionicons name="alert-circle" size={48} color={colors.danger} style={{ marginBottom: 12 }} />
+        <Text style={[styles.errorTitle, { color: themeColors.text }]}>User Not Found</Text>
+        <Text style={[styles.errorSubtitle, { color: themeColors.textMuted }]}>
+          {error || 'Unable to retrieve this user.'}
+        </Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchProfile}>
           <Text style={styles.retryButtonText}>Try Again</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+          <Text style={[styles.backButtonText, { color: themeColors.textMuted }]}>Go Back</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -133,90 +156,202 @@ export default function PublicProfileScreen({ route, navigation }: Props) {
     const imageUrl = item.images?.[0] || 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400';
     return (
       <TouchableOpacity
-        style={styles.itemCard}
+        style={[
+          styles.itemCard,
+          {
+            backgroundColor: themeColors.surface,
+            borderColor: themeColors.border,
+          },
+        ]}
         activeOpacity={0.85}
         onPress={() => navigation.navigate('ItemDetail', { itemId: item.id })}
       >
         <Image source={{ uri: imageUrl }} style={styles.itemImage} />
         <View style={styles.itemBody}>
           <Text style={styles.itemCategory}>{item.category}</Text>
-          <Text style={styles.itemTitle} numberOfLines={1}>
+          <Text
+            style={[styles.itemTitle, { color: themeColors.text }]}
+            numberOfLines={1}
+          >
             {item.title}
           </Text>
-          <Text style={styles.itemPrice}>
-            {formatINR(item.pricePerDay)} <Text style={styles.itemPriceUnit}>/ day</Text>
-          </Text>
+          <View style={styles.pricePill}>
+            <Text style={styles.pricePillAmount}>{formatINR(item.pricePerDay)}</Text>
+            <Text style={styles.pricePillUnit}>/ day</Text>
+          </View>
         </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      edges={['top']}
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary[600]]} />}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary[500]]}
+            tintColor={colors.primary[500]}
+          />
+        }
       >
-        {/* Profile Card Header */}
-        <View style={styles.headerCard}>
-          {profile.avatarUrl ? (
-            <Image source={{ uri: profile.avatarUrl }} style={styles.avatarImage} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarInitial}>{profile.name.charAt(0).toUpperCase()}</Text>
-            </View>
-          )}
+        {/* ── Gradient Banner with Avatar ──────────────────────────────── */}
+        <View style={styles.bannerContainer}>
+          <LinearGradient
+            colors={gradients.brand as unknown as [string, string, ...string[]]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gradientBanner}
+          />
 
-          <Text style={styles.name}>{profile.name}</Text>
-          <View style={styles.verifiedBadge}>
-            <Text style={styles.verifiedText}>✓ Verified Neighbour</Text>
-          </View>
-
-          {/* Rating Summary */}
-          <View style={styles.ratingSummaryRow}>
-            {profile.reviewCount && profile.reviewCount > 0 ? (
-              <StarRating
-                rating={profile.averageRating || 0}
-                size="sm"
-                showValue
-                reviewCount={profile.reviewCount}
-              />
+          <View style={styles.avatarWrapper}>
+            {profile.avatarUrl ? (
+              <Image source={{ uri: profile.avatarUrl }} style={styles.avatarImage} />
             ) : (
-              <Text style={styles.noRatingText}>No reviews yet</Text>
-            )}
-          </View>
-
-          <View style={styles.metaRow}>
-            {profile.addressArea && (
-              <View style={styles.metaItem}>
-                <Text style={styles.metaIcon}>📍</Text>
-                <Text style={styles.metaText}>{profile.addressArea}</Text>
+              <View
+                style={[
+                  styles.avatarPlaceholder,
+                  { backgroundColor: getAvatarColor(profile.name) },
+                ]}
+              >
+                <Text style={styles.avatarInitial}>
+                  {getInitials(profile.name)}
+                </Text>
               </View>
             )}
-            <View style={styles.metaItem}>
-              <Text style={styles.metaIcon}>🗓️</Text>
-              <Text style={styles.metaText}>Joined {formatDate(profile.memberSince)}</Text>
+
+            <Text style={[styles.name, { color: themeColors.text }]}>{profile.name}</Text>
+
+            <View style={styles.verifiedBadge}>
+              <Ionicons name="shield-checkmark" size={13} color="#16a34a" />
+              <Text style={styles.verifiedText}>Verified Neighbour</Text>
             </View>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaIcon}>📦</Text>
-              <Text style={styles.metaText}>
-                {profile.itemCount} {profile.itemCount === 1 ? 'item' : 'items'}
-              </Text>
+
+            {/* Rating Summary */}
+            <View style={styles.ratingSummaryRow}>
+              {profile.reviewCount && profile.reviewCount > 0 ? (
+                <StarRating
+                  rating={profile.averageRating || 0}
+                  size="sm"
+                  showValue
+                  reviewCount={profile.reviewCount}
+                />
+              ) : (
+                <Text style={[styles.noRatingText, { color: themeColors.textMuted }]}>
+                  No reviews yet
+                </Text>
+              )}
             </View>
           </View>
         </View>
 
-        {/* Listings Section */}
+        {/* ── Stats Row in Coloured Chips ──────────────────────────────── */}
+        <View style={styles.statsRow}>
+          {/* Items Listed */}
+          <View
+            style={[
+              styles.statChip,
+              {
+                backgroundColor: isDark ? 'rgba(15, 157, 138, 0.15)' : colors.primary[50],
+                borderColor: isDark ? 'rgba(15, 157, 138, 0.3)' : colors.primary[100],
+              },
+            ]}
+          >
+            <Ionicons name="cube-outline" size={16} color={colors.primary[500]} />
+            <View>
+              <Text style={[styles.statValue, { color: colors.primary[600] }]}>
+                {profile.itemCount}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.primary[700] }]}>
+                {profile.itemCount === 1 ? 'Item' : 'Items'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Rating */}
+          <View
+            style={[
+              styles.statChip,
+              {
+                backgroundColor: isDark ? 'rgba(245, 179, 1, 0.15)' : '#fef3c7',
+                borderColor: isDark ? 'rgba(245, 179, 1, 0.3)' : '#fde68a',
+              },
+            ]}
+          >
+            <Ionicons name="star" size={16} color={colors.gold} />
+            <View>
+              <Text style={[styles.statValue, { color: '#b45309' }]}>
+                {profile.averageRating ? profile.averageRating.toFixed(1) : '5.0'}
+              </Text>
+              <Text style={[styles.statLabel, { color: '#92400e' }]}>Rating</Text>
+            </View>
+          </View>
+
+          {/* Member Since */}
+          <View
+            style={[
+              styles.statChip,
+              {
+                backgroundColor: isDark ? 'rgba(91, 91, 214, 0.15)' : colors.secondary[50],
+                borderColor: isDark ? 'rgba(91, 91, 214, 0.3)' : colors.secondary[100],
+              },
+            ]}
+          >
+            <Ionicons name="calendar-outline" size={16} color={colors.secondary[500]} />
+            <View>
+              <Text style={[styles.statValue, { color: colors.secondary[500] }]}>
+                {formatMemberYear(profile.memberSince)}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.secondary[600] }]}>Member</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ── Area Location Notice ─────────────────────────────────────── */}
+        {profile.addressArea && (
+          <View
+            style={[
+              styles.areaBadge,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <Ionicons name="location-outline" size={16} color={colors.primary[500]} />
+            <Text style={[styles.areaText, { color: themeColors.text }]}>
+              {profile.addressArea}
+            </Text>
+          </View>
+        )}
+
+        {/* ── Listings Section ─────────────────────────────────────────── */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
             Items by {profile.name.split(' ')[0]} ({profile.items.length})
           </Text>
         </View>
 
         {profile.items.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyIcon}>📦</Text>
-            <Text style={styles.emptyText}>No items currently listed by this neighbour.</Text>
+          <View
+            style={[
+              styles.emptyCard,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <Ionicons name="cube-outline" size={36} color={colors.primary[500]} style={{ marginBottom: 6 }} />
+            <Text style={[styles.emptyText, { color: themeColors.textMuted }]}>
+              No items currently listed by this neighbour.
+            </Text>
           </View>
         ) : (
           <FlatList
@@ -229,38 +364,64 @@ export default function PublicProfileScreen({ route, navigation }: Props) {
           />
         )}
 
-        {/* Reviews Received Section */}
+        {/* ── Reviews Received Section ─────────────────────────────────── */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
             Reviews Received ({totalReviews || profile.reviewCount || 0})
           </Text>
         </View>
 
         {isLoadingReviews ? (
-          <ActivityIndicator color={colors.primary[600]} style={{ marginVertical: 16 }} />
+          <ActivityIndicator color={colors.primary[500]} style={{ marginVertical: 16 }} />
         ) : reviews.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyIcon}>⭐</Text>
-            <Text style={styles.emptyText}>No reviews received yet.</Text>
+          <View
+            style={[
+              styles.emptyCard,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <Ionicons name="star-outline" size={36} color={colors.gold} style={{ marginBottom: 6 }} />
+            <Text style={[styles.emptyText, { color: themeColors.textMuted }]}>
+              No reviews received yet.
+            </Text>
           </View>
         ) : (
           <View style={styles.reviewsList}>
             {reviews.map((rev) => (
-              <View key={rev.id} style={styles.reviewItem}>
+              <View
+                key={rev.id}
+                style={[
+                  styles.reviewItem,
+                  {
+                    backgroundColor: themeColors.surface,
+                    borderColor: themeColors.border,
+                  },
+                ]}
+              >
                 <View style={styles.reviewHeaderRow}>
                   <View style={styles.reviewerInfo}>
                     {rev.author.avatarUrl ? (
                       <Image source={{ uri: rev.author.avatarUrl }} style={styles.reviewerAvatar} />
                     ) : (
-                      <View style={[styles.reviewerAvatar, styles.reviewerAvatarFallback]}>
+                      <View
+                        style={[
+                          styles.reviewerAvatar,
+                          { backgroundColor: getAvatarColor(rev.author.name) },
+                        ]}
+                      >
                         <Text style={styles.reviewerAvatarText}>
-                          {rev.author.name.charAt(0).toUpperCase()}
+                          {getInitials(rev.author.name)}
                         </Text>
                       </View>
                     )}
                     <View>
-                      <Text style={styles.reviewerName}>{rev.author.name}</Text>
-                      <Text style={styles.reviewDate}>
+                      <Text style={[styles.reviewerName, { color: themeColors.text }]}>
+                        {rev.author.name}
+                      </Text>
+                      <Text style={[styles.reviewDate, { color: themeColors.textMuted }]}>
                         {formatDateDMY(rev.createdAt)}
                       </Text>
                     </View>
@@ -268,21 +429,30 @@ export default function PublicProfileScreen({ route, navigation }: Props) {
                   <StarRating rating={rev.rating} size="sm" />
                 </View>
                 {rev.comment ? (
-                  <Text style={styles.reviewCommentText}>{rev.comment}</Text>
+                  <Text style={[styles.reviewCommentText, { color: themeColors.text }]}>
+                    {rev.comment}
+                  </Text>
                 ) : null}
               </View>
             ))}
 
             {reviews.length < totalReviews && (
               <TouchableOpacity
-                style={styles.loadMoreReviewsBtn}
+                style={[
+                  styles.loadMoreReviewsBtn,
+                  {
+                    backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[100],
+                  },
+                ]}
                 onPress={handleLoadMoreReviews}
                 disabled={isLoadingMoreReviews}
               >
                 {isLoadingMoreReviews ? (
-                  <ActivityIndicator size="small" color={colors.primary[600]} />
+                  <ActivityIndicator size="small" color={colors.primary[500]} />
                 ) : (
-                  <Text style={styles.loadMoreReviewsBtnText}>Load more reviews</Text>
+                  <Text style={[styles.loadMoreReviewsBtnText, { color: colors.primary[500] }]}>
+                    Load more reviews
+                  </Text>
                 )}
               </TouchableOpacity>
             )}
@@ -296,45 +466,35 @@ export default function PublicProfileScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: colors.gray[50],
   },
   scrollContent: {
-    padding: 16,
     paddingBottom: 40,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: colors.gray[500],
-  },
-  errorEmoji: {
-    fontSize: 40,
-    marginBottom: 12,
   },
   errorTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: colors.gray[900],
+    fontWeight: '800',
     marginBottom: 6,
   },
   errorSubtitle: {
     fontSize: 14,
-    color: colors.gray[500],
     textAlign: 'center',
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: colors.primary[600],
+    backgroundColor: colors.primary[500],
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: radius.md,
     marginBottom: 10,
   },
   retryButtonText: {
@@ -346,135 +506,150 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   backButtonText: {
-    color: colors.gray[500],
     fontSize: 14,
   },
 
-  // ── Header Card ─────────────────────────────────────────────────────────────
-  headerCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 20,
+  // ── Banner with Avatar ──────────────────────────────────────────────────────
+  bannerContainer: {
+    position: 'relative',
+    marginBottom: 16,
+  },
+  gradientBanner: {
+    height: 100,
+    width: '100%',
+  },
+  avatarWrapper: {
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    marginBottom: 20,
+    marginTop: -44,
   },
   avatarImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     borderWidth: 3,
     borderColor: '#ffffff',
-    backgroundColor: colors.gray[100],
-    marginBottom: 12,
   },
   avatarPlaceholder: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: colors.primary[100],
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    borderWidth: 3,
+    borderColor: '#ffffff',
   },
   avatarInitial: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '800',
-    color: colors.primary[700],
+    color: '#ffffff',
   },
   name: {
     fontSize: 20,
     fontWeight: '800',
-    color: colors.gray[900],
-    marginBottom: 6,
+    marginTop: 8,
+    marginBottom: 4,
   },
   verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: '#ecfdf5',
     borderColor: '#a7f3d0',
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 3,
-    borderRadius: 12,
-    marginBottom: 16,
+    borderRadius: radius.full,
+    marginBottom: 6,
   },
   verifiedText: {
-    color: '#047857',
     fontSize: 11,
+    color: '#065f46',
     fontWeight: '700',
   },
-  metaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray[100],
-    paddingTop: 14,
-    width: '100%',
+  ratingSummaryRow: {
+    marginVertical: 2,
   },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  metaIcon: {
-    fontSize: 13,
-  },
-  metaText: {
+  noRatingText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: colors.gray[600],
   },
 
-  // ── Section ─────────────────────────────────────────────────────────────────
+  // ── Stats Row ───────────────────────────────────────────────────────────────
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  statChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  statValue: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  areaBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginHorizontal: 16,
+    padding: 12,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  areaText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // ── Listings Section ────────────────────────────────────────────────────────
   sectionHeader: {
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    marginBottom: 10,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: colors.gray[900],
+    fontWeight: '800',
   },
   emptyCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 32,
+    marginHorizontal: 16,
+    borderRadius: radius.lg,
+    padding: 24,
     alignItems: 'center',
-  },
-  emptyIcon: {
-    fontSize: 32,
-    marginBottom: 8,
+    justifyContent: 'center',
+    borderWidth: 1,
+    marginBottom: 16,
   },
   emptyText: {
     fontSize: 13,
-    color: colors.gray[500],
     textAlign: 'center',
   },
-
-  // ── Grid Items ──────────────────────────────────────────────────────────────
   columnWrapper: {
-    justifyContent: 'space-between',
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    gap: 12,
+    marginBottom: 16,
   },
   itemCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    width: '48%',
+    flex: 1,
+    borderRadius: radius.lg,
+    borderWidth: 1,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    ...shadows.sm,
   },
   itemImage: {
     width: '100%',
-    height: 120,
-    backgroundColor: colors.gray[100],
+    height: 110,
   },
   itemBody: {
     padding: 10,
@@ -482,43 +657,45 @@ const styles = StyleSheet.create({
   itemCategory: {
     fontSize: 10,
     fontWeight: '700',
-    color: colors.primary[600],
+    color: colors.primary[500],
     textTransform: 'uppercase',
     marginBottom: 2,
   },
   itemTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.gray[900],
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  itemPrice: {
-    fontSize: 14,
+  pricePill: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    backgroundColor: 'rgba(255, 138, 31, 0.12)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+    alignSelf: 'flex-start',
+  },
+  pricePillAmount: {
+    fontSize: 13,
     fontWeight: '800',
-    color: colors.primary[700],
+    color: colors.accent[500],
   },
-  itemPriceUnit: {
+  pricePillUnit: {
     fontSize: 10,
-    fontWeight: '500',
-    color: colors.gray[400],
+    fontWeight: '600',
+    color: colors.accent[600],
+    marginLeft: 2,
   },
-  ratingSummaryRow: {
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  noRatingText: {
-    fontSize: 12,
-    color: colors.gray[500],
-  },
+
+  // ── Reviews List ────────────────────────────────────────────────────────────
   reviewsList: {
-    gap: 12,
+    paddingHorizontal: 16,
+    gap: 10,
   },
   reviewItem: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.gray[200],
-    padding: 14,
+    padding: 12,
   },
   reviewHeaderRow: {
     flexDirection: 'row',
@@ -532,32 +709,26 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   reviewerAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  reviewerAvatarFallback: {
-    backgroundColor: colors.primary[100],
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
   reviewerAvatarText: {
-    color: colors.primary[700],
-    fontWeight: '700',
-    fontSize: 13,
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 12,
   },
   reviewerName: {
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.gray[900],
+    fontWeight: '700',
   },
   reviewDate: {
     fontSize: 11,
-    color: colors.gray[400],
   },
   reviewCommentText: {
     fontSize: 13,
-    color: colors.gray[700],
     lineHeight: 18,
     marginTop: 4,
   },
@@ -565,13 +736,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.gray[100],
-    borderRadius: 10,
-    marginTop: 6,
+    borderRadius: radius.md,
+    marginTop: 4,
   },
   loadMoreReviewsBtnText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.primary[600],
+    fontWeight: '700',
   },
 });

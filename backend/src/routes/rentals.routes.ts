@@ -8,6 +8,7 @@ import * as rentalsController from '../controllers/rentals.controller';
 import * as reviewsController from '../controllers/reviews.controller';
 import * as messagesController from '../controllers/messages.controller';
 import { authenticate } from '../middlewares/auth.middleware';
+import { handoverVerifyRateLimiter } from '../middlewares/handoverRateLimit.middleware';
 
 const router = Router();
 
@@ -41,6 +42,15 @@ router.post('/:id/tracking/stop', authenticate, rentalsController.stopTracking);
 router.post('/:id/tracking/arrived', authenticate, rentalsController.markArrived);
 router.get('/:id/tracking', authenticate, rentalsController.getTracking);
 
+// Handover PIN
+router.get('/:id/handover-pin', authenticate, rentalsController.getHandoverPin);
+router.post(
+  '/:id/handover/verify',
+  authenticate,
+  handoverVerifyRateLimiter(),
+  rentalsController.verifyHandover,
+);
+
 // Lifecycle transitions
 router.patch('/:id/approve', authenticate, rentalsController.approveRental);
 router.patch('/:id/reject', authenticate, rentalsController.rejectRental);
@@ -49,3 +59,4 @@ router.patch('/:id/activate', authenticate, rentalsController.activateRental);
 router.patch('/:id/return', authenticate, rentalsController.returnRental);
 
 export default router;
+

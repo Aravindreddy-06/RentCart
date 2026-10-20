@@ -1,14 +1,16 @@
 /**
  * src/components/StarRating.tsx (mobile)
  * Reusable StarRating component for React Native:
+ * - Gold for stars: #F5B301
  * - Display mode (read-only fractional or integer rating with optional numerical/count labels)
  * - Input mode (interactive tappable 1-5 star selector)
- * Uses standard styling and clean design tokens.
+ * - Dark mode support
  */
 
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
 
 export interface StarRatingProps {
   /** Mode: 'display' for showing rating, 'input' for selecting rating */
@@ -48,6 +50,7 @@ export function StarRating({
   disabled = false,
   style,
 }: StarRatingProps) {
+  const { isDark, themeColors } = useTheme();
   const triggerChange = onChange || onRatingChange;
 
   // Size configurations
@@ -57,6 +60,8 @@ export function StarRating({
     md: { fontSize: 24, gap: 4, textFontSize: 14 },
     lg: { fontSize: 34, gap: 8, textFontSize: 16 },
   }[size];
+
+  const emptyStarColor = isDark ? colors.dark.border : '#E5E9EE';
 
   if (mode === 'input') {
     const currentRating = value ?? rating ?? 0;
@@ -83,7 +88,7 @@ export function StarRating({
                   styles.starGlyph,
                   {
                     fontSize: sizeConfig.fontSize,
-                    color: isFilled ? '#f59e0b' : '#d1d5db',
+                    color: isFilled ? colors.gold : emptyStarColor,
                   },
                 ]}
               >
@@ -114,7 +119,7 @@ export function StarRating({
                 styles.starGlyph,
                 {
                   fontSize: sizeConfig.fontSize,
-                  color: isFilled ? '#f59e0b' : '#e5e7eb',
+                  color: isFilled ? colors.gold : emptyStarColor,
                 },
               ]}
             >
@@ -131,7 +136,7 @@ export function StarRating({
             <Text
               style={[
                 styles.valueText,
-                { fontSize: sizeConfig.textFontSize },
+                { fontSize: sizeConfig.textFontSize, color: themeColors.text },
               ]}
             >
               {effectiveRating > 0 ? effectiveRating.toFixed(1) : '0.0'}
@@ -141,7 +146,7 @@ export function StarRating({
             <Text
               style={[
                 styles.countText,
-                { fontSize: sizeConfig.textFontSize },
+                { fontSize: sizeConfig.textFontSize, color: themeColors.textMuted },
               ]}
             >
               ({reviewCount})
@@ -174,10 +179,8 @@ const styles = StyleSheet.create({
   },
   valueText: {
     fontWeight: '700',
-    color: colors.gray[800],
   },
   countText: {
     fontWeight: '500',
-    color: colors.gray[500],
   },
 });

@@ -9,6 +9,13 @@ import { Prisma, RentalStatus, NotificationType } from '@prisma/client';
 import { createNotification } from './notifications.service';
 import { stopTrackingOnStatusChange } from './tracking.service';
 import { CURRENCY } from '../config/constants';
+import {
+  generateHandoverPin,
+  hashHandoverPin,
+  encryptHandoverPin,
+  decryptHandoverPin,
+  verifyPinConstantTime,
+} from '../utils/handoverPin';
 
 export class ValidationError extends Error {
   statusCode = 400;
@@ -39,6 +46,26 @@ export class ConflictError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'ConflictError';
+  }
+}
+
+export class LockedError extends Error {
+  statusCode = 429;
+  retryAfterSeconds: number;
+  constructor(retryAfterSeconds: number, message = 'PIN verification is locked. Please try again later.') {
+    super(message);
+    this.name = 'LockedError';
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
+export class WrongPinError extends Error {
+  statusCode = 400;
+  attemptsLeft: number;
+  constructor(attemptsLeft: number, message = 'Incorrect PIN.') {
+    super(message);
+    this.name = 'WrongPinError';
+    this.attemptsLeft = attemptsLeft;
   }
 }
 
@@ -152,6 +179,14 @@ export function sanitizeRentalForUser(rental: any, currentUserId: string) {
       }),
     };
   }
+
+  // Ensure PIN fields and sensitive handover data are never leaked in rental details or lists
+  delete (sanitized as any).handoverPinHash;
+  delete (sanitized as any).handoverPinEnc;
+  delete (sanitized as any).handoverPinCreatedAt;
+  delete (sanitized as any).handoverPinAttempts;
+  delete (sanitized as any).handoverPinLockedUntil;
+  delete (sanitized as any).handoverVerifiedAt;
 
   return sanitized;
 }
@@ -409,6 +444,11 @@ export async function approveRental(
           throw new ConflictError('Dates conflict with an existing approved or active rental');
         }
 
+        const pin = generateHandoverPin();
+        const handoverPinHash = hashHandoverPin(pin);
+        const handoverPinEnc = encryptHandoverPin(pin);
+        const handoverPinCreatedAt = new Date();
+
         return tx.rental.update({
           where: { id: rental.id },
           data: {
@@ -419,6 +459,11 @@ export async function approveRental(
             pickupNote,
             pickupTimeFrom,
             pickupTimeTo,
+            handoverPinHash,
+            handoverPinEnc,
+            handoverPinCreatedAt,
+            handoverPinAttempts: 0,
+            handoverPinLockedUntil: null,
           },
           include: rentalInclude,
         });
@@ -452,6 +497,19 @@ export async function approveRental(
       );
     } catch (notifErr) {
       console.error('Failed to create pickup location shared notification:', notifErr);
+    }
+
+    try {
+      await createNotification(
+        updated.borrowerId,
+        NotificationType.HANDOVER_PIN_READY,
+        'Pickup PIN Ready',
+        'Your pickup PIN is ready. Open the rental to view it.',
+        { rentalId: updated.id, itemId: updated.itemId },
+        ownerId,
+      );
+    } catch (notifErr) {
+      console.error('Failed to create handover pin ready notification:', notifErr);
     }
 
     return sanitizeRentalForUser(updated, ownerId);
@@ -582,6 +640,11 @@ export async function rejectRental(rentalId: string, ownerId: string, ownerNote?
     data: {
       status: RentalStatus.REJECTED,
       ownerNote: ownerNote?.trim() || null,
+      handoverPinHash: null,
+      handoverPinEnc: null,
+      handoverPinCreatedAt: null,
+      handoverPinAttempts: 0,
+      handoverPinLockedUntil: null,
     },
     include: rentalInclude,
   });
@@ -624,7 +687,14 @@ export async function cancelRental(rentalId: string, borrowerId: string) {
 
   const updated = await prisma.rental.update({
     where: { id: rental.id },
-    data: { status: RentalStatus.CANCELLED },
+    data: {
+      status: RentalStatus.CANCELLED,
+      handoverPinHash: null,
+      handoverPinEnc: null,
+      handoverPinCreatedAt: null,
+      handoverPinAttempts: 0,
+      handoverPinLockedUntil: null,
+    },
     include: rentalInclude,
   });
 
@@ -646,7 +716,11 @@ export async function cancelRental(rentalId: string, borrowerId: string) {
   return sanitizeRentalForUser(updated, borrowerId);
 }
 
-export async function activateRental(rentalId: string, ownerId: string) {
+export async function activateRental(
+  rentalId: string,
+  ownerId: string,
+  confirmWithoutPin?: boolean,
+) {
   const rental = await prisma.rental.findUnique({
     where: { id: rentalId },
     include: { item: true },
@@ -663,9 +737,22 @@ export async function activateRental(rentalId: string, ownerId: string) {
     );
   }
 
+  if (!confirmWithoutPin) {
+    throw new ValidationError(
+      'Confirmation required: pass confirmWithoutPin: true to activate without a PIN',
+    );
+  }
+
   const updated = await prisma.rental.update({
     where: { id: rental.id },
-    data: { status: RentalStatus.ACTIVE },
+    data: {
+      status: RentalStatus.ACTIVE,
+      handoverPinHash: null,
+      handoverPinEnc: null,
+      handoverPinCreatedAt: null,
+      handoverPinAttempts: 0,
+      handoverPinLockedUntil: null,
+    },
     include: rentalInclude,
   });
 
@@ -682,6 +769,173 @@ export async function activateRental(rentalId: string, ownerId: string) {
     );
   } catch (notifErr) {
     console.error('Failed to create rental activated notification:', notifErr);
+  }
+
+  return sanitizeRentalForUser(updated, ownerId);
+}
+
+export async function getHandoverPin(rentalId: string, currentUserId: string) {
+  const rental = await prisma.rental.findUnique({
+    where: { id: rentalId },
+    include: { item: true },
+  });
+
+  if (!rental) {
+    throw new NotFoundError('Rental not found');
+  }
+
+  if (rental.borrowerId !== currentUserId) {
+    throw new ForbiddenError('Only the borrower can view the handover PIN');
+  }
+
+  if (rental.status !== RentalStatus.APPROVED) {
+    throw new ConflictError('Handover PIN is only available for APPROVED rentals');
+  }
+
+  let pin: string;
+  let createdAt: Date;
+
+  if (!rental.handoverPinEnc || !rental.handoverPinHash) {
+    // Lazy generation for existing approved rentals
+    pin = generateHandoverPin();
+    const hash = hashHandoverPin(pin);
+    const enc = encryptHandoverPin(pin);
+    createdAt = new Date();
+
+    await prisma.rental.update({
+      where: { id: rental.id },
+      data: {
+        handoverPinHash: hash,
+        handoverPinEnc: enc,
+        handoverPinCreatedAt: createdAt,
+        handoverPinAttempts: 0,
+        handoverPinLockedUntil: null,
+      },
+    });
+  } else {
+    pin = decryptHandoverPin(rental.handoverPinEnc);
+    createdAt = rental.handoverPinCreatedAt || new Date();
+  }
+
+  return {
+    pin,
+    createdAt: createdAt.toISOString(),
+  };
+}
+
+export async function verifyHandoverPin(
+  rentalId: string,
+  ownerId: string,
+  candidatePin: string,
+) {
+  const rental = await prisma.rental.findUnique({
+    where: { id: rentalId },
+    include: rentalInclude,
+  });
+
+  if (!rental) {
+    throw new NotFoundError('Rental not found');
+  }
+
+  if (rental.item.ownerId !== ownerId) {
+    throw new ForbiddenError('Only the item owner can verify the handover PIN');
+  }
+
+  if (rental.status !== RentalStatus.APPROVED) {
+    throw new ConflictError('Rental is not in APPROVED status');
+  }
+
+  const now = new Date();
+  if (rental.handoverPinLockedUntil && rental.handoverPinLockedUntil > now) {
+    const retryAfterSeconds = Math.max(1, Math.ceil((rental.handoverPinLockedUntil.getTime() - now.getTime()) / 1000));
+    throw new LockedError(retryAfterSeconds, 'Too many incorrect attempts. Verification is locked.');
+  }
+
+  const isMatch = rental.handoverPinHash
+    ? verifyPinConstantTime(candidatePin, rental.handoverPinHash)
+    : false;
+
+  if (!isMatch) {
+    const newAttempts = rental.handoverPinAttempts + 1;
+    if (newAttempts >= 5) {
+      const lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+      await prisma.rental.update({
+        where: { id: rental.id },
+        data: {
+          handoverPinAttempts: newAttempts,
+          handoverPinLockedUntil: lockedUntil,
+        },
+      });
+      throw new LockedError(15 * 60, 'Maximum PIN attempts exceeded. Verification locked for 15 minutes.');
+    } else {
+      await prisma.rental.update({
+        where: { id: rental.id },
+        data: {
+          handoverPinAttempts: newAttempts,
+        },
+      });
+      const attemptsLeft = 5 - newAttempts;
+      throw new WrongPinError(attemptsLeft, `Incorrect PIN. ${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} remaining.`);
+    }
+  }
+
+  // Verification succeeded: transition to ACTIVE, clear PIN, set handoverVerifiedAt
+  const updated = await prisma.rental.update({
+    where: { id: rental.id },
+    data: {
+      status: RentalStatus.ACTIVE,
+      handoverPinHash: null,
+      handoverPinEnc: null,
+      handoverPinCreatedAt: null,
+      handoverPinAttempts: 0,
+      handoverPinLockedUntil: null,
+      handoverVerifiedAt: new Date(),
+    },
+    include: rentalInclude,
+  });
+
+  // Stop live tracking and emit tracking:stopped socket event
+  await stopTrackingOnStatusChange(rental.id, 'ACTIVE');
+
+  // Side-effect: RENTAL_ACTIVATED notification for borrower
+  try {
+    await createNotification(
+      updated.borrowerId,
+      NotificationType.RENTAL_ACTIVATED,
+      'Rental Active',
+      `Your rental of "${updated.item.title}" is now active.`,
+      { rentalId: updated.id, itemId: updated.itemId },
+      ownerId,
+    );
+  } catch (notifErr) {
+    console.error('Failed to create rental activated notification:', notifErr);
+  }
+
+  // Side-effect: HANDOVER_CONFIRMED notification for borrower
+  try {
+    await createNotification(
+      updated.borrowerId,
+      NotificationType.HANDOVER_CONFIRMED,
+      'Handover Confirmed',
+      `Handover confirmed for "${updated.item.title}". Your rental is now active.`,
+      { rentalId: updated.id, itemId: updated.itemId },
+      ownerId,
+    );
+  } catch (notifErr) {
+    console.error('Failed to create handover confirmed notification for borrower:', notifErr);
+  }
+
+  // Side-effect: HANDOVER_CONFIRMED notification for owner
+  try {
+    await createNotification(
+      ownerId,
+      NotificationType.HANDOVER_CONFIRMED,
+      'Handover Confirmed',
+      `Handover confirmed for "${updated.item.title}". Rental is now active.`,
+      { rentalId: updated.id, itemId: updated.itemId },
+    );
+  } catch (notifErr) {
+    console.error('Failed to create handover confirmed notification for owner:', notifErr);
   }
 
   return sanitizeRentalForUser(updated, ownerId);

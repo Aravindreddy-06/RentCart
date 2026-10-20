@@ -45,6 +45,8 @@ import * as Clipboard from 'expo-clipboard';
 import { formatINR } from '../utils/currency';
 import { formatDateDMY, formatTime12 } from '../utils/date';
 import { formatPhoneNumber } from '../utils/phone';
+import { PickupPinCard } from '../components/PickupPinCard';
+import { HandoverVerifyCard } from '../components/HandoverVerifyCard';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'RentalDetail'>;
 
@@ -526,19 +528,6 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
     openApprovePickupModal();
   };
 
-  const handleActivate = async () => {
-    if (!rental) return;
-    setIsBusy(true);
-    try {
-      await rentalsService.activate(rental.id);
-      Alert.alert('Active', 'Item handed over.');
-      fetchRental(true);
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message ?? 'Failed to activate rental.');
-    } finally {
-      setIsBusy(false);
-    }
-  };
 
   const handleReturn = async () => {
     if (!rental) return;
@@ -937,9 +926,14 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
           </View>
         )}
 
-        {/* Live Tracking Cards (APPROVED status only) */}
+        {/* Live Tracking & Handover Cards (APPROVED status only) */}
         {rental.status === 'APPROVED' && (
           <>
+            {/* Borrower Pickup PIN card */}
+            {isBorrower && (
+              <PickupPinCard rentalId={rental.id} />
+            )}
+
             {/* Borrower live tracking controls */}
             {isBorrower && (
               <View style={styles.card}>
@@ -1215,22 +1209,18 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
             )}
 
             {rental.status === 'APPROVED' && (
-              <TouchableOpacity
-                style={styles.btnPrimary}
-                onPress={handleActivate}
-                disabled={isBusy}
-              >
-                {isBusy ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.btnPrimaryText}>🤝 Mark as Handed Over (Active)</Text>
-                )}
-              </TouchableOpacity>
+              <HandoverVerifyCard
+                rentalId={rental.id}
+                onSuccess={() => {
+                  fetchRental(false);
+                  Alert.alert('Success 🎉', 'Handover confirmed! Rental is now Active.');
+                }}
+              />
             )}
 
             {rental.status === 'ACTIVE' && (
               <TouchableOpacity
-                style={[styles.btnPrimary, { backgroundColor: '#9333ea' }]}
+                style={styles.btnReturn}
                 onPress={handleReturn}
                 disabled={isBusy}
               >
@@ -1466,9 +1456,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[500],
   },
   stepCurrent: {
-    backgroundColor: colors.primary[600],
+    backgroundColor: colors.accent[500],
     borderWidth: 3,
-    borderColor: colors.primary[200],
+    borderColor: colors.accent[200],
   },
   stepNum: {
     fontSize: 12,
@@ -1484,8 +1474,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   stepLabelCurrent: {
-    color: colors.primary[700],
-    fontWeight: '700',
+    color: colors.accent[600],
+    fontWeight: '800',
   },
   terminatedBanner: {
     padding: 12,
@@ -1709,7 +1699,7 @@ const styles = StyleSheet.create({
   },
   btnApprove: {
     flex: 1,
-    backgroundColor: '#16a34a',
+    backgroundColor: colors.success,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -1723,18 +1713,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#fee2e2',
-    borderWidth: 1,
-    borderColor: '#fca5a5',
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   btnDeclineText: {
-    color: '#b91c1c',
+    color: colors.danger,
     fontSize: 14,
     fontWeight: '700',
   },
+  btnActivate: {
+    flex: 1,
+    backgroundColor: colors.info,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  btnReturn: {
+    flex: 1,
+    backgroundColor: colors.secondary[500],
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
   btnPrimary: {
     flex: 1,
-    backgroundColor: colors.primary[600],
+    backgroundColor: colors.primary[500],
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -1746,15 +1752,15 @@ const styles = StyleSheet.create({
   },
   btnCancel: {
     flex: 1,
-    backgroundColor: '#fee2e2',
-    borderWidth: 1,
-    borderColor: '#fca5a5',
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: colors.danger,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
   btnCancelText: {
-    color: '#b91c1c',
+    color: colors.danger,
     fontSize: 14,
     fontWeight: '700',
   },

@@ -1,11 +1,10 @@
 /**
  * src/screens/VerifyEmailScreen.tsx (mobile)
- * 6-box OTP verification screen for mobile:
- * - textContentType="oneTimeCode" & autoComplete="sms-otp"
- * - Auto-advance, backspace handling, paste support
- * - 60s resend timer
- * - Safe areas via react-native-safe-area-context
- * - Auto-login into app on verification success
+ * Polished 6-box OTP verification screen:
+ * - Active box highlighted in teal with subtle glow
+ * - Gradient primary button
+ * - Soft tinted background with dark mode support
+ * - Clean resend countdown and state feedback
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -21,11 +20,14 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { authService } from '../services/auth.service';
-import { colors } from '../utils/colors';
+import { colors, gradients, shadows } from '../utils/colors';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'VerifyEmail'>;
 
@@ -41,8 +43,10 @@ function maskEmail(email: string): string {
 export default function VerifyEmailScreen({ navigation, route }: Props) {
   const { email } = route.params;
   const { verifyEmail } = useAuth();
+  const { isDark, themeColors } = useTheme();
 
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
+  const [focusedIndex, setFocusedIndex] = useState<number>(0);
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
   const [loading, setLoading] = useState(false);
@@ -68,7 +72,6 @@ export default function VerifyEmailScreen({ navigation, route }: Props) {
   const handleDigitChange = (index: number, text: string) => {
     const cleaned = text.replace(/\D/g, '');
 
-    // Handle multi-character paste
     if (cleaned.length > 1) {
       const chars = cleaned.slice(0, 6).split('');
       const newOtp = [...otp];
@@ -119,7 +122,6 @@ export default function VerifyEmailScreen({ navigation, route }: Props) {
 
     try {
       await verifyEmail(email, code);
-      // Auth state changes to authenticated, root navigator automatically transitions to AppNavigator
     } catch (err: any) {
       const resp = err.response?.data;
       setError(resp?.message || 'Verification failed. Please check the code and try again.');
@@ -155,91 +157,167 @@ export default function VerifyEmailScreen({ navigation, route }: Props) {
     }
   };
 
+  const isComplete = otp.every((d) => d !== '');
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      edges={['top', 'left', 'right', 'bottom']}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header */}
           <View style={styles.headerContainer}>
-            <View style={styles.iconCircle}>
-              <Text style={styles.iconText}>✉️</Text>
+            <View
+              style={[
+                styles.iconCircle,
+                {
+                  backgroundColor: isDark ? 'rgba(15, 157, 138, 0.15)' : colors.primary[50],
+                  borderColor: isDark ? 'rgba(15, 157, 138, 0.3)' : colors.primary[200],
+                },
+              ]}
+            >
+              <Ionicons name="mail-open" size={34} color={colors.primary[500]} />
             </View>
-            <Text style={styles.title}>Check Your Email</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: themeColors.text }]}>Check Your Email</Text>
+            <Text style={[styles.subtitle, { color: themeColors.textMuted }]}>
               We sent a 6-digit verification code to{'\n'}
-              <Text style={styles.emailHighlight}>{maskEmail(email)}</Text>
+              <Text style={[styles.emailHighlight, { color: themeColors.text }]}>
+                {maskEmail(email)}
+              </Text>
             </Text>
           </View>
 
-          <View style={styles.card}>
+          {/* Card */}
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
             {infoMessage && (
               <View style={styles.infoContainer}>
+                <Ionicons name="checkmark-circle" size={18} color={colors.primary[500]} />
                 <Text style={styles.infoText}>{infoMessage}</Text>
               </View>
             )}
 
             {error && (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
-                {attemptsLeft !== null && attemptsLeft > 0 && (
-                  <Text style={styles.attemptsText}>
-                    {attemptsLeft} attempt{attemptsLeft === 1 ? '' : 's'} remaining before this code is invalidated.
-                  </Text>
-                )}
+                <Ionicons name="alert-circle" size={18} color={colors.danger} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.errorText}>{error}</Text>
+                  {attemptsLeft !== null && attemptsLeft > 0 && (
+                    <Text style={styles.attemptsText}>
+                      {attemptsLeft} attempt{attemptsLeft === 1 ? '' : 's'} remaining before this code is invalidated.
+                    </Text>
+                  )}
+                </View>
               </View>
             )}
 
-            <Text style={styles.otpLabel}>ENTER 6-DIGIT CODE</Text>
+            <Text style={[styles.otpLabel, { color: themeColors.textMuted }]}>
+              ENTER 6-DIGIT CODE
+            </Text>
+
+            {/* OTP Boxes - Highlight Active Box in Teal */}
             <View style={styles.otpRow}>
-              {otp.map((digit, idx) => (
-                <TextInput
-                  key={idx}
-                  ref={(ref) => {
-                    inputRefs.current[idx] = ref;
-                  }}
-                  style={[
-                    styles.otpBox,
-                    digit ? styles.otpBoxFilled : null,
-                    error ? styles.otpBoxError : null,
-                  ]}
-                  keyboardType="number-pad"
-                  textContentType="oneTimeCode"
-                  autoComplete="sms-otp"
-                  maxLength={1}
-                  value={digit}
-                  onChangeText={(val) => handleDigitChange(idx, val)}
-                  onKeyPress={({ nativeEvent }) => handleKeyPress(idx, nativeEvent.key)}
-                  selectTextOnFocus
-                />
-              ))}
+              {otp.map((digit, idx) => {
+                const isFocused = focusedIndex === idx;
+                const isFilled = Boolean(digit);
+
+                let boxBorder = themeColors.border;
+                let boxBg = isDark ? colors.dark.background : '#F8FAFC';
+
+                if (isFocused) {
+                  boxBorder = colors.primary[500];
+                  boxBg = isDark ? 'rgba(15, 157, 138, 0.12)' : colors.primary[50];
+                } else if (isFilled) {
+                  boxBorder = isDark ? 'rgba(15, 157, 138, 0.4)' : colors.primary[200];
+                  boxBg = isDark ? 'rgba(15, 157, 138, 0.08)' : colors.primary[50];
+                }
+
+                if (error) {
+                  boxBorder = colors.danger;
+                  boxBg = isDark ? 'rgba(229, 72, 77, 0.1)' : '#FEF2F2';
+                }
+
+                return (
+                  <TextInput
+                    key={idx}
+                    ref={(ref) => {
+                      inputRefs.current[idx] = ref;
+                    }}
+                    style={[
+                      styles.otpBox,
+                      {
+                        borderColor: boxBorder,
+                        backgroundColor: boxBg,
+                        color: themeColors.text,
+                      },
+                      isFocused && styles.otpBoxActive,
+                    ]}
+                    keyboardType="number-pad"
+                    textContentType="oneTimeCode"
+                    autoComplete="sms-otp"
+                    maxLength={1}
+                    value={digit}
+                    onFocus={() => setFocusedIndex(idx)}
+                    onChangeText={(val) => handleDigitChange(idx, val)}
+                    onKeyPress={({ nativeEvent }) => handleKeyPress(idx, nativeEvent.key)}
+                    selectTextOnFocus
+                  />
+                );
+              })}
             </View>
 
+            {/* Gradient Primary Button */}
             <TouchableOpacity
-              style={[
-                styles.primaryButton,
-                otp.some((d) => !d) && styles.primaryButtonDisabled,
-              ]}
               onPress={() => handleVerify()}
-              disabled={loading || otp.some((d) => !d)}
-              activeOpacity={0.8}
+              disabled={loading || !isComplete}
+              activeOpacity={0.88}
+              style={[styles.buttonWrapper, !isComplete && styles.buttonDisabled]}
             >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.primaryButtonText}>Verify & Continue</Text>
-              )}
+              <LinearGradient
+                colors={
+                  isComplete
+                    ? (gradients.brand as unknown as [string, string, ...string[]])
+                    : ['#94A3B8', '#CBD5E1']
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.primaryButton}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.primaryButtonText}>Verify & Continue</Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
 
-            <View style={styles.resendSection}>
-              <Text style={styles.resendPrompt}>Didn't receive the email?</Text>
+            {/* Resend Section */}
+            <View style={[styles.resendSection, { borderTopColor: themeColors.border }]}>
+              <Text style={[styles.resendPrompt, { color: themeColors.textMuted }]}>
+                Didn't receive the email?
+              </Text>
               {cooldown > 0 ? (
-                <Text style={styles.cooldownText}>
-                  Resend code in <Text style={styles.cooldownBold}>{cooldown}s</Text>
+                <Text style={[styles.cooldownText, { color: themeColors.textMuted }]}>
+                  Resend code in{' '}
+                  <Text style={[styles.cooldownBold, { color: themeColors.text }]}>{cooldown}s</Text>
                 </Text>
               ) : (
-                <TouchableOpacity onPress={handleResend} disabled={resending}>
+                <TouchableOpacity onPress={handleResend} disabled={resending} activeOpacity={0.7}>
                   <Text style={styles.resendLink}>
                     {resending ? 'Sending…' : 'Resend verification code'}
                   </Text>
@@ -248,11 +326,15 @@ export default function VerifyEmailScreen({ navigation, route }: Props) {
             </View>
           </View>
 
+          {/* Back Button */}
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.navigate('Login')}
+            activeOpacity={0.7}
           >
-            <Text style={styles.backButtonText}>← Back to Sign In</Text>
+            <Text style={[styles.backButtonText, { color: themeColors.textMuted }]}>
+              ← Back to Sign In
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -263,89 +345,89 @@ export default function VerifyEmailScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
   },
   scrollContent: {
-    padding: 24,
+    padding: 20,
     justifyContent: 'center',
     flexGrow: 1,
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 24,
   },
   iconCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 24,
-    backgroundColor: colors.primary[50],
+    width: 72,
+    height: 72,
+    borderRadius: 22,
     borderWidth: 1.5,
-    borderColor: colors.primary[200],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-  },
-  iconText: {
-    fontSize: 32,
+    ...shadows.sm,
   },
   title: {
     fontSize: 26,
-    fontWeight: '700',
-    color: colors.gray[900],
-    marginBottom: 8,
+    fontWeight: '800',
+    marginBottom: 6,
     textAlign: 'center',
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 14,
-    color: colors.gray[500],
     textAlign: 'center',
     lineHeight: 20,
+    maxWidth: 290,
   },
   emailHighlight: {
     fontWeight: '700',
-    color: colors.gray[800],
   },
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 20,
+    padding: 22,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    ...shadows.md,
   },
   infoContainer: {
-    backgroundColor: colors.primary[50],
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 157, 138, 0.1)',
     borderWidth: 1,
-    borderColor: colors.primary[200],
-    borderRadius: 8,
+    borderColor: 'rgba(15, 157, 138, 0.25)',
+    borderRadius: 12,
     padding: 12,
     marginBottom: 16,
+    gap: 8,
   },
   infoText: {
-    color: colors.primary[700],
+    color: colors.primary[500],
     fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
   },
   errorContainer: {
-    backgroundColor: '#fef2f2',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(229, 72, 77, 0.1)',
     borderWidth: 1,
-    borderColor: '#fca5a5',
-    borderRadius: 8,
+    borderColor: 'rgba(229, 72, 77, 0.25)',
+    borderRadius: 12,
     padding: 12,
     marginBottom: 16,
+    gap: 8,
   },
   errorText: {
-    color: '#b91c1c',
+    color: colors.danger,
     fontSize: 13,
     fontWeight: '500',
   },
   attemptsText: {
-    color: '#b91c1c',
+    color: colors.danger,
     fontSize: 11,
     marginTop: 4,
   },
   otpLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.gray[400],
     letterSpacing: 1,
     textAlign: 'center',
     marginBottom: 14,
@@ -356,62 +438,59 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   otpBox: {
-    width: 44,
-    height: 54,
-    borderRadius: 12,
+    width: 46,
+    height: 56,
+    borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: colors.gray[200],
-    backgroundColor: colors.gray[50],
     textAlign: 'center',
     fontSize: 22,
-    fontWeight: '700',
-    color: colors.gray[900],
+    fontWeight: '800',
   },
-  otpBoxFilled: {
-    borderColor: colors.primary[600],
-    backgroundColor: colors.primary[50],
+  otpBoxActive: {
+    borderWidth: 2,
+    elevation: 3,
+    shadowColor: colors.primary[500],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
-  otpBoxError: {
-    borderColor: '#ef4444',
-    backgroundColor: '#fef2f2',
+  buttonWrapper: {
+    marginBottom: 16,
+    borderRadius: 14,
+    overflow: 'hidden',
+    ...shadows.sm,
+  },
+  buttonDisabled: {
+    opacity: 0.65,
   },
   primaryButton: {
-    backgroundColor: colors.primary[600],
-    borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  primaryButtonDisabled: {
-    backgroundColor: colors.gray[300],
+    justifyContent: 'center',
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '700',
   },
   resendSection: {
     alignItems: 'center',
-    paddingTop: 12,
+    paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: colors.gray[100],
   },
   resendPrompt: {
     fontSize: 13,
-    color: colors.gray[500],
     marginBottom: 4,
   },
   cooldownText: {
     fontSize: 12,
-    color: colors.gray[400],
   },
   cooldownBold: {
     fontWeight: '700',
-    color: colors.gray[700],
   },
   resendLink: {
     fontSize: 13,
-    color: colors.primary[600],
+    color: colors.primary[500],
     fontWeight: '700',
   },
   backButton: {
@@ -420,7 +499,6 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 14,
-    color: colors.gray[500],
     fontWeight: '600',
   },
 });

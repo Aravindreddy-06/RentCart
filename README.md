@@ -80,6 +80,9 @@ RentCart/
    SMTP_USER=your_email@gmail.com
    SMTP_PASS=your16characterapppassword
    MAIL_FROM="RentCart <your_email@gmail.com>"
+   HANDOVER_PIN_SECRET="your-32-byte-hex-hmac-secret-here-min-32-chars"
+   HANDOVER_PIN_ENC_KEY="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+   REQUIRE_RETURN_PIN=false
    ```
 
    > **Note on SMTP / Gmail App Password:**
@@ -166,8 +169,10 @@ All endpoints require authentication, validate with Zod, and return consistent J
 - `GET /api/rentals/:id/tracking` *(Protected, Owner only)* — Fetches latest borrower live coordinates, timestamp, and estimated arrival time (`etaMinutes`). Returns `null` if borrower is not sharing.
 - `PATCH /api/rentals/:id/reject` *(Protected, Owner only)* — Owner rejects a `PENDING` request with optional `ownerNote`. Status becomes `REJECTED`.
 - `PATCH /api/rentals/:id/cancel` *(Protected, Borrower only)* — Borrower cancels a `PENDING` or `APPROVED` rental. Status becomes `CANCELLED`.
-- `PATCH /api/rentals/:id/activate` *(Protected, Owner only)* — Owner marks an `APPROVED` rental as `ACTIVE` (item handed over). Auto-stops any active tracking session.
-- `PATCH /api/rentals/:id/return` *(Protected, Owner only)* — Owner marks an `ACTIVE` rental as `RETURNED` (item returned). Auto-stops any active tracking session.
+- `GET /api/rentals/:id/handover-pin` *(Protected, Borrower only, APPROVED only)* — Retrieves the 4-digit pickup PIN for an approved rental (`{ pin, createdAt }`). Returns 403 Forbidden for owners or other users, 409 Conflict if rental status is not `APPROVED`. Lazily generates a PIN for legacy approved rentals if one does not exist.
+- `POST /api/rentals/:id/handover/verify` *(Protected, Owner only, APPROVED only)* — Owner verifies borrower's 4-digit PIN (`{ pin: string }` matching `/^\d{4}$/`). Constant-time comparison prevents timing attacks. On success, transitions rental to `ACTIVE`, resets failed attempts, invalidates the PIN, auto-stops tracking, and sends `HANDOVER_CONFIRMED` notifications to both parties. Enforces a 5-attempt limit per rental with a 15-minute lock (429 with `retryAfterSeconds`). Rate-limited per user and per rental.
+- `PATCH /api/rentals/:id/activate` *(Protected, Owner only)* — Fallback activation ("Skip PIN"). Requires `{ confirmWithoutPin: true }` in the request body (returns 400 Bad Request otherwise). Both web and mobile UIs present a warning confirmation: *"Only skip if the borrower cannot show the PIN."* Auto-stops any active tracking session.
+- `PATCH /api/rentals/:id/return` *(Protected, Owner only)* — Owner marks an `ACTIVE` rental as `RETURNED` (item returned). Auto-stops any active tracking session. Enables mutual review flow.
 
 ### Realtime Socket.IO Events & Live Tracking
 - **JWT Handshake Auth**: Socket connections authenticate using Bearer JWT tokens.
@@ -206,6 +211,8 @@ All endpoints require authentication and return consistent JSON format.
 | **Rental rejected** | Borrower | `RENTAL_REJECTED` | `Rental Rejected` | Owner declined (includes owner's note) |
 | **Rental cancelled** | Item owner | `RENTAL_CANCELLED` | `Rental Cancelled` | Borrower cancelled request |
 | **Rental marked ACTIVE** | Borrower | `RENTAL_ACTIVATED` | `Rental Active` | Item handed over and active |
+| **Pickup PIN ready** | Borrower | `HANDOVER_PIN_READY` | `Pickup PIN Ready` | "Your pickup PIN is ready. Open the rental to view it." *(Never contains plaintext PIN)* |
+| **Handover confirmed** | Borrower & Owner | `HANDOVER_CONFIRMED` | `Handover Confirmed` | Handover confirmed via PIN verification; rental is now Active |
 | **Rental marked RETURNED** | Borrower | `RENTAL_RETURNED` | `Rental Returned` | Item returned to owner |
 
 Each notification includes `{ rentalId, itemId }` in `data` so clients navigate directly to `RentalDetail`. Notifications fail-safe: failures never roll back or abort rental lifecycle operations. Users are never notified of their own actions.
@@ -232,21 +239,50 @@ Each notification includes `{ rentalId, itemId }` in `data` so clients navigate 
                          │  └───────────────► [ REJECTED ]
                          ▼
                   ┌───────────────┐
-                  │   APPROVED    │
-                  └──────┬────────┘
-     Owner Hands Over    │
-     (Marks Active)      ▼
+                  │   APPROVED    │ ◄─── Generates 4-digit Handover PIN
+                  └──────┬────────┘      (Stored as HMAC-SHA256 & AES-256-GCM)
+   Owner verifies PIN or │
+   confirms Skip PIN     ▼
                   ┌───────────────┐
-                  │    ACTIVE     │
+                  │    ACTIVE     │ ◄─── Handover PIN invalidated & deleted
                   └──────┬────────┘
      Owner Item Return   │
      (Marks Returned)    ▼
                   ┌───────────────┐
-                  │   RETURNED    │
+                  │   RETURNED    │ ◄─── Mutual reviews enabled
                   └───────────────┘
 
   * Borrower can cancel anytime during PENDING or APPROVED ──► [ CANCELLED ]
 ```
+
+### 🔑 Handover PIN Security Rules & Architecture
+1. **Cryptographic Generation**: When a rental is approved (`PENDING` -> `APPROVED`), a cryptographically secure 4-digit PIN is generated via `crypto.randomInt(0, 10000)` (formatted as `0000`–`9999` with zero-padding).
+2. **Dual-Layer Database Storage**:
+   - `handoverPinHash`: Computed using HMAC-SHA256 with server secret `HANDOVER_PIN_SECRET` for fast constant-time verification.
+   - `handoverPinEnc`: Stored encrypted using AES-256-GCM with a 32-byte hex key `HANDOVER_PIN_ENC_KEY` (format: `iv:authTag:encryptedPayload`) allowing the borrower to securely retrieve and view the PIN.
+   - **Zero Plaintext**: Plaintext PIN is **never** stored in the database, never logged, and never included in emails, chat, sockets, or push notifications.
+3. **Role-Gated Retrieval**:
+   - The PIN is returned **ONLY** to the borrower, **ONLY** while the rental is in `APPROVED` status, via `GET /api/rentals/:id/handover-pin`.
+   - The owner, third-party users, or unauthenticated requests receive HTTP 403 Forbidden.
+   - Once the status transitions to `ACTIVE`, `RETURNED`, or `CANCELLED`, requests receive HTTP 409 Conflict.
+4. **Owner Verification & Constant-Time Protection**:
+   - The owner verifies the PIN at `POST /api/rentals/:id/handover/verify`.
+   - Constant-time HMAC comparison via `crypto.timingSafeEqual` prevents timing side-channel attacks.
+   - On successful verification, the rental transitions to `ACTIVE`, PIN fields are permanently invalidated, and `HANDOVER_CONFIRMED` notifications are dispatched to both users.
+5. **Lockout & Rate Limiting**:
+   - Max 5 failed attempts per rental. The 5th incorrect attempt locks verification for 15 minutes (HTTP 429 with `retryAfterSeconds`).
+   - Failed attempts return HTTP 400 with `attemptsLeft`. Successful verification resets the attempt counter.
+   - Additional middleware rate limiters throttle attempts per authenticated user and per rental ID.
+6. **Graceful Fallback ("Skip PIN")**:
+   - `PATCH /api/rentals/:id/activate` requires `{ confirmWithoutPin: true }` in the request body (returns 400 if omitted).
+   - Web and mobile UIs present a warning modal: *"Only skip if the borrower cannot show the PIN."*
+7. **Lazy PIN Generation**:
+   - Existing approved rentals lacking a PIN automatically generate one on first access by the borrower via `GET /api/rentals/:id/handover-pin`.
+8. **Privacy Guarantee Across All Endpoints**:
+   - `handoverPinHash`, `handoverPinEnc`, `handoverPinCreatedAt`, `handoverPinAttempts`, and `handoverPinLockedUntil` are explicitly stripped from rental details, rental lists, items, and public user profiles.
+9. **Return PIN Configuration**:
+   - Environment and config support `requireReturnPin` (`REQUIRE_RETURN_PIN=false` by default) ready for future return PIN enablement without modifying the core domain model.
+
 
 ### Double-Booking Prevention
 1. **Concurrent Requests:** Multiple borrowers can request overlapping dates for the same item while requests are `PENDING` (giving the owner freedom of choice).

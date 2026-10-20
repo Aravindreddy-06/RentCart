@@ -15,6 +15,7 @@
     "seed": "ts-node prisma/seed.ts",
     "studio": "node node_modules/prisma/build/index.js studio",
     "smoke-test": "ts-node scripts/smoke-test.ts",
+    "smoke": "ts-node scripts/smoke-test.ts",
     "migrate:phones": "ts-node scripts/normalize-phones.ts"
   },
   "keywords": [],

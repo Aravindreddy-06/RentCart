@@ -9,6 +9,7 @@
 
 import { PrismaClient, RentalStatus, NotificationType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { hashHandoverPin, encryptHandoverPin } from '../src/utils/handoverPin';
 
 const prisma = new PrismaClient();
 
@@ -350,6 +351,10 @@ async function main() {
         pickupNote: 'Gate 2, ring the bell on the porch',
         pickupTimeFrom: new Date('2026-11-05T09:00:00Z'),
         pickupTimeTo: new Date('2026-11-05T12:00:00Z'),
+        handoverPinHash: hashHandoverPin('1234'),
+        handoverPinEnc: encryptHandoverPin('1234'),
+        handoverPinCreatedAt: new Date(),
+        handoverPinAttempts: 0,
       },
       {
         itemId: mixer.id,
@@ -623,6 +628,7 @@ async function main() {
   console.log('✅  Seed complete!');
   console.log(`   Users: alice@example.com, bob@example.com, carol@example.com, dave@example.com, emma@example.com`);
   console.log(`   Password for all: password123`);
+  console.log(`🔑 Known test handover PIN for APPROVED rental (Washer / Borrower Carol): 1234`);
 }
 
 main()

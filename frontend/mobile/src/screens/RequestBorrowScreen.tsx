@@ -1,7 +1,11 @@
 /**
  * src/screens/RequestBorrowScreen.tsx (mobile)
- * Request to Borrow — date range selection with conflict prevention,
- * price calculation, optional note, and submit request.
+ * Vibrant request flow:
+ * - Date range selection with conflict prevention
+ * - Price calculation with INR formatting
+ * - Themed cost summary card
+ * - Brand gradient submit CTA
+ * - Full dark mode support
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -20,9 +24,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { AppStackParamList } from '../navigation/types';
 import { rentalsService, BookedDateRange } from '../services/rentals.service';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
+import { colors, gradients, radius, shadows } from '../utils/colors';
 import { formatINR } from '../utils/currency';
 import { formatDateDMY } from '../utils/date';
 
@@ -37,6 +44,7 @@ function formatDateStr(d: Date): string {
 
 export default function RequestBorrowScreen({ route, navigation }: Props) {
   const { itemId, title, pricePerDay, deposit, ownerName } = route.params;
+  const { isDark, themeColors } = useTheme();
 
   const today = useMemo(() => new Date(), []);
   const tomorrow = useMemo(() => {
@@ -140,20 +148,44 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
     }
   };
 
+  const isDisabled = Boolean(overlapConflict) || isSubmitting || days <= 0;
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      edges={['top', 'bottom']}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {/* Top Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>✕</Text>
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: themeColors.surface,
+              borderBottomColor: themeColors.border,
+            },
+          ]}
+        >
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={[
+              styles.backBtn,
+              { backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[100] },
+            ]}
+          >
+            <Ionicons name="close" size={20} color={themeColors.text} />
           </TouchableOpacity>
           <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={styles.headerTitle}>Request to Borrow</Text>
-            <Text style={styles.headerSubtitle} numberOfLines={1}>
+            <Text style={[styles.headerTitle, { color: themeColors.text }]}>
+              Request to Borrow
+            </Text>
+            <Text
+              style={[styles.headerSubtitle, { color: themeColors.textMuted }]}
+              numberOfLines={1}
+            >
               {title}
             </Text>
           </View>
@@ -162,11 +194,31 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {/* Reserved Dates Warning */}
           {bookedDates.length > 0 && (
-            <View style={styles.bookedContainer}>
-              <Text style={styles.bookedTitle}>📅 Reserved Dates for this Item:</Text>
+            <View
+              style={[
+                styles.bookedContainer,
+                {
+                  backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : '#fef3c7',
+                  borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#fde68a',
+                },
+              ]}
+            >
+              <View style={styles.bookedTitleRow}>
+                <Ionicons name="calendar-outline" size={14} color="#d97706" />
+                <Text style={styles.bookedTitle}>Reserved Dates for this Item:</Text>
+              </View>
               <View style={styles.bookedChips}>
                 {bookedDates.map((b, i) => (
-                  <View key={i} style={styles.bookedChip}>
+                  <View
+                    key={i}
+                    style={[
+                      styles.bookedChip,
+                      {
+                        backgroundColor: isDark ? 'rgba(245, 158, 11, 0.25)' : '#fef9c3',
+                        borderColor: isDark ? 'rgba(245, 158, 11, 0.4)' : '#fef08a',
+                      },
+                    ]}
+                  >
                     <Text style={styles.bookedChipText}>
                       {b.startDate} → {b.endDate}
                     </Text>
@@ -177,27 +229,51 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
           )}
 
           {/* Date Pickers */}
-          <Text style={styles.sectionTitle}>Rental Period</Text>
+          <Text style={[styles.sectionTitle, { color: themeColors.textMuted }]}>
+            Rental Period
+          </Text>
           <View style={styles.dateRow}>
             {/* Start Date */}
             <View style={{ flex: 1, marginRight: 8 }}>
-              <Text style={styles.dateLabel}>Start Date</Text>
+              <Text style={[styles.dateLabel, { color: themeColors.textMuted }]}>
+                Start Date
+              </Text>
               <TouchableOpacity
-                style={styles.dateBtn}
+                style={[
+                  styles.dateBtn,
+                  {
+                    backgroundColor: themeColors.surface,
+                    borderColor: themeColors.border,
+                  },
+                ]}
                 onPress={() => setShowStartPicker(true)}
               >
-                <Text style={styles.dateBtnText}>📅 {startDateStr}</Text>
+                <Ionicons name="calendar" size={15} color={colors.primary[500]} />
+                <Text style={[styles.dateBtnText, { color: themeColors.text }]}>
+                  {startDateStr}
+                </Text>
               </TouchableOpacity>
             </View>
 
             {/* End Date */}
             <View style={{ flex: 1, marginLeft: 8 }}>
-              <Text style={styles.dateLabel}>End Date</Text>
+              <Text style={[styles.dateLabel, { color: themeColors.textMuted }]}>
+                End Date
+              </Text>
               <TouchableOpacity
-                style={styles.dateBtn}
+                style={[
+                  styles.dateBtn,
+                  {
+                    backgroundColor: themeColors.surface,
+                    borderColor: themeColors.border,
+                  },
+                ]}
                 onPress={() => setShowEndPicker(true)}
               >
-                <Text style={styles.dateBtnText}>📅 {endDateStr}</Text>
+                <Ionicons name="calendar" size={15} color={colors.primary[500]} />
+                <Text style={[styles.dateBtnText, { color: themeColors.text }]}>
+                  {endDateStr}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -233,73 +309,151 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
 
           {/* Conflict Error */}
           {overlapConflict && (
-            <View style={styles.errorBanner}>
+            <View
+              style={[
+                styles.errorBanner,
+                {
+                  backgroundColor: isDark ? 'rgba(229, 72, 77, 0.15)' : '#fee2e2',
+                  borderColor: isDark ? 'rgba(229, 72, 77, 0.3)' : '#fca5a5',
+                },
+              ]}
+            >
+              <Ionicons name="alert-circle" size={16} color={colors.danger} />
               <Text style={styles.errorText}>
-                ⚠️ Dates overlap with an existing booking ({overlapConflict.startDate} to{' '}
+                Dates overlap with an existing booking ({overlapConflict.startDate} to{' '}
                 {overlapConflict.endDate}). Please select other dates.
               </Text>
             </View>
           )}
 
           {/* Note to Owner */}
-          <Text style={styles.sectionTitle}>Note to {ownerName} (optional)</Text>
+          <Text style={[styles.sectionTitle, { color: themeColors.textMuted }]}>
+            Note to {ownerName} (optional)
+          </Text>
           <TextInput
-            style={styles.noteInput}
+            style={[
+              styles.noteInput,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+                color: themeColors.text,
+              },
+            ]}
             multiline
             numberOfLines={4}
             placeholder="Let the owner know your pickup time preferences or what you'll be using it for…"
-            placeholderTextColor={colors.gray[400]}
+            placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
             value={note}
             onChangeText={setNote}
             maxLength={500}
           />
-          <Text style={styles.charCount}>{note.length}/500</Text>
+          <Text style={[styles.charCount, { color: themeColors.textMuted }]}>
+            {note.length}/500
+          </Text>
 
           {/* Summary Box */}
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>Estimated Cost Summary</Text>
+          <View
+            style={[
+              styles.summaryCard,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.summaryTitle, { color: themeColors.text }]}>
+              Estimated Cost Summary
+            </Text>
 
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>
+              <Text style={[styles.summaryLabel, { color: themeColors.textMuted }]}>
                 Daily Rate ({days} {days === 1 ? 'day' : 'days'} × {formatINR(pricePerDay)})
               </Text>
-              <Text style={styles.summaryValue}>{formatINR(totalPrice)}</Text>
+              <Text style={[styles.summaryValue, { color: themeColors.text }]}>
+                {formatINR(totalPrice)}
+              </Text>
             </View>
 
             {deposit > 0 && (
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Refundable Security Deposit</Text>
-                <Text style={styles.summaryValue}>{formatINR(deposit)}</Text>
+                <Text style={[styles.summaryLabel, { color: themeColors.textMuted }]}>
+                  Refundable Security Deposit
+                </Text>
+                <Text style={[styles.summaryValue, { color: themeColors.text }]}>
+                  {formatINR(deposit)}
+                </Text>
               </View>
             )}
 
-            <View style={[styles.summaryRow, styles.summaryTotalRow]}>
-              <Text style={styles.totalLabel}>Total Due on Handover</Text>
+            <View
+              style={[
+                styles.summaryRow,
+                styles.summaryTotalRow,
+                { borderTopColor: themeColors.border },
+              ]}
+            >
+              <Text style={[styles.totalLabel, { color: themeColors.text }]}>
+                Total Due on Handover
+              </Text>
               <Text style={styles.totalValue}>{formatINR(totalPrice + deposit)}</Text>
             </View>
           </View>
 
           {/* Global error */}
           {error ? (
-            <View style={styles.errorBanner}>
+            <View
+              style={[
+                styles.errorBanner,
+                {
+                  backgroundColor: isDark ? 'rgba(229, 72, 77, 0.15)' : '#fee2e2',
+                  borderColor: isDark ? 'rgba(229, 72, 77, 0.3)' : '#fca5a5',
+                },
+              ]}
+            >
+              <Ionicons name="alert-circle" size={16} color={colors.danger} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
 
           {/* Submit Button */}
           <TouchableOpacity
-            style={[
-              styles.submitBtn,
-              (Boolean(overlapConflict) || isSubmitting || days <= 0) && styles.submitBtnDisabled,
-            ]}
+            disabled={isDisabled}
             onPress={handleSubmit}
-            disabled={Boolean(overlapConflict) || isSubmitting || days <= 0}
             activeOpacity={0.85}
           >
-            {isSubmitting ? (
-              <ActivityIndicator color="#fff" />
+            {!isDisabled ? (
+              <LinearGradient
+                colors={gradients.brand as unknown as [string, string, ...string[]]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.submitBtn}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <Text style={styles.submitBtnText}>Send Borrow Request</Text>
+                )}
+              </LinearGradient>
             ) : (
-              <Text style={styles.submitBtnText}>Send Borrow Request</Text>
+              <View
+                style={[
+                  styles.submitBtn,
+                  { backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[300] },
+                ]}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <Text
+                    style={[
+                      styles.submitBtnText,
+                      { color: isDark ? colors.dark.textMuted : colors.neutral[500] },
+                    ]}
+                  >
+                    Send Borrow Request
+                  </Text>
+                )}
+              </View>
             )}
           </TouchableOpacity>
         </ScrollView>
@@ -311,7 +465,6 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
   },
   header: {
     flexDirection: 'row',
@@ -319,48 +472,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
   },
   backBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.gray[100],
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  backBtnText: {
-    fontSize: 16,
-    color: colors.gray[700],
-    fontWeight: '700',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: colors.gray[900],
   },
   headerSubtitle: {
     fontSize: 13,
-    color: colors.gray[500],
-    marginTop: 1,
+    marginTop: 2,
   },
   content: {
     padding: 20,
     paddingBottom: 40,
   },
   bookedContainer: {
-    backgroundColor: '#fef3c7',
     padding: 12,
-    borderRadius: 12,
+    borderRadius: radius.md,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#fde68a',
+  },
+  bookedTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
   },
   bookedTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#92400e',
-    marginBottom: 8,
+    color: '#d97706',
   },
   bookedChips: {
     flexDirection: 'row',
@@ -368,23 +515,20 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   bookedChip: {
-    backgroundColor: '#fef9c3',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: '#fef08a',
   },
   bookedChipText: {
     fontSize: 11,
-    color: '#854d0e',
+    color: '#b45309',
     fontWeight: '600',
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.gray[800],
-    marginBottom: 10,
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -395,52 +539,45 @@ const styles = StyleSheet.create({
   dateLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.gray[600],
     marginBottom: 6,
   },
   dateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     borderWidth: 1,
-    borderColor: colors.gray[300],
-    borderRadius: 12,
-    paddingHorizontal: 14,
+    borderRadius: radius.md,
+    paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: colors.gray[50],
   },
   dateBtnText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: colors.gray[800],
+    fontWeight: '700',
   },
   noteInput: {
     borderWidth: 1,
-    borderColor: colors.gray[300],
-    borderRadius: 12,
+    borderRadius: radius.md,
     padding: 14,
     fontSize: 14,
-    color: colors.gray[900],
-    backgroundColor: colors.gray[50],
     textAlignVertical: 'top',
     height: 100,
   },
   charCount: {
     fontSize: 11,
-    color: colors.gray[400],
     textAlign: 'right',
     marginTop: 4,
     marginBottom: 20,
   },
   summaryCard: {
-    backgroundColor: colors.gray[50],
-    borderRadius: 16,
+    borderRadius: radius.lg,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.gray[200],
     marginBottom: 20,
+    ...shadows.sm,
   },
   summaryTitle: {
     fontSize: 14,
-    fontWeight: '700',
-    color: colors.gray[900],
+    fontWeight: '800',
     marginBottom: 12,
   },
   summaryRow: {
@@ -450,16 +587,13 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 13,
-    color: colors.gray[600],
   },
   summaryValue: {
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.gray[900],
+    fontWeight: '700',
   },
   summaryTotalRow: {
     borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
     paddingTop: 10,
     marginTop: 4,
     marginBottom: 0,
@@ -467,46 +601,37 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontSize: 15,
     fontWeight: '800',
-    color: colors.gray[900],
   },
   totalValue: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800',
-    color: colors.primary[600],
+    color: colors.accent[500],
   },
   errorBanner: {
-    backgroundColor: '#fee2e2',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     borderWidth: 1,
-    borderColor: '#fca5a5',
     padding: 12,
-    borderRadius: 12,
+    borderRadius: radius.md,
     marginBottom: 16,
   },
   errorText: {
-    color: '#b91c1c',
+    flex: 1,
+    color: colors.danger,
     fontSize: 12,
     fontWeight: '600',
   },
   submitBtn: {
-    backgroundColor: colors.primary[600],
     paddingVertical: 16,
-    borderRadius: 14,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary[600],
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  submitBtnDisabled: {
-    backgroundColor: colors.gray[300],
-    shadowOpacity: 0,
-    elevation: 0,
+    ...shadows.sm,
   },
   submitBtnText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });

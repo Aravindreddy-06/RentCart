@@ -1,7 +1,9 @@
 /**
  * src/screens/MessagesScreen.tsx (mobile)
- * Conversations list tab showing all active and past rental chats.
- * Uses react-native-safe-area-context and pull-to-refresh.
+ * Conversations list tab showing all active and past rental chats:
+ * - Avatar with consistent user palette initials
+ * - Unread red notification badges
+ * - Full dark theme support
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -18,10 +20,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import { AppStackParamList } from '../navigation/types';
 import { chatsService, type ChatConversation } from '../services/chats.service';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
+import { colors, radius, getAvatarColor, getInitials } from '../utils/colors';
 import { formatDateDMY } from '../utils/date';
 
 function formatChatTime(isoString: string): string {
@@ -43,6 +47,7 @@ function formatChatTime(isoString: string): string {
 export default function MessagesScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { user } = useAuth();
+  const { isDark, themeColors } = useTheme();
 
   const [chats, setChats] = useState<ChatConversation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,9 +89,17 @@ export default function MessagesScreen() {
   };
 
   const renderChatItem = ({ item: chat }: { item: ChatConversation }) => {
+    const userName = chat.otherUser.name || 'Neighbor';
+
     return (
       <TouchableOpacity
-        style={styles.chatRow}
+        style={[
+          styles.chatRow,
+          {
+            backgroundColor: themeColors.surface,
+            borderBottomColor: themeColors.border,
+          },
+        ]}
         onPress={() => handleOpenChat(chat)}
         activeOpacity={0.7}
       >
@@ -94,26 +107,32 @@ export default function MessagesScreen() {
         {chat.otherUser.avatarUrl ? (
           <Image source={{ uri: chat.otherUser.avatarUrl }} style={styles.avatar} />
         ) : (
-          <View style={[styles.avatar, styles.avatarFallback]}>
-            <Text style={styles.avatarInitial}>
-              {chat.otherUser.name.charAt(0).toUpperCase()}
-            </Text>
+          <View
+            style={[
+              styles.avatar,
+              { backgroundColor: getAvatarColor(userName) },
+            ]}
+          >
+            <Text style={styles.avatarInitial}>{getInitials(userName)}</Text>
           </View>
         )}
 
         <View style={styles.chatInfo}>
           <View style={styles.headerRow}>
-            <Text style={styles.userName} numberOfLines={1}>
-              {chat.otherUser.name}
+            <Text
+              style={[styles.userName, { color: themeColors.text }]}
+              numberOfLines={1}
+            >
+              {userName}
             </Text>
             {chat.lastMessage && (
-              <Text style={styles.timeText}>
+              <Text style={[styles.timeText, { color: themeColors.textMuted }]}>
                 {formatChatTime(chat.lastMessage.createdAt)}
               </Text>
             )}
           </View>
 
-          <Text style={styles.itemTitle} numberOfLines={1}>
+          <Text style={[styles.itemTitle, { color: colors.primary[500] }]} numberOfLines={1}>
             📦 {chat.item.title}
           </Text>
 
@@ -121,7 +140,8 @@ export default function MessagesScreen() {
             <Text
               style={[
                 styles.lastMessageText,
-                chat.unreadCount > 0 && styles.lastMessageUnread,
+                { color: themeColors.textMuted },
+                chat.unreadCount > 0 && { color: themeColors.text, fontWeight: '700' },
               ]}
               numberOfLines={1}
             >
@@ -147,15 +167,26 @@ export default function MessagesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      edges={['top', 'left', 'right']}
+    >
       {/* Top Header */}
-      <View style={styles.topHeader}>
-        <Text style={styles.screenTitle}>Messages</Text>
+      <View
+        style={[
+          styles.topHeader,
+          {
+            backgroundColor: themeColors.surface,
+            borderBottomColor: themeColors.border,
+          },
+        ]}
+      >
+        <Text style={[styles.screenTitle, { color: themeColors.text }]}>Messages</Text>
       </View>
 
       {loading ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={colors.primary[600]} />
+          <ActivityIndicator size="large" color={colors.primary[500]} />
         </View>
       ) : chats.length === 0 ? (
         <FlatList
@@ -166,15 +197,22 @@ export default function MessagesScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => fetchChats(true)}
-              colors={[colors.primary[600]]}
-              tintColor={colors.primary[600]}
+              colors={[colors.primary[500]]}
+              tintColor={colors.primary[500]}
             />
           }
           ListEmptyComponent={
             <View style={styles.emptyCard}>
-              <Text style={styles.emptyEmoji}>💬</Text>
-              <Text style={styles.emptyTitle}>No messages yet</Text>
-              <Text style={styles.emptySubtitle}>
+              <View
+                style={[
+                  styles.emptyIconBg,
+                  { backgroundColor: isDark ? colors.dark.surfaceHover : colors.primary[50] },
+                ]}
+              >
+                <Ionicons name="chatbubbles-outline" size={36} color={colors.primary[500]} />
+              </View>
+              <Text style={[styles.emptyTitle, { color: themeColors.text }]}>No messages yet</Text>
+              <Text style={[styles.emptySubtitle, { color: themeColors.textMuted }]}>
                 When you request or lend an item, you can chat with your neighbour here to
                 coordinate pickup and return.
               </Text>
@@ -191,8 +229,8 @@ export default function MessagesScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => fetchChats(true)}
-              colors={[colors.primary[600]]}
-              tintColor={colors.primary[600]}
+              colors={[colors.primary[500]]}
+              tintColor={colors.primary[500]}
             />
           }
         />
@@ -204,18 +242,15 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
   },
   topHeader: {
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
   },
   screenTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800',
-    color: colors.gray[900],
     letterSpacing: -0.3,
   },
   centerContainer: {
@@ -232,23 +267,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
   },
   avatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.gray[200],
-  },
-  avatarFallback: {
-    backgroundColor: colors.primary[100],
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitial: {
     fontSize: 18,
-    fontWeight: '700',
-    color: colors.primary[700],
+    fontWeight: '800',
+    color: '#ffffff',
   },
   chatInfo: {
     flex: 1,
@@ -263,19 +293,16 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.gray[900],
     flex: 1,
     marginRight: 8,
   },
   timeText: {
     fontSize: 11,
-    color: colors.gray[400],
     fontWeight: '500',
   },
   itemTitle: {
     fontSize: 12,
-    fontWeight: '600',
-    color: colors.primary[700],
+    fontWeight: '700',
     marginBottom: 3,
   },
   lastMessageRow: {
@@ -285,17 +312,12 @@ const styles = StyleSheet.create({
   },
   lastMessageText: {
     fontSize: 13,
-    color: colors.gray[500],
     flex: 1,
     marginRight: 8,
   },
-  lastMessageUnread: {
-    color: colors.gray[900],
-    fontWeight: '700',
-  },
   unreadBadge: {
-    backgroundColor: colors.primary[600],
-    borderRadius: 10,
+    backgroundColor: colors.danger,
+    borderRadius: radius.full,
     minWidth: 20,
     height: 20,
     alignItems: 'center',
@@ -304,8 +326,8 @@ const styles = StyleSheet.create({
   },
   unreadCountText: {
     color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 10,
+    fontWeight: '800',
   },
   emptyContainer: {
     flexGrow: 1,
@@ -317,19 +339,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 24,
   },
-  emptyEmoji: {
-    fontSize: 48,
+  emptyIconBg: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
   emptyTitle: {
     fontSize: 17,
-    fontWeight: '700',
-    color: colors.gray[900],
+    fontWeight: '800',
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: colors.gray[500],
     textAlign: 'center',
     lineHeight: 18,
   },

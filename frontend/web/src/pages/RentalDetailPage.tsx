@@ -11,6 +11,8 @@ import { StatusBadge } from '../components/StatusBadge';
 import { StarRating } from '../components/StarRating';
 import { MapView } from '../components/MapView';
 import { LocationPicker, type LocationValue } from '../components/LocationPicker';
+import { PickupPinCard } from '../components/PickupPinCard';
+import { HandoverVerifyCard } from '../components/HandoverVerifyCard';
 import { useAuth } from '../context/AuthContext';
 import { connectSocket } from '../services/socket';
 import {
@@ -454,19 +456,6 @@ export function RentalDetailPage() {
     openApprovePickupModal();
   };
 
-  const handleActivate = async () => {
-    if (!rental) return;
-    setActionInProgress(true);
-    setActionError('');
-    try {
-      await rentalsService.activate(rental.id);
-      await fetchRental();
-    } catch (err: any) {
-      setActionError(err?.response?.data?.message ?? 'Failed to mark as active.');
-    } finally {
-      setActionInProgress(false);
-    }
-  };
 
   const handleReturn = async () => {
     if (!rental) return;
@@ -630,23 +619,23 @@ export function RentalDetailPage() {
                 return (
                   <div key={step.status} className="flex flex-col items-center text-center">
                     <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-colors z-10 ${
+                      className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all z-10 ${
                         isCurrent
-                          ? 'bg-primary-600 text-white ring-4 ring-primary-100 shadow-md'
+                          ? 'bg-accent-500 text-white ring-4 ring-accent-100 dark:ring-accent-500/20 shadow-glow-accent'
                           : isPassed
                             ? 'bg-primary-500 text-white'
-                            : 'bg-neutral-100 text-neutral-400 border border-neutral-200'
+                            : 'bg-neutral-100 dark:bg-dark-card text-neutral-400 dark:text-dark-muted border border-neutral-200 dark:border-dark-border'
                       }`}
                     >
-                      {isPassed ? '✓' : idx + 1}
+                      {isPassed && !isCurrent ? '✓' : idx + 1}
                     </div>
                     <span
-                      className={`text-xs mt-2 font-semibold ${
+                      className={`text-xs mt-2 font-bold ${
                         isCurrent
-                          ? 'text-primary-700'
+                          ? 'text-accent-600 dark:text-accent-400'
                           : isPassed
-                            ? 'text-neutral-800'
-                            : 'text-neutral-400'
+                            ? 'text-primary-700 dark:text-primary-400'
+                            : 'text-neutral-400 dark:text-dark-muted'
                       }`}
                     >
                       {step.label}
@@ -767,6 +756,11 @@ export function RentalDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* ── Borrower Pickup PIN Card (APPROVED only) ── */}
+            {isBorrower && rental.status === 'APPROVED' && (
+              <PickupPinCard rentalId={rental.id} />
+            )}
 
             {/* ── Pickup Location Card ── */}
             {((isOwner && (rental.pickupLatitude != null || rental.pickupAddress || rental.status === 'APPROVED' || rental.status === 'ACTIVE')) ||
@@ -1269,14 +1263,14 @@ export function RentalDetailPage() {
                       <button
                         onClick={handleApprove}
                         disabled={actionInProgress}
-                        className="btn-primary w-full py-3 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700"
+                        className="btn-primary w-full py-3 text-sm font-bold bg-success hover:bg-emerald-700 shadow-sm"
                       >
                         {actionInProgress ? 'Approving…' : '✓ Approve Request'}
                       </button>
                       <button
                         onClick={() => setShowRejectModal(true)}
                         disabled={actionInProgress}
-                        className="w-full py-2.5 text-sm font-semibold rounded-xl text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
+                        className="w-full py-2.5 text-sm font-bold rounded-xl text-danger border border-danger/40 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                       >
                         Decline Request
                       </button>
@@ -1284,20 +1278,17 @@ export function RentalDetailPage() {
                   )}
 
                   {rental.status === 'APPROVED' && (
-                    <button
-                      onClick={handleActivate}
-                      disabled={actionInProgress}
-                      className="btn-primary w-full py-3 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700"
-                    >
-                      {actionInProgress ? 'Updating…' : '🤝 Hand Over Item (Mark Active)'}
-                    </button>
+                    <HandoverVerifyCard
+                      rentalId={rental.id}
+                      onSuccess={fetchRental}
+                    />
                   )}
 
                   {rental.status === 'ACTIVE' && (
                     <button
                       onClick={handleReturn}
                       disabled={actionInProgress}
-                      className="btn-primary w-full py-3 text-sm font-semibold bg-purple-600 hover:bg-purple-700"
+                      className="w-full py-3 text-sm font-bold rounded-xl text-white bg-secondary-500 hover:bg-secondary-600 shadow-sm transition-colors"
                     >
                       {actionInProgress ? 'Updating…' : '📦 Mark Item as Returned'}
                     </button>
@@ -1306,7 +1297,7 @@ export function RentalDetailPage() {
                   {(rental.status === 'RETURNED' ||
                     rental.status === 'REJECTED' ||
                     rental.status === 'CANCELLED') && (
-                    <p className="text-xs text-neutral-500 text-center py-2">
+                    <p className="text-xs text-neutral-500 dark:text-dark-muted text-center py-2">
                       No further actions needed for this agreement.
                     </p>
                   )}
@@ -1320,16 +1311,16 @@ export function RentalDetailPage() {
                     <button
                       onClick={() => setShowCancelModal(true)}
                       disabled={actionInProgress}
-                      className="w-full py-2.5 text-sm font-semibold rounded-xl text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
+                      className="w-full py-2.5 text-sm font-bold rounded-xl text-danger border border-danger/40 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                     >
                       Cancel Request
                     </button>
                   )}
 
                   {rental.status === 'ACTIVE' && (
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800">
+                    <div className="p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl text-xs text-blue-800 dark:text-blue-300">
                       Item is currently in your possession. Return the item to the owner by{' '}
-                      <strong>{rental.endDate}</strong>.
+                      <strong>{formatDateDMY(rental.endDate)}</strong>.
                     </div>
                   )}
 

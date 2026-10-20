@@ -1,35 +1,83 @@
 /**
  * src/screens/SplashScreen.tsx (mobile)
- * Initial splash screen displayed on app startup.
- * Shows RentCart branding with a smooth min 1.5s loading animation while verifying auth token.
+ * Full-screen brand gradient splash screen:
+ * - Brand gradient ['#0F9D8A', '#12C2A8']
+ * - White logo with gentle pulse/scale animation
+ * - Tagline fading in
+ * - Subtle loading indicator
  */
 
-import React, { useEffect } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '../utils/colors';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, Text, View, ActivityIndicator, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { gradients } from '../utils/colors';
 
 export default function SplashScreen() {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Gentle pulse animation for logo
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.06,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+
+    // Fade-in tagline
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      delay: 300,
+      useNativeDriver: true,
+    }).start();
+
+    return () => {
+      pulse.stop();
+    };
+  }, [pulseAnim, fadeAnim]);
+
   return (
-    <SafeAreaView style={styles.container}>
+    <LinearGradient
+      colors={gradients.brand as unknown as [string, string, ...string[]]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
       <View style={styles.content}>
-        <View style={styles.logoBadge}>
-          <Text style={styles.logoIcon}>🤝</Text>
-        </View>
+        {/* Animated White Logo Badge */}
+        <Animated.View style={[styles.logoBadge, { transform: [{ scale: pulseAnim }] }]}>
+          <Ionicons name="cart" size={46} color="#0F9D8A" />
+        </Animated.View>
+
         <Text style={styles.title}>RentCart</Text>
-        <Text style={styles.subtitle}>Neighbourhood Sharing Platform</Text>
+
+        <Animated.Text style={[styles.subtitle, { opacity: fadeAnim }]}>
+          Borrow What You Need · Lend What You Don't
+        </Animated.Text>
+
         <View style={styles.spinnerContainer}>
-          <ActivityIndicator size="large" color={colors.primary[500]} />
+          <ActivityIndicator size="small" color="#FFFFFF" />
         </View>
       </View>
-    </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
   },
   content: {
     flex: 1,
@@ -38,37 +86,35 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   logoBadge: {
-    width: 84,
-    height: 84,
-    borderRadius: 24,
-    backgroundColor: colors.primary[500],
+    width: 96,
+    height: 96,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
-    shadowColor: colors.primary[500],
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  logoIcon: {
-    fontSize: 44,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
   },
   title: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: '800',
-    color: colors.gray[900],
+    color: '#FFFFFF',
     letterSpacing: -0.5,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '500',
-    color: colors.gray[500],
+    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
-    marginBottom: 40,
+    maxWidth: 260,
+    lineHeight: 20,
   },
   spinnerContainer: {
-    marginTop: 20,
+    marginTop: 44,
   },
 });

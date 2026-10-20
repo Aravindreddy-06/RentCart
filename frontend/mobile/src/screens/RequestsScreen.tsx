@@ -1,7 +1,11 @@
 /**
  * src/screens/RequestsScreen.tsx (mobile)
- * Displays incoming borrow requests on items owned by the current user.
- * Supports status chips filter, pull-to-refresh, Approve, Decline, Mark Active, Mark Returned.
+ * Displays incoming borrow requests on items owned by the current user:
+ * - Status-coloured left border on cards
+ * - Coloured action buttons (Approve=green, Reject=red outline, Activate=blue, Returned=indigo)
+ * - Borrower avatar with initials and palette colors
+ * - Confirm Pickup Point and Decline modals
+ * - Full dark mode support
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -23,12 +27,24 @@ import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import { AppStackParamList } from '../navigation/types';
 import { rentalsService, Rental, RentalStatus } from '../services/rentals.service';
 import { StatusBadge } from '../components/StatusBadge';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import LocationPicker, { LocationValue } from '../components/LocationPicker';
-import { colors } from '../utils/colors';
+import { HandoverVerifyCard } from '../components/HandoverVerifyCard';
+import {
+  colors,
+  radius,
+  shadows,
+  STATUS_THEMES,
+  CATEGORY_THEMES,
+  CategoryKey,
+  getAvatarColor,
+  getInitials,
+} from '../utils/colors';
 import { formatINR } from '../utils/currency';
 import { formatDateDMY } from '../utils/date';
 import { formatPhoneNumber } from '../utils/phone';
@@ -45,6 +61,9 @@ const TABS: { label: string; value: RentalStatus | '' }[] = [
 
 export default function RequestsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+  const { user } = useAuth();
+  const { isDark, themeColors } = useTheme();
+
   const [activeTab, setActiveTab] = useState<RentalStatus | ''>('');
   const [requests, setRequests] = useState<Rental[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +71,6 @@ export default function RequestsScreen() {
   const [error, setError] = useState('');
 
   // Reject modal
-  const { user } = useAuth();
   const [rejectingRental, setRejectingRental] = useState<Rental | null>(null);
   const [rejectNote, setRejectNote] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
@@ -134,18 +152,6 @@ export default function RequestsScreen() {
     }
   };
 
-  const handleActivate = async (rental: Rental) => {
-    setBusyRentalId(rental.id);
-    try {
-      await rentalsService.activate(rental.id);
-      Alert.alert('Active', `Item handed over to ${rental.borrower.name}.`);
-      fetchRequests(true);
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message ?? 'Failed to update status.');
-    } finally {
-      setBusyRentalId(null);
-    }
-  };
 
   const handleReturn = async (rental: Rental) => {
     setBusyRentalId(rental.id);
@@ -180,10 +186,22 @@ export default function RequestsScreen() {
       item.item.images?.[0] ??
       'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400';
     const isBusy = busyRentalId === item.id;
+    const statusCfg = STATUS_THEMES[item.status] || STATUS_THEMES.PENDING;
+    const catKey = (item.item.category in CATEGORY_THEMES ? item.item.category : 'Other') as CategoryKey;
+    const catTheme = CATEGORY_THEMES[catKey];
+    const borrowerName = item.borrower.name || 'Borrower';
 
     return (
       <TouchableOpacity
-        style={styles.card}
+        style={[
+          styles.card,
+          {
+            backgroundColor: themeColors.surface,
+            borderColor: themeColors.border,
+            borderLeftWidth: 4,
+            borderLeftColor: isDark ? statusCfg.darkFg : statusCfg.fg,
+          },
+        ]}
         onPress={() => navigation.navigate('RentalDetail', { rentalId: item.id })}
         activeOpacity={0.85}
       >
@@ -191,8 +209,20 @@ export default function RequestsScreen() {
         <View style={styles.topRow}>
           <Image source={{ uri: itemImage }} style={styles.itemThumb} />
           <View style={{ flex: 1, marginLeft: 10 }}>
-            <Text style={styles.categoryBadge}>{item.item.category}</Text>
-            <Text style={styles.itemTitle} numberOfLines={1}>
+            <View
+              style={[
+                styles.categoryBadge,
+                {
+                  backgroundColor: isDark ? catTheme.darkTint : catTheme.tint,
+                  borderColor: isDark ? catTheme.darkBorder : catTheme.border,
+                },
+              ]}
+            >
+              <Text style={[styles.categoryBadgeText, { color: catTheme.primary }]}>
+                {item.item.category}
+              </Text>
+            </View>
+            <Text style={[styles.itemTitle, { color: themeColors.text }]} numberOfLines={1}>
               {item.item.title}
             </Text>
           </View>
@@ -200,19 +230,34 @@ export default function RequestsScreen() {
         </View>
 
         {/* Borrower info */}
-        <View style={styles.borrowerSection}>
+        <View
+          style={[
+            styles.borrowerSection,
+            {
+              backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+              borderColor: themeColors.border,
+            },
+          ]}
+        >
           <View style={styles.borrowerRow}>
             {item.borrower.avatarUrl ? (
               <Image source={{ uri: item.borrower.avatarUrl }} style={styles.avatar} />
             ) : (
-              <View style={styles.avatarFallback}>
+              <View
+                style={[
+                  styles.avatarFallback,
+                  { backgroundColor: getAvatarColor(borrowerName) },
+                ]}
+              >
                 <Text style={styles.avatarFallbackText}>
-                  {item.borrower.name.charAt(0).toUpperCase()}
+                  {getInitials(borrowerName)}
                 </Text>
               </View>
             )}
-            <View style={{ flex: 1, marginLeft: 8 }}>
-              <Text style={styles.borrowerName}>{item.borrower.name}</Text>
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={[styles.borrowerName, { color: themeColors.text }]}>
+                {borrowerName}
+              </Text>
               {item.borrower.phone ? (
                 <View style={styles.phoneActionRow}>
                   <TouchableOpacity
@@ -220,7 +265,10 @@ export default function RequestsScreen() {
                     style={styles.phoneLink}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.phoneText}>📞 {formatPhoneNumber(item.borrower.phone)}</Text>
+                    <Ionicons name="call-outline" size={12} color={colors.primary[500]} />
+                    <Text style={[styles.phoneText, { color: colors.primary[500] }]}>
+                      {formatPhoneNumber(item.borrower.phone)}
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={async () => {
@@ -229,47 +277,68 @@ export default function RequestsScreen() {
                         Alert.alert('Copied!', 'Phone number copied to clipboard.');
                       }
                     }}
-                    style={styles.copyBtn}
+                    style={[
+                      styles.copyBtn,
+                      {
+                        backgroundColor: isDark ? colors.dark.border : colors.neutral[200],
+                        borderColor: themeColors.border,
+                      },
+                    ]}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.copyBtnText}>Copy</Text>
+                    <Text style={[styles.copyBtnText, { color: themeColors.textMuted }]}>
+                      Copy
+                    </Text>
                   </TouchableOpacity>
                 </View>
               ) : null}
             </View>
           </View>
 
-          <Text style={styles.dates}>
-            📅 {formatDateDMY(item.startDate)} → {formatDateDMY(item.endDate)}
-          </Text>
+          <View style={styles.dateRow}>
+            <Ionicons name="calendar-outline" size={13} color={themeColors.textMuted} />
+            <Text style={[styles.dates, { color: themeColors.textMuted }]}>
+              {formatDateDMY(item.startDate)} → {formatDateDMY(item.endDate)}
+            </Text>
+          </View>
 
-          <Text style={styles.earnings}>
-            Earnings: <Text style={styles.earningsValue}>{formatINR(item.totalPrice)}</Text>
-            {item.depositAmount > 0 ? ` (+${formatINR(item.depositAmount)} dep)` : ''}
-          </Text>
+          <View style={styles.earningsRow}>
+            <Text style={[styles.earningsLabel, { color: themeColors.textMuted }]}>Earnings: </Text>
+            <Text style={styles.earningsValue}>{formatINR(item.totalPrice)}</Text>
+            {item.depositAmount > 0 ? (
+              <Text style={[styles.depositPill, { color: colors.secondary[500] }]}>
+                {' '}(+{formatINR(item.depositAmount)} deposit)
+              </Text>
+            ) : null}
+          </View>
 
           {item.borrowerNote ? (
-            <Text style={styles.noteText} numberOfLines={2}>
+            <Text style={[styles.noteText, { color: themeColors.textMuted }]} numberOfLines={2}>
               "{item.borrowerNote}"
             </Text>
           ) : null}
         </View>
 
-        {/* Action Buttons */}
+        {/* Action Buttons with Design Spec Colors */}
         <View style={styles.actionRow}>
           {item.status === 'PENDING' && (
             <>
+              {/* Reject = red outline */}
               <TouchableOpacity
                 style={styles.declineBtn}
                 onPress={() => setRejectingRental(item)}
                 disabled={isBusy}
+                activeOpacity={0.7}
               >
                 <Text style={styles.declineBtnText}>Decline</Text>
               </TouchableOpacity>
+
+              {/* Approve = green */}
               <TouchableOpacity
                 style={styles.approveBtn}
                 onPress={() => handleApproveClick(item)}
                 disabled={isBusy}
+                activeOpacity={0.8}
               >
                 {isBusy ? (
                   <ActivityIndicator color="#fff" size="small" />
@@ -280,25 +349,25 @@ export default function RequestsScreen() {
             </>
           )}
 
+          {/* Confirm handover card replaces plain activate button */}
           {item.status === 'APPROVED' && (
-            <TouchableOpacity
-              style={styles.activateBtn}
-              onPress={() => handleActivate(item)}
-              disabled={isBusy}
-            >
-              {isBusy ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.activateBtnText}>🤝 Hand Over Item</Text>
-              )}
-            </TouchableOpacity>
+            <HandoverVerifyCard
+              rentalId={item.id}
+              compact
+              onSuccess={() => {
+                fetchRequests(false);
+                Alert.alert('Success 🎉', `Handover confirmed! Rental is now Active.`);
+              }}
+            />
           )}
 
+          {/* Mark Returned = indigo */}
           {item.status === 'ACTIVE' && (
             <TouchableOpacity
               style={styles.returnBtn}
               onPress={() => handleReturn(item)}
               disabled={isBusy}
+              activeOpacity={0.8}
             >
               {isBusy ? (
                 <ActivityIndicator color="#fff" size="small" />
@@ -313,15 +382,28 @@ export default function RequestsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      edges={['top']}
+    >
       {/* Title */}
-      <View style={styles.header}>
-        <Text style={styles.screenTitle}>Incoming Requests</Text>
-        <Text style={styles.screenSubtitle}>Requests on items you listed</Text>
+      <View style={[styles.header, { backgroundColor: themeColors.surface }]}>
+        <Text style={[styles.screenTitle, { color: themeColors.text }]}>Incoming Requests</Text>
+        <Text style={[styles.screenSubtitle, { color: themeColors.textMuted }]}>
+          Requests on items you listed
+        </Text>
       </View>
 
       {/* Tabs */}
-      <View style={styles.tabsWrapper}>
+      <View
+        style={[
+          styles.tabsWrapper,
+          {
+            backgroundColor: themeColors.surface,
+            borderBottomColor: themeColors.border,
+          },
+        ]}
+      >
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -332,11 +414,36 @@ export default function RequestsScreen() {
             const isSelected = activeTab === item.value;
             return (
               <TouchableOpacity
-                style={[styles.tabChip, isSelected && styles.tabChipActive]}
+                style={[
+                  styles.tabChip,
+                  {
+                    backgroundColor: isSelected
+                      ? colors.primary[500]
+                      : isDark
+                      ? colors.dark.surfaceHover
+                      : colors.neutral[100],
+                    borderColor: isSelected
+                      ? colors.primary[600]
+                      : isDark
+                      ? colors.dark.border
+                      : colors.border,
+                  },
+                ]}
                 onPress={() => setActiveTab(item.value)}
+                activeOpacity={0.75}
               >
                 <Text
-                  style={[styles.tabChipText, isSelected && styles.tabChipTextActive]}
+                  style={[
+                    styles.tabChipText,
+                    {
+                      color: isSelected
+                        ? '#ffffff'
+                        : isDark
+                        ? colors.dark.text
+                        : colors.neutral[700],
+                      fontWeight: isSelected ? '700' : '600',
+                    },
+                  ]}
                 >
                   {item.label}
                 </Text>
@@ -349,20 +456,28 @@ export default function RequestsScreen() {
       {/* List */}
       {isLoading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary[600]} />
+          <ActivityIndicator size="large" color={colors.primary[500]} />
         </View>
       ) : error ? (
         <View style={styles.centered}>
-          <Text style={styles.errorText}>{error}</Text>
+          <Ionicons name="alert-circle" size={40} color={colors.danger} style={{ marginBottom: 8 }} />
+          <Text style={[styles.errorText, { color: themeColors.text }]}>{error}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={() => fetchRequests()}>
             <Text style={styles.retryBtnText}>Retry</Text>
           </TouchableOpacity>
         </View>
       ) : requests.length === 0 ? (
         <View style={styles.centered}>
-          <Text style={styles.emptyIcon}>📬</Text>
-          <Text style={styles.emptyTitle}>No requests found</Text>
-          <Text style={styles.emptyText}>
+          <View
+            style={[
+              styles.emptyIconBg,
+              { backgroundColor: isDark ? colors.dark.surfaceHover : colors.primary[50] },
+            ]}
+          >
+            <Ionicons name="mail-outline" size={36} color={colors.primary[500]} />
+          </View>
+          <Text style={[styles.emptyTitle, { color: themeColors.text }]}>No requests found</Text>
+          <Text style={[styles.emptyText, { color: themeColors.textMuted }]}>
             {activeTab
               ? `No requests currently in "${activeTab}" status.`
               : 'When neighbours request to borrow your items, they will appear here.'}
@@ -378,7 +493,8 @@ export default function RequestsScreen() {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={() => fetchRequests(true)}
-              colors={[colors.primary[600]]}
+              colors={[colors.primary[500]]}
+              tintColor={colors.primary[500]}
             />
           }
         />
@@ -392,19 +508,36 @@ export default function RequestsScreen() {
         onRequestClose={() => setRejectingRental(null)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Decline Borrow Request</Text>
-            <Text style={styles.modalSubtitle}>
+          <View
+            style={[
+              styles.modalCard,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.modalTitle, { color: themeColors.text }]}>
+              Decline Borrow Request
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: themeColors.textMuted }]}>
               You are declining {rejectingRental?.borrower.name}'s request for{' '}
               {rejectingRental?.item.title}.
             </Text>
 
             <TextInput
-              style={styles.modalInput}
+              style={[
+                styles.modalInput,
+                {
+                  backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                  borderColor: themeColors.border,
+                  color: themeColors.text,
+                },
+              ]}
               multiline
               numberOfLines={3}
               placeholder="Optional reason for declining…"
-              placeholderTextColor={colors.gray[400]}
+              placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
               value={rejectNote}
               onChangeText={setRejectNote}
               maxLength={500}
@@ -412,11 +545,16 @@ export default function RequestsScreen() {
 
             <View style={styles.modalBtnRow}>
               <TouchableOpacity
-                style={styles.modalCancelBtn}
+                style={[
+                  styles.modalCancelBtn,
+                  { borderColor: themeColors.border },
+                ]}
                 onPress={() => setRejectingRental(null)}
                 disabled={isRejecting}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={[styles.modalCancelText, { color: themeColors.text }]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalRejectBtn}
@@ -442,14 +580,33 @@ export default function RequestsScreen() {
         onRequestClose={() => setApprovingRental(null)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, styles.pickupModalCard]}>
-            <Text style={styles.modalTitle}>Confirm Pickup Point</Text>
-            <Text style={styles.modalSubtitle}>
+          <View
+            style={[
+              styles.modalCard,
+              styles.pickupModalCard,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.modalTitle, { color: themeColors.text }]}>
+              Confirm Pickup Point
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: themeColors.textMuted }]}>
               Confirm where the borrower will meet you to pick up the item.
             </Text>
 
             {/* Safety tip */}
-            <View style={styles.safetyBox}>
+            <View
+              style={[
+                styles.safetyBox,
+                {
+                  backgroundColor: isDark ? 'rgba(37, 99, 235, 0.15)' : '#eff6ff',
+                  borderColor: isDark ? 'rgba(37, 99, 235, 0.3)' : '#bfdbfe',
+                },
+              ]}
+            >
               <Text style={styles.safetyText}>
                 💡 Safety tip: Meet in a public, well-lit place when possible.
               </Text>
@@ -466,9 +623,17 @@ export default function RequestsScreen() {
             />
 
             <TextInput
-              style={[styles.modalInput, styles.noteInput]}
+              style={[
+                styles.modalInput,
+                styles.noteInput,
+                {
+                  backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                  borderColor: themeColors.border,
+                  color: themeColors.text,
+                },
+              ]}
               placeholder="Pickup note: Gate 2, call upon arrival... (optional, max 200)"
-              placeholderTextColor={colors.gray[400]}
+              placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
               value={pickupNote}
               onChangeText={setPickupNote}
               maxLength={200}
@@ -476,11 +641,16 @@ export default function RequestsScreen() {
 
             <View style={styles.modalBtnRow}>
               <TouchableOpacity
-                style={styles.modalCancelBtn}
+                style={[
+                  styles.modalCancelBtn,
+                  { borderColor: themeColors.border },
+                ]}
                 onPress={() => setApprovingRental(null)}
                 disabled={isApproving}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={[styles.modalCancelText, { color: themeColors.text }]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.approveBtn, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}
@@ -504,7 +674,6 @@ export default function RequestsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
   },
   header: {
     paddingHorizontal: 20,
@@ -514,16 +683,13 @@ const styles = StyleSheet.create({
   screenTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: colors.gray[900],
   },
   screenSubtitle: {
     fontSize: 13,
-    color: colors.gray[500],
     marginTop: 2,
   },
   tabsWrapper: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
   },
   tabsContainer: {
     paddingHorizontal: 16,
@@ -533,20 +699,12 @@ const styles = StyleSheet.create({
   tabChip: {
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: colors.gray[100],
+    borderRadius: radius.full,
+    borderWidth: 1,
     marginRight: 6,
   },
-  tabChipActive: {
-    backgroundColor: colors.primary[600],
-  },
   tabChipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.gray[700],
-  },
-  tabChipTextActive: {
-    color: '#ffffff',
+    fontSize: 12,
   },
   listContainer: {
     padding: 16,
@@ -554,12 +712,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   card: {
-    backgroundColor: colors.gray[50],
-    borderRadius: 16,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.gray[200],
     padding: 14,
     marginBottom: 10,
+    ...shadows.sm,
   },
   topRow: {
     flexDirection: 'row',
@@ -567,57 +724,58 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   itemThumb: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    backgroundColor: colors.gray[200],
+    width: 46,
+    height: 46,
+    borderRadius: radius.sm,
   },
   categoryBadge: {
-    fontSize: 10,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    marginBottom: 2,
+  },
+  categoryBadgeText: {
+    fontSize: 9,
     fontWeight: '700',
-    color: colors.gray[500],
     textTransform: 'uppercase',
   },
   itemTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.gray[900],
   },
   borrowerSection: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: radius.md,
     padding: 10,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: colors.gray[200],
   },
   borrowerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   avatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
   },
   avatarFallback: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: colors.primary[100],
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarFallbackText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: colors.primary[700],
+    fontWeight: '800',
+    color: '#ffffff',
   },
   borrowerName: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
-    color: colors.gray[900],
   },
   phoneActionRow: {
     flexDirection: 'row',
@@ -626,169 +784,194 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   phoneLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingVertical: 2,
   },
   phoneText: {
-    fontSize: 11,
-    color: colors.primary[600],
+    fontSize: 12,
     fontWeight: '600',
   },
   copyBtn: {
-    backgroundColor: colors.gray[100],
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: colors.gray[200],
   },
   copyBtnText: {
     fontSize: 10,
-    fontWeight: '600',
-    color: colors.gray[700],
+    fontWeight: '700',
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 4,
   },
   dates: {
     fontSize: 12,
-    color: colors.gray[700],
+  },
+  earningsRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
     marginBottom: 4,
   },
-  earnings: {
+  earningsLabel: {
     fontSize: 12,
-    color: colors.gray[600],
-    marginBottom: 4,
   },
   earningsValue: {
+    fontSize: 14,
     fontWeight: '800',
-    color: '#166534',
+    color: colors.accent[500],
+  },
+  depositPill: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   noteText: {
-    fontSize: 11,
-    color: colors.gray[500],
+    fontSize: 12,
     fontStyle: 'italic',
+    marginTop: 2,
   },
   actionRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 8,
+    gap: 10,
+    marginTop: 4,
   },
+
+  // Action Buttons from Design Spec
   declineBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: '#fee2e2',
-    borderWidth: 1,
-    borderColor: '#fca5a5',
-  },
-  declineBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#b91c1c',
-  },
-  approveBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: '#16a34a',
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.danger,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  declineBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.danger,
+  },
+  approveBtn: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: radius.md,
+    backgroundColor: colors.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
   },
   approveBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
     color: '#ffffff',
   },
   activateBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: '#16a34a',
+    borderRadius: radius.md,
+    backgroundColor: colors.info,
     alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
   },
   activateBtnText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#ffffff',
   },
   returnBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: '#9333ea',
+    borderRadius: radius.md,
+    backgroundColor: colors.secondary[500],
     alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
   },
   returnBtnText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#ffffff',
   },
+
+  // States
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
   },
-  emptyIcon: {
-    fontSize: 40,
-    marginBottom: 10,
+  emptyIconBg: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   emptyTitle: {
     fontSize: 17,
-    fontWeight: '700',
-    color: colors.gray[900],
+    fontWeight: '800',
     marginBottom: 4,
   },
   emptyText: {
     fontSize: 13,
-    color: colors.gray[500],
     textAlign: 'center',
   },
   errorText: {
     fontSize: 14,
-    color: '#b91c1c',
+    color: colors.danger,
     marginBottom: 12,
     textAlign: 'center',
   },
   retryBtn: {
-    backgroundColor: colors.primary[600],
+    backgroundColor: colors.primary[500],
     paddingHorizontal: 18,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: radius.md,
   },
   retryBtnText: {
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '700',
   },
+
+  // Modals
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
+    borderRadius: radius.xl,
     padding: 20,
     width: '100%',
     maxWidth: 340,
+    borderWidth: 1,
+    ...shadows.lg,
   },
   modalTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '800',
-    color: colors.gray[900],
     marginBottom: 4,
   },
   modalSubtitle: {
     fontSize: 13,
-    color: colors.gray[500],
     marginBottom: 14,
   },
   modalInput: {
-    borderWidth: 1,
-    borderColor: colors.gray[300],
-    borderRadius: 12,
+    borderWidth: 1.5,
+    borderRadius: radius.md,
     padding: 12,
     fontSize: 13,
-    color: colors.gray[900],
-    backgroundColor: colors.gray[50],
     height: 80,
     textAlignVertical: 'top',
     marginBottom: 16,
@@ -800,47 +983,45 @@ const styles = StyleSheet.create({
   modalCancelBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.gray[300],
     alignItems: 'center',
+    justifyContent: 'center',
   },
   modalCancelText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.gray[700],
+    fontWeight: '700',
   },
   modalRejectBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: '#dc2626',
+    borderRadius: radius.md,
+    backgroundColor: colors.danger,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   modalRejectText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#ffffff',
   },
   pickupModalCard: {
     maxWidth: 380,
   },
   safetyBox: {
-    backgroundColor: '#eff6ff',
     borderWidth: 1,
-    borderColor: '#bfdbfe',
-    borderRadius: 10,
-    padding: 8,
-    marginBottom: 10,
+    borderRadius: radius.md,
+    padding: 10,
+    marginBottom: 12,
   },
   safetyText: {
     fontSize: 11,
-    color: '#1e40af',
+    color: colors.info,
     lineHeight: 15,
   },
   noteInput: {
-    height: 44,
-    marginBottom: 12,
+    height: 48,
+    marginBottom: 14,
     marginTop: 8,
   },
 });

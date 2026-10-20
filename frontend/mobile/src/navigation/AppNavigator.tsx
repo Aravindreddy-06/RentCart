@@ -1,14 +1,19 @@
 /**
  * src/navigation/AppNavigator.tsx (mobile)
- * Bottom tabs: Home, Requests (with pending badge), My Rentals, Profile
- * Keep "+" Add Item button on Home.
- * Stack screens: ItemDetail, RentalDetail, RequestBorrow, AddItem, CreateItem, MyItems, Profile.
+ * Polished bottom tabs and stack navigator:
+ * - Teal active tab with Ionicons and pill indicator
+ * - Red unread badge on Requests and Messages
+ * - Warm gradient floating "+" Add Item button
+ * - Full dark theme support for headers and bottom tabs
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, TouchableOpacity, View, StyleSheet } from 'react-native';
+import { TouchableOpacity, View, StyleSheet, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppStackParamList, MainTabParamList } from './types';
 import HomeScreen from '../screens/HomeScreen';
 import ItemDetailScreen from '../screens/ItemDetailScreen';
@@ -26,26 +31,97 @@ import MessagesScreen from '../screens/MessagesScreen';
 import ChatScreen from '../screens/ChatScreen';
 import { rentalsService } from '../services/rentals.service';
 import { chatsService } from '../services/chats.service';
-import { colors } from '../utils/colors';
+import { colors, gradients, shadows } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-// Floating "+" button rendered over the tab bar
-function AddItemFab({ navigation }: { navigation: NativeStackNavigationProp<AppStackParamList> }) {
+type IoniconsGlyph = React.ComponentProps<typeof Ionicons>['name'];
+const FALLBACK_ICON: IoniconsGlyph = 'help-circle-outline';
+
+/**
+ * Validates that an icon glyph name exists in Ionicons.glyphMap,
+ * safely falling back to a default icon if not present.
+ */
+function getValidIoniconsGlyph(name: string, fallback: IoniconsGlyph = FALLBACK_ICON): IoniconsGlyph {
+  if (Ionicons.glyphMap && Object.prototype.hasOwnProperty.call(Ionicons.glyphMap, name)) {
+    return name as IoniconsGlyph;
+  }
+  return fallback;
+}
+
+interface TabBarIconWrapperProps {
+  focused: boolean;
+  activeName: string;
+  inactiveName: string;
+  color: string;
+  isDark: boolean;
+}
+
+/**
+ * Custom 56x32 pill indicator wrapper for bottom tab bar icons.
+ * Ensures centered layout, overflow visible, and no lineHeight clipping on Android.
+ */
+function TabBarIconWrapper({
+  focused,
+  activeName,
+  inactiveName,
+  color,
+  isDark,
+}: TabBarIconWrapperProps) {
+  const desiredName = focused ? activeName : inactiveName;
+  const glyphName = getValidIoniconsGlyph(desiredName);
+
+  return (
+    <View
+      style={[
+        styles.tabIconWrapper,
+        focused && {
+          backgroundColor: isDark ? 'rgba(15, 157, 138, 0.2)' : colors.primary[50],
+        },
+      ]}
+    >
+      <Ionicons
+        name={glyphName}
+        size={22}
+        color={color}
+        style={styles.tabIcon}
+      />
+    </View>
+  );
+}
+
+// Floating "+" button with warm gradient, positioned above the dynamic tab bar
+function AddItemFab({
+  navigation,
+  bottomInset,
+}: {
+  navigation: NativeStackNavigationProp<AppStackParamList>;
+  bottomInset: number;
+}) {
   return (
     <TouchableOpacity
-      style={styles.fab}
       onPress={() => navigation.navigate('AddItem')}
-      activeOpacity={0.85}
+      activeOpacity={0.88}
+      style={[styles.fabContainer, { bottom: 76 + bottomInset }]}
     >
-      <Text style={styles.fabText}>＋</Text>
+      <LinearGradient
+        colors={gradients.warm as unknown as [string, string, ...string[]]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.fabGradient}
+      >
+        <Ionicons name="add" size={28} color="#FFFFFF" style={styles.fabIcon} />
+      </LinearGradient>
     </TouchableOpacity>
   );
 }
 
 function MainTabs({ navigation }: { navigation: NativeStackNavigationProp<AppStackParamList> }) {
+  const { isDark, themeColors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [pendingCount, setPendingCount] = useState(0);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
@@ -62,7 +138,7 @@ function MainTabs({ navigation }: { navigation: NativeStackNavigationProp<AppSta
         setUnreadChatCount(unreadRes.value);
       }
     } catch {
-      // Ignore if not logged in or network error
+      // Ignore network errors or unauthenticated state
     }
   }, []);
 
@@ -73,18 +149,36 @@ function MainTabs({ navigation }: { navigation: NativeStackNavigationProp<AppSta
   }, [refreshCounts]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: themeColors.background }}>
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: colors.primary[600],
-          tabBarInactiveTintColor: colors.gray[400],
+          tabBarActiveTintColor: colors.primary[500],
+          tabBarInactiveTintColor: isDark ? colors.dark.textMuted : colors.textMuted,
+          tabBarBadgeStyle: {
+            backgroundColor: colors.danger,
+            color: '#FFFFFF',
+            fontSize: 10,
+            fontWeight: '700',
+            lineHeight: 14,
+          },
           tabBarStyle: {
+            backgroundColor: themeColors.surface,
             borderTopWidth: 1,
-            borderTopColor: colors.gray[200],
-            paddingBottom: 4,
-            paddingTop: 4,
-            height: 60,
+            borderTopColor: themeColors.border,
+            paddingTop: 8,
+            paddingBottom: insets.bottom,
+            height: 64 + insets.bottom,
+            elevation: 8,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: isDark ? 0.2 : 0.04,
+            shadowRadius: 8,
+          },
+          tabBarLabelStyle: {
+            fontSize: 11,
+            fontWeight: '600',
+            marginTop: 2,
           },
         }}
       >
@@ -93,7 +187,15 @@ function MainTabs({ navigation }: { navigation: NativeStackNavigationProp<AppSta
           component={HomeScreen as any}
           options={{
             tabBarLabel: 'Home',
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🏠</Text>,
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIconWrapper
+                focused={focused}
+                activeName="home"
+                inactiveName="home-outline"
+                color={color}
+                isDark={isDark}
+              />
+            ),
           }}
         />
         <Tab.Screen
@@ -102,7 +204,15 @@ function MainTabs({ navigation }: { navigation: NativeStackNavigationProp<AppSta
           options={{
             tabBarLabel: 'Requests',
             tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📥</Text>,
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIconWrapper
+                focused={focused}
+                activeName="clipboard"
+                inactiveName="clipboard-outline"
+                color={color}
+                isDark={isDark}
+              />
+            ),
           }}
           listeners={{
             focus: () => {
@@ -116,7 +226,15 @@ function MainTabs({ navigation }: { navigation: NativeStackNavigationProp<AppSta
           options={{
             tabBarLabel: 'Messages',
             tabBarBadge: unreadChatCount > 0 ? unreadChatCount : undefined,
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>💬</Text>,
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIconWrapper
+                focused={focused}
+                activeName="chatbubbles"
+                inactiveName="chatbubbles-outline"
+                color={color}
+                isDark={isDark}
+              />
+            ),
           }}
           listeners={{
             focus: () => {
@@ -129,7 +247,15 @@ function MainTabs({ navigation }: { navigation: NativeStackNavigationProp<AppSta
           component={MyRentalsScreen as any}
           options={{
             tabBarLabel: 'My Rentals',
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🤝</Text>,
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIconWrapper
+                focused={focused}
+                activeName="receipt"
+                inactiveName="receipt-outline"
+                color={color}
+                isDark={isDark}
+              />
+            ),
           }}
         />
         <Tab.Screen
@@ -137,22 +263,43 @@ function MainTabs({ navigation }: { navigation: NativeStackNavigationProp<AppSta
           component={ProfileScreen as any}
           options={{
             tabBarLabel: 'Profile',
-            tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>👤</Text>,
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIconWrapper
+                focused={focused}
+                activeName="person"
+                inactiveName="person-outline"
+                color={color}
+                isDark={isDark}
+              />
+            ),
           }}
         />
       </Tab.Navigator>
-      {/* Floating "+" button over the tab bar */}
-      <AddItemFab navigation={navigation} />
+
+      {/* Floating Warm Gradient "+" FAB */}
+      <AddItemFab navigation={navigation} bottomInset={insets.bottom} />
     </View>
   );
 }
 
 export default function AppNavigator() {
+  const { isDark, themeColors } = useTheme();
+
   return (
     <Stack.Navigator
       screenOptions={{
-        headerTintColor: colors.gray[900],
-        headerTitleStyle: { fontWeight: '700' },
+        headerStyle: {
+          backgroundColor: themeColors.surface,
+        },
+        headerTintColor: themeColors.text,
+        headerTitleStyle: {
+          fontWeight: '700',
+          fontSize: 17,
+        },
+        headerShadowVisible: false,
+        contentStyle: {
+          backgroundColor: themeColors.background,
+        },
       }}
     >
       <Stack.Screen
@@ -204,7 +351,7 @@ export default function AppNavigator() {
       <Stack.Screen
         name="PublicProfile"
         component={PublicProfileScreen}
-        options={{ title: 'Neighbour Profile' }}
+        options={{ title: 'Community Member' }}
       />
       <Stack.Screen
         name="Notifications"
@@ -223,27 +370,32 @@ export default function AppNavigator() {
 }
 
 const styles = StyleSheet.create({
-  fab: {
-    position: 'absolute',
-    bottom: 72, // above tab bar (60) + 12 gap
-    right: 20,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.primary[600],
+  tabIconWrapper: {
+    width: 56,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
+    overflow: 'visible',
   },
-  fabText: {
-    color: '#ffffff',
-    fontSize: 26,
-    lineHeight: 28,
-    fontWeight: '300',
-    marginTop: -2,
+  tabIcon: {
+    lineHeight: undefined,
+    includeFontPadding: false,
+  },
+  fabContainer: {
+    position: 'absolute',
+    right: 20,
+    ...shadows.accent,
+  },
+  fabGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fabIcon: {
+    lineHeight: undefined,
+    includeFontPadding: false,
   },
 });

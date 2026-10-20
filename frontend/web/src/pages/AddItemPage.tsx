@@ -1,19 +1,54 @@
 /**
- * src/pages/AddItemPage.tsx
- * Add Item form — upload images, fill item details, publish.
- * Route: /items/new (protected)
+ * src/pages/AddItemPage.tsx (web)
+ * Polished Add Item form:
+ * - Tinted section cards with dark mode support
+ * - Image picker tiles with dashed teal border and plus icon
+ * - Category picker with colored category theme chips
+ * - Teal input focus states
+ * - Gradient primary button
+ * - Preserved Zod validation, price bounds, and image upload flow
  */
 
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { itemsService } from '../services/items.service';
-
-// ─── Schema ───────────────────────────────────────────────────────────────────
+import { CATEGORY_THEMES } from '../utils/colors';
+import {
+  ArrowLeft,
+  Plus,
+  X,
+  CheckCircle2,
+  AlertTriangle,
+  Wrench,
+  Zap,
+  Utensils,
+  Trophy,
+  BookOpen,
+  Package,
+} from 'lucide-react';
 
 const CATEGORIES = ['Tools', 'Electronics', 'Kitchen', 'Sports', 'Books', 'Other'] as const;
+
+function getCategoryIcon(cat: string) {
+  switch (cat) {
+    case 'Tools':
+      return <Wrench className="w-4 h-4" />;
+    case 'Electronics':
+      return <Zap className="w-4 h-4" />;
+    case 'Kitchen':
+      return <Utensils className="w-4 h-4" />;
+    case 'Sports':
+      return <Trophy className="w-4 h-4" />;
+    case 'Books':
+      return <BookOpen className="w-4 h-4" />;
+    case 'Other':
+    default:
+      return <Package className="w-4 h-4" />;
+  }
+}
 
 const schema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters'),
@@ -24,8 +59,6 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export function AddItemPage() {
   const navigate = useNavigate();
@@ -38,13 +71,16 @@ export function AddItemPage() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { category: 'Tools', deposit: 0 },
   });
 
-  // ── Image handling ──────────────────────────────────────────────────────────
+  const selectedCategory = watch('category');
+
   const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files ?? []);
     const remaining = 5 - imageFiles.length;
@@ -62,7 +98,6 @@ export function AddItemPage() {
     });
   }, []);
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     setSubmitError('');
@@ -90,70 +125,79 @@ export function AddItemPage() {
     }
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-neutral-50 dark:bg-dark-bg transition-colors duration-200 pb-16">
       {/* Header */}
-      <header className="bg-white border-b border-neutral-100 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
+      <header className="bg-white/80 dark:bg-dark-surface/80 border-b border-neutral-200 dark:border-dark-border sticky top-0 z-20 backdrop-blur-md">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="btn-ghost p-2"
-            aria-label="Go back"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-600 dark:text-dark-muted hover:text-neutral-900 dark:hover:text-dark-text py-1 px-2.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-dark-card transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-            </svg>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
           </button>
-          <div>
-            <h1 className="font-bold text-neutral-900 text-lg">List an Item</h1>
-            <p className="text-neutral-400 text-xs">Share something with your community</p>
-          </div>
+          <span className="text-xs font-bold text-neutral-400 dark:text-dark-muted uppercase tracking-wider">
+            List an Item
+          </span>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
+      {/* Main Form */}
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 animate-slide-up">
         {success ? (
-          <div className="card p-10 text-center animate-fade-in">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 flex items-center justify-center">
-              <svg className="w-8 h-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-              </svg>
+          <div className="card p-12 text-center animate-fade-in shadow-xl">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center animate-bounce">
+              <CheckCircle2 className="w-10 h-10" />
             </div>
-            <p className="text-neutral-900 font-bold text-xl mb-1">Item published! 🎉</p>
-            <p className="text-neutral-500 text-sm">Redirecting to your item…</p>
+            <h2 className="text-2xl font-extrabold text-neutral-900 dark:text-dark-text mb-1">Item Published! 🎉</h2>
+            <p className="text-neutral-500 dark:text-dark-muted text-sm font-medium">Redirecting to your listing…</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-            {/* Image picker */}
-            <div className="card p-5 space-y-3">
-              <h2 className="font-semibold text-neutral-800">Photos</h2>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+            {/* Section 1: Photos with Dashed Teal Border */}
+            <div className="card p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-700 dark:text-dark-text">Item Photos</h2>
+                  <p className="text-xs text-neutral-500 dark:text-dark-muted mt-0.5">Add up to 5 photos of your item</p>
+                </div>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300">
+                  {imageFiles.length}/5
+                </span>
+              </div>
+
+              {/* Existing preview thumbnails */}
               {imagePreviews.length > 0 && (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
                   {imagePreviews.map((src, i) => (
-                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-neutral-200 group">
+                    <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-neutral-200 dark:border-dark-border group shadow-xs">
                       <img src={src} alt="" className="w-full h-full object-cover" />
                       <button
                         type="button"
                         onClick={() => removeImage(i)}
-                        className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                        className="absolute top-1 right-1 w-6 h-6 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-opacity text-xs"
                         aria-label="Remove image"
                       >
-                        ✕
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
+
+              {/* Dashed Teal Image Picker Box */}
               {imageFiles.length < 5 && (
-                <label className="flex flex-col items-center justify-center border-2 border-dashed border-neutral-200 rounded-xl p-6 cursor-pointer hover:border-primary-400 transition-colors">
-                  <svg className="w-8 h-8 text-neutral-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                  </svg>
-                  <span className="text-sm text-neutral-500 font-medium">
-                    Add photos ({imageFiles.length}/5)
+                <label className="flex flex-col items-center justify-center border-2 border-dashed border-primary-400/80 dark:border-primary-500/50 bg-primary-50/20 dark:bg-primary-900/10 hover:bg-primary-50/40 rounded-2xl p-6 cursor-pointer transition-all group">
+                  <div className="w-12 h-12 rounded-2xl bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <Plus className="w-6 h-6 stroke-[2.5]" />
+                  </div>
+                  <span className="text-sm font-bold text-neutral-800 dark:text-dark-text">
+                    Click to upload photos
                   </span>
-                  <span className="text-xs text-neutral-400 mt-0.5">JPG, PNG, WebP · Max 5 MB each</span>
+                  <span className="text-xs text-neutral-400 dark:text-dark-muted mt-0.5 font-medium">
+                    JPG, PNG, WebP · Max 5 MB each
+                  </span>
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
@@ -165,88 +209,102 @@ export function AddItemPage() {
               )}
             </div>
 
-            {/* Item details */}
-            <div className="card p-5 space-y-4">
-              <h2 className="font-semibold text-neutral-800">Item Details</h2>
+            {/* Section 2: Item Details */}
+            <div className="card p-6 space-y-4">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-700 dark:text-dark-text border-b border-neutral-100 dark:border-dark-border pb-3">
+                Item Information
+              </h2>
 
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1" htmlFor="title">
-                  Title *
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-dark-muted mb-1.5" htmlFor="title">
+                  Item Title *
                 </label>
                 <input
                   id="title"
                   type="text"
-                  placeholder="e.g. DeWalt Cordless Drill 20V"
+                  placeholder="e.g. DeWalt 20V Max Cordless Drill Kit"
                   className={`form-field ${errors.title ? 'form-field-error' : ''}`}
                   {...register('title')}
                 />
                 {errors.title && (
-                  <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>
+                  <p className="text-danger text-xs mt-1.5 font-medium">{errors.title.message}</p>
                 )}
               </div>
 
-              {/* Category */}
+              {/* Category Chips Selection */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1.5" htmlFor="category">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-dark-muted mb-2">
                   Category *
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {CATEGORIES.map((cat) => {
-                    const catEmoji: Record<string, string> = {
-                      Tools: '🔧', Electronics: '📱', Kitchen: '🍳',
-                      Sports: '⚽', Books: '📚', Other: '📦',
-                    };
+                    const theme = CATEGORY_THEMES[cat];
+                    const isSelected = selectedCategory === cat;
                     return (
-                      <label key={cat} className="cursor-pointer">
-                        <input type="radio" value={cat} {...register('category')} className="sr-only" />
-                        <span className={`chip ${errors.category ? 'chip-inactive' : 'chip-inactive'}`}>
-                          {catEmoji[cat]} {cat}
-                        </span>
-                      </label>
+                      <button
+                        type="button"
+                        key={cat}
+                        onClick={() => setValue('category', cat, { shouldValidate: true })}
+                        className="chip"
+                        style={
+                          isSelected
+                            ? {
+                                backgroundColor: theme.solidBg,
+                                color: theme.solidText,
+                                borderColor: theme.solidBg,
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                              }
+                            : {
+                                backgroundColor: theme.tintBg,
+                                color: theme.tintText,
+                                borderColor: theme.borderColor,
+                              }
+                        }
+                      >
+                        {getCategoryIcon(cat)}
+                        <span>{cat}</span>
+                      </button>
                     );
                   })}
                 </div>
-                {/* Use a visible select as the actual controller for category */}
-                <select
-                  id="category"
-                  className={`form-field mt-2 ${errors.category ? 'form-field-error' : ''}`}
-                  {...register('category')}
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
                 {errors.category && (
-                  <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>
+                  <p className="text-danger text-xs mt-1.5 font-medium">{errors.category.message}</p>
                 )}
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1" htmlFor="description">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-dark-muted mb-1.5" htmlFor="description">
                   Description *
                 </label>
                 <textarea
                   id="description"
                   rows={4}
-                  placeholder="Describe the condition, what's included, and pickup rules…"
+                  placeholder="Describe the condition, included accessories, guidelines for use, and pickup instructions…"
                   className={`form-field resize-none ${errors.description ? 'form-field-error' : ''}`}
                   {...register('description')}
                 />
                 {errors.description && (
-                  <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>
+                  <p className="text-danger text-xs mt-1.5 font-medium">{errors.description.message}</p>
                 )}
               </div>
+            </div>
 
-              {/* Pricing */}
-              <div className="grid grid-cols-2 gap-3">
+            {/* Section 3: Pricing and Deposit */}
+            <div className="card p-6 space-y-4">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-700 dark:text-dark-text border-b border-neutral-100 dark:border-dark-border pb-3">
+                Pricing & Security
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Price per day */}
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1" htmlFor="pricePerDay">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-dark-muted mb-1.5" htmlFor="pricePerDay">
                     Price per day (₹) *
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-neutral-500 font-medium select-none pointer-events-none">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-accent-500 font-extrabold select-none pointer-events-none text-base">
                       ₹
                     </span>
                     <input
@@ -256,20 +314,22 @@ export function AddItemPage() {
                       max="1000000"
                       step="1"
                       placeholder="150"
-                      className={`form-field pl-7 ${errors.pricePerDay ? 'form-field-error' : ''}`}
+                      className={`form-field pl-8 font-bold ${errors.pricePerDay ? 'form-field-error' : ''}`}
                       {...register('pricePerDay')}
                     />
                   </div>
                   {errors.pricePerDay && (
-                    <p className="text-red-500 text-xs mt-1">{errors.pricePerDay.message}</p>
+                    <p className="text-danger text-xs mt-1.5 font-medium">{errors.pricePerDay.message}</p>
                   )}
                 </div>
+
+                {/* Deposit */}
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1" htmlFor="deposit">
-                    Deposit (₹)
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-dark-muted mb-1.5" htmlFor="deposit">
+                    Deposit (₹) <span className="text-neutral-400 font-normal lowercase">(optional)</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-neutral-500 font-medium select-none pointer-events-none">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-secondary-500 font-extrabold select-none pointer-events-none text-base">
                       ₹
                     </span>
                     <input
@@ -279,41 +339,39 @@ export function AddItemPage() {
                       max="1000000"
                       step="1"
                       placeholder="500"
-                      className={`form-field pl-7 ${errors.deposit ? 'form-field-error' : ''}`}
+                      className={`form-field pl-8 font-bold ${errors.deposit ? 'form-field-error' : ''}`}
                       {...register('deposit')}
                     />
                   </div>
                   {errors.deposit && (
-                    <p className="text-red-500 text-xs mt-1">{errors.deposit.message}</p>
+                    <p className="text-danger text-xs mt-1.5 font-medium">{errors.deposit.message}</p>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Error */}
+            {/* Error Banner */}
             {submitError && (
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200">
-                <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                </svg>
-                <p className="text-red-700 text-sm">{submitError}</p>
+              <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-danger text-xs font-medium">
+                <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <p>{submitError}</p>
               </div>
             )}
 
-            {/* Submit */}
+            {/* Submit Button */}
             <button
               id="publish-btn"
               type="submit"
               disabled={isSubmitting}
-              className="btn-primary w-full py-3.5 text-base"
+              className="btn-primary w-full py-4 text-sm font-bold shadow-md hover:shadow-glow"
             >
               {isSubmitting ? (
-                <>
+                <span className="flex items-center justify-center gap-2">
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Publishing…
-                </>
+                  Publishing Listing…
+                </span>
               ) : (
-                'Publish Item'
+                'Publish Listing'
               )}
             </button>
           </form>

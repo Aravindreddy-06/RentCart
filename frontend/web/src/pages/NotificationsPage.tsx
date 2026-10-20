@@ -10,6 +10,25 @@ import { Navbar } from '../components/Navbar';
 import { notificationsService } from '../services/notifications.service';
 import type { NotificationItem, NotificationType } from '../services/notifications.service';
 import { formatDateDMY } from '../utils/date';
+import {
+  FileText,
+  CheckCircle2,
+  XCircle,
+  Ban,
+  PlayCircle,
+  PackageCheck,
+  Star,
+  MessageSquare,
+  MapPin,
+  Navigation,
+  Sparkles,
+  Bell,
+  Check,
+  Trash2,
+  AlertTriangle,
+  KeyRound,
+  ShieldCheck,
+} from 'lucide-react';
 
 function formatTimeAgo(isoString: string): string {
   const date = new Date(isoString);
@@ -30,75 +49,87 @@ function getBadge(type: NotificationType) {
   switch (type) {
     case 'RENTAL_REQUESTED':
       return {
-        bg: 'bg-amber-100 text-amber-800 border-amber-200',
+        bg: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border-amber-200 dark:border-amber-800/50',
         label: 'Request',
-        icon: '📋',
+        icon: <FileText className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
       };
     case 'RENTAL_APPROVED':
       return {
-        bg: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50',
         label: 'Approved',
-        icon: '✅',
+        icon: <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
       };
     case 'RENTAL_REJECTED':
       return {
-        bg: 'bg-rose-100 text-rose-800 border-rose-200',
+        bg: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400 border-red-200 dark:border-red-800/50',
         label: 'Declined',
-        icon: '❌',
+        icon: <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />,
       };
     case 'RENTAL_CANCELLED':
       return {
-        bg: 'bg-neutral-100 text-neutral-700 border-neutral-200',
+        bg: 'bg-neutral-100 text-neutral-600 dark:bg-dark-surface dark:text-dark-muted border-neutral-200 dark:border-dark-border',
         label: 'Cancelled',
-        icon: '🚫',
+        icon: <Ban className="w-5 h-5 text-neutral-500 dark:text-dark-muted" />,
       };
     case 'RENTAL_ACTIVATED':
       return {
-        bg: 'bg-blue-100 text-blue-800 border-blue-200',
+        bg: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400 border-blue-200 dark:border-blue-800/50',
         label: 'Active',
-        icon: '🚀',
+        icon: <PlayCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />,
       };
     case 'RENTAL_RETURNED':
       return {
-        bg: 'bg-teal-100 text-teal-800 border-teal-200',
+        bg: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/50',
         label: 'Returned',
-        icon: '📦',
+        icon: <PackageCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />,
       };
     case 'REVIEW_RECEIVED':
       return {
-        bg: 'bg-amber-100 text-amber-800 border-amber-200',
+        bg: 'bg-amber-50 text-gold dark:bg-amber-950/40 dark:text-gold border-amber-300 dark:border-amber-700/50',
         label: 'Review',
-        icon: '⭐',
+        icon: <Star className="w-5 h-5 fill-gold text-gold" />,
       };
     case 'NEW_MESSAGE':
       return {
-        bg: 'bg-primary-100 text-primary-800 border-primary-200',
+        bg: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400 border-blue-200 dark:border-blue-800/50',
         label: 'Message',
-        icon: '💬',
+        icon: <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />,
       };
     case 'PICKUP_LOCATION_SHARED':
       return {
-        bg: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        bg: 'bg-primary-100 text-primary-700 dark:bg-primary-950/50 dark:text-primary-400 border-primary-200 dark:border-primary-800/50',
         label: 'Pickup',
-        icon: '📍',
+        icon: <MapPin className="w-5 h-5 text-primary-600 dark:text-primary-400" />,
       };
     case 'BORROWER_ON_THE_WAY':
       return {
-        bg: 'bg-blue-100 text-blue-800 border-blue-200',
+        bg: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400 border-blue-200 dark:border-blue-800/50',
         label: 'On the way',
-        icon: '🚗',
+        icon: <Navigation className="w-5 h-5 text-blue-600 dark:text-blue-400" />,
       };
     case 'BORROWER_ARRIVED':
       return {
-        bg: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50',
         label: 'Arrived',
-        icon: '🎉',
+        icon: <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
+      };
+    case 'HANDOVER_PIN_READY':
+      return {
+        bg: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border-amber-200 dark:border-amber-800/50',
+        label: 'Pickup PIN',
+        icon: <KeyRound className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
+      };
+    case 'HANDOVER_CONFIRMED':
+      return {
+        bg: 'bg-primary-100 text-primary-700 dark:bg-primary-950/50 dark:text-primary-400 border-primary-200 dark:border-primary-800/50',
+        label: 'Handover Confirmed',
+        icon: <ShieldCheck className="w-5 h-5 text-primary-600 dark:text-primary-400" />,
       };
     default:
       return {
-        bg: 'bg-neutral-100 text-neutral-700 border-neutral-200',
+        bg: 'bg-neutral-100 text-neutral-600 dark:bg-dark-surface dark:text-dark-muted border-neutral-200 dark:border-dark-border',
         label: 'Notice',
-        icon: '🔔',
+        icon: <Bell className="w-5 h-5 text-neutral-500 dark:text-dark-muted" />,
       };
   }
 }
@@ -228,17 +259,17 @@ export function NotificationsPage() {
   const unreadCountInList = notifications.filter((n) => !n.isRead).length;
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col">
+    <div className="min-h-screen bg-neutral-50 dark:bg-dark-bg text-neutral-900 dark:text-dark-text flex flex-col transition-colors">
       <Navbar />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
               Notifications
             </h1>
-            <p className="text-sm text-neutral-500 mt-1">
+            <p className="text-sm text-neutral-500 dark:text-dark-muted mt-1">
               Stay updated on your rental requests, approvals, and activity.
             </p>
           </div>
@@ -247,24 +278,16 @@ export function NotificationsPage() {
             <button
               onClick={handleMarkAllAsRead}
               disabled={markingAll || (activeTab === 'all' && unreadCountInList === 0)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 text-xs sm:text-sm font-semibold text-neutral-700 bg-white hover:bg-neutral-50 hover:text-neutral-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-dark-border text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-200 bg-white dark:bg-dark-surface hover:bg-neutral-50 dark:hover:bg-dark-border/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
-              <svg
-                className="w-4 h-4 text-primary-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-              </svg>
+              <Check className="w-4 h-4 text-primary-600 dark:text-primary-400" />
               <span>{markingAll ? 'Marking…' : 'Mark all as read'}</span>
             </button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center border-b border-neutral-200 mb-6 gap-2">
+        <div className="flex items-center border-b border-neutral-200 dark:border-dark-border mb-6 gap-2">
           <button
             onClick={() => {
               setActiveTab('all');
@@ -272,13 +295,13 @@ export function NotificationsPage() {
             }}
             className={`pb-3 px-3 font-semibold text-sm transition-all border-b-2 -mb-px flex items-center gap-2 ${
               activeTab === 'all'
-                ? 'border-primary-600 text-primary-700'
-                : 'border-transparent text-neutral-500 hover:text-neutral-800'
+                ? 'border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                : 'border-transparent text-neutral-500 dark:text-dark-muted hover:text-neutral-800 dark:hover:text-neutral-200'
             }`}
           >
             <span>All</span>
             {activeTab === 'all' && totalCount > 0 && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-700 font-bold">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-200 dark:bg-dark-border text-neutral-700 dark:text-neutral-300 font-bold">
                 {totalCount}
               </span>
             )}
@@ -290,13 +313,13 @@ export function NotificationsPage() {
             }}
             className={`pb-3 px-3 font-semibold text-sm transition-all border-b-2 -mb-px flex items-center gap-2 ${
               activeTab === 'unread'
-                ? 'border-primary-600 text-primary-700'
-                : 'border-transparent text-neutral-500 hover:text-neutral-800'
+                ? 'border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                : 'border-transparent text-neutral-500 dark:text-dark-muted hover:text-neutral-800 dark:hover:text-neutral-200'
             }`}
           >
             <span>Unread</span>
             {activeTab === 'unread' && totalCount > 0 && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-primary-100 text-primary-800 font-bold">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-950/60 text-primary-700 dark:text-primary-400 font-bold border border-primary-200 dark:border-primary-800/40">
                 {totalCount}
               </span>
             )}
@@ -309,25 +332,23 @@ export function NotificationsPage() {
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="bg-white rounded-2xl p-4 border border-neutral-200 animate-pulse flex items-start gap-3.5"
+                className="bg-white dark:bg-dark-surface rounded-2xl p-4 border border-neutral-200 dark:border-dark-border animate-pulse flex items-start gap-3.5"
               >
-                <div className="w-10 h-10 rounded-xl bg-neutral-200 flex-shrink-0" />
+                <div className="w-10 h-10 rounded-xl bg-neutral-200 dark:bg-dark-border flex-shrink-0" />
                 <div className="flex-1 space-y-2 py-1">
-                  <div className="h-4 bg-neutral-200 rounded w-1/3" />
-                  <div className="h-3.5 bg-neutral-100 rounded w-3/4" />
+                  <div className="h-4 bg-neutral-200 dark:bg-dark-border rounded w-1/3" />
+                  <div className="h-3.5 bg-neutral-100 dark:bg-dark-border/60 rounded w-3/4" />
                 </div>
               </div>
             ))}
           </div>
         ) : error ? (
-          <div className="bg-white rounded-2xl p-8 border border-neutral-200 text-center shadow-sm">
-            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+          <div className="bg-white dark:bg-dark-surface rounded-2xl p-8 border border-neutral-200 dark:border-dark-border text-center shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-6 h-6" />
             </div>
-            <h3 className="font-bold text-neutral-900 text-base mb-1">Failed to load</h3>
-            <p className="text-neutral-500 text-sm mb-4">{error}</p>
+            <h3 className="font-bold text-neutral-900 dark:text-white text-base mb-1">Failed to load</h3>
+            <p className="text-neutral-500 dark:text-dark-muted text-sm mb-4">{error}</p>
             <button
               onClick={() => fetchNotifications(page, true)}
               className="btn-primary text-sm px-4 py-2"
@@ -336,14 +357,14 @@ export function NotificationsPage() {
             </button>
           </div>
         ) : notifications.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 border border-neutral-200 text-center shadow-sm">
-            <div className="w-16 h-16 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center mx-auto mb-4 text-3xl">
+          <div className="bg-white dark:bg-dark-surface rounded-2xl p-12 border border-neutral-200 dark:border-dark-border text-center shadow-sm">
+            <div className="w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 flex items-center justify-center mx-auto mb-4 text-3xl">
               🔔
             </div>
-            <h3 className="text-lg font-bold text-neutral-900 mb-1">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-1">
               {activeTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}
             </h3>
-            <p className="text-sm text-neutral-500 max-w-sm mx-auto">
+            <p className="text-sm text-neutral-500 dark:text-dark-muted max-w-sm mx-auto">
               {activeTab === 'unread'
                 ? "You're all caught up! Check back later or view all past notifications."
                 : 'Rental requests, approvals, and reminders will appear here.'}
@@ -359,23 +380,28 @@ export function NotificationsPage() {
                   onClick={() => handleNotificationClick(notif)}
                   className={`group relative rounded-2xl p-4 border transition-all cursor-pointer flex items-start gap-4 ${
                     notif.isRead
-                      ? 'bg-white border-neutral-200 hover:border-neutral-300 hover:shadow-sm'
-                      : 'bg-primary-50/50 border-primary-200/80 shadow-xs hover:bg-primary-50 hover:shadow-sm'
+                      ? 'bg-white dark:bg-dark-surface border-neutral-200 dark:border-dark-border hover:border-neutral-300 dark:hover:border-neutral-700 hover:shadow-sm'
+                      : 'bg-primary-50/70 dark:bg-primary-950/20 border-primary-200 dark:border-primary-900/50 shadow-xs hover:bg-primary-50 dark:hover:bg-primary-950/40 hover:shadow-sm'
                   }`}
                 >
-                  {/* Icon badge */}
+                  {/* Icon badge inside circle */}
                   <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg border ${badge.bg}`}
+                    className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-lg border shadow-xs ${badge.bg}`}
                   >
                     {badge.icon}
                   </div>
 
                   {/* Body Content */}
-                  <div className="flex-1 min-w-0 pr-8">
+                  <div className="flex-1 min-w-0 pr-6">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      {!notif.isRead && (
+                        <span className="w-2.5 h-2.5 rounded-full bg-primary-500 flex-shrink-0 animate-pulse" />
+                      )}
                       <span
-                        className={`text-sm font-semibold tracking-tight ${
-                          notif.isRead ? 'text-neutral-800' : 'text-neutral-900 font-bold'
+                        className={`text-sm tracking-tight ${
+                          notif.isRead
+                            ? 'font-semibold text-neutral-800 dark:text-neutral-200'
+                            : 'font-bold text-neutral-900 dark:text-white'
                         }`}
                       >
                         {notif.title}
@@ -385,21 +411,23 @@ export function NotificationsPage() {
                       >
                         {badge.label}
                       </span>
-                      <span className="text-xs text-neutral-400">
+                      <span className="text-xs text-neutral-400 dark:text-dark-muted">
                         • {formatTimeAgo(notif.createdAt)}
                       </span>
                     </div>
 
                     <p
                       className={`text-sm leading-relaxed ${
-                        notif.isRead ? 'text-neutral-600' : 'text-neutral-800 font-medium'
+                        notif.isRead
+                          ? 'text-neutral-600 dark:text-dark-muted'
+                          : 'text-neutral-800 dark:text-neutral-200 font-medium'
                       }`}
                     >
                       {notif.body}
                     </p>
 
                     {notif.data?.rentalId && (
-                      <div className="mt-2.5 flex items-center text-xs font-semibold text-primary-700 group-hover:text-primary-800 transition-colors">
+                      <div className="mt-2.5 flex items-center text-xs font-semibold text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
                         <span>View rental details</span>
                         <svg
                           className="w-3.5 h-3.5 ml-1 group-hover:translate-x-0.5 transition-transform"
@@ -420,44 +448,20 @@ export function NotificationsPage() {
                       <button
                         onClick={(e) => handleMarkAsRead(e, notif.id)}
                         title="Mark as read"
-                        className="p-1.5 rounded-lg text-neutral-400 hover:text-primary-600 hover:bg-white border border-transparent hover:border-neutral-200 transition-colors"
+                        className="p-1.5 rounded-lg text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-white dark:hover:bg-dark-border border border-transparent hover:border-neutral-200 dark:hover:border-dark-border transition-colors"
                       >
                         <span className="sr-only">Mark read</span>
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="m4.5 12.75 6 6 9-13.5"
-                          />
-                        </svg>
+                        <Check className="w-4 h-4" />
                       </button>
                     )}
 
                     <button
                       onClick={(e) => handleDelete(e, notif.id)}
                       title="Delete notification"
-                      className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-600 hover:bg-white border border-transparent hover:border-neutral-200 transition-colors"
+                      className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-dark-border border border-transparent hover:border-neutral-200 dark:hover:border-dark-border transition-colors"
                     >
                       <span className="sr-only">Delete</span>
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={1.5}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                        />
-                      </svg>
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -468,21 +472,21 @@ export function NotificationsPage() {
 
         {/* Pagination controls */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-8 pt-4 border-t border-neutral-200">
+          <div className="flex items-center justify-between mt-8 pt-4 border-t border-neutral-200 dark:border-dark-border">
             <button
               onClick={() => fetchNotifications(page - 1, true)}
               disabled={page <= 1}
-              className="btn-ghost text-xs sm:text-sm px-3 py-1.5 text-neutral-600 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="btn-secondary text-xs sm:text-sm px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Previous
             </button>
-            <span className="text-xs sm:text-sm text-neutral-500 font-medium">
+            <span className="text-xs sm:text-sm text-neutral-500 dark:text-dark-muted font-medium">
               Page {page} of {totalPages}
             </span>
             <button
               onClick={() => fetchNotifications(page + 1, true)}
               disabled={page >= totalPages}
-              className="btn-ghost text-xs sm:text-sm px-3 py-1.5 text-neutral-600 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="btn-secondary text-xs sm:text-sm px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Next
             </button>

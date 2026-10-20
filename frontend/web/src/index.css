@@ -4,18 +4,30 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Base resets ──────────────────────────────────────────────────────────── */
+/* ── Base resets & Dark Mode Background ─────────────────────────────────────── */
 @layer base {
   * {
     @apply box-border;
   }
 
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
-    @apply font-sans text-neutral-800 bg-neutral-50 antialiased;
+    @apply font-sans text-neutral-900 bg-neutral-50 antialiased selection:bg-primary-500 selection:text-white transition-colors duration-200;
+  }
+
+  html.dark body {
+    @apply bg-dark-bg text-dark-text;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold;
+    @apply font-semibold tracking-tight;
   }
 
   input, textarea, select {
@@ -25,22 +37,36 @@
 
 /* ── Reusable component classes ───────────────────────────────────────────── */
 @layer components {
-  /* Primary button */
+  /* Brand gradient primary button */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2
            px-5 py-2.5 rounded-xl font-semibold text-white text-sm
-           bg-primary-500 hover:bg-primary-600 active:bg-primary-700
-           disabled:opacity-50 disabled:cursor-not-allowed
-           transition-all duration-200 shadow-sm hover:shadow-md
+           bg-gradient-to-r from-primary-500 to-[#12C2A8]
+           hover:from-primary-600 hover:to-primary-500
+           active:scale-[0.98]
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none
+           transition-all duration-200 shadow-sm hover:shadow-glow
            focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+  }
+
+  /* Warm gradient button (CTAs, highlight actions) */
+  .btn-warm {
+    @apply inline-flex items-center justify-center gap-2
+           px-5 py-2.5 rounded-xl font-semibold text-white text-sm
+           bg-gradient-to-r from-accent-500 to-[#FF5E62]
+           hover:from-accent-600 hover:to-accent-500
+           active:scale-[0.98]
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none
+           transition-all duration-200 shadow-sm hover:shadow-glow-accent
+           focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2;
   }
 
   /* Secondary / outline button */
   .btn-outline {
     @apply inline-flex items-center justify-center gap-2
-           px-5 py-2.5 rounded-xl font-semibold text-primary-600 text-sm
-           border border-primary-200 bg-white
-           hover:bg-primary-50 active:bg-primary-100
+           px-5 py-2.5 rounded-xl font-semibold text-primary-600 dark:text-primary-400 text-sm
+           border border-primary-200 dark:border-primary-700/50 bg-white dark:bg-dark-surface
+           hover:bg-primary-50 dark:hover:bg-primary-900/20 active:scale-[0.98]
            disabled:opacity-50 disabled:cursor-not-allowed
            transition-all duration-200
            focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
@@ -49,61 +75,64 @@
   /* Ghost / text button */
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2
-           px-4 py-2 rounded-lg font-medium text-neutral-600 text-sm
-           hover:bg-neutral-100 active:bg-neutral-200
+           px-4 py-2 rounded-xl font-medium text-neutral-600 dark:text-dark-muted text-sm
+           hover:bg-neutral-100 dark:hover:bg-dark-card hover:text-neutral-900 dark:hover:text-dark-text
+           active:scale-[0.98]
            disabled:opacity-50 disabled:cursor-not-allowed
            transition-all duration-200;
   }
 
   /* Form field */
   .form-field {
-    @apply w-full px-4 py-3 rounded-xl border border-neutral-200
-           bg-white text-neutral-800 text-sm placeholder-neutral-400
-           focus:border-primary-500 focus:ring-2 focus:ring-primary-100
+    @apply w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-dark-border
+           bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text text-sm placeholder-neutral-400 dark:placeholder-neutral-500
+           focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
            transition-all duration-200;
   }
 
   .form-field-error {
-    @apply border-red-400 focus:border-red-500 focus:ring-red-100;
+    @apply border-danger focus:border-danger focus:ring-danger/20;
   }
 
   /* Card */
   .card {
-    @apply bg-white rounded-2xl shadow-card border border-neutral-100;
+    @apply bg-white dark:bg-dark-surface rounded-2xl shadow-card dark:shadow-card-dark
+           border border-neutral-200/80 dark:border-dark-border transition-all duration-200;
   }
 
-  /* Skeleton pulse */
+  .card-hoverable {
+    @apply hover:-translate-y-1 hover:shadow-card-hover dark:hover:shadow-card-hover-dark
+           transition-all duration-200 cursor-pointer;
+  }
+
+  /* Skeleton shimmer */
   .skeleton {
-    @apply bg-neutral-200 rounded-xl animate-pulse;
+    @apply bg-neutral-200 dark:bg-dark-card rounded-xl animate-pulse;
   }
 
-  /* Category chip */
+  /* Category chip base */
   .chip {
-    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium
-           border transition-all duration-200 cursor-pointer whitespace-nowrap;
-  }
-
-  .chip-active {
-    @apply bg-primary-500 text-white border-primary-500 shadow-sm;
-  }
-
-  .chip-inactive {
-    @apply bg-white text-neutral-600 border-neutral-200 hover:border-primary-300 hover:text-primary-600;
+    @apply inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium
+           border transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95;
   }
 }
 
-/* ── Utility animations ───────────────────────────────────────────────────── */
+/* ── Utility animations & accessibility ───────────────────────────────────── */
 @layer utilities {
   .animate-fade-in {
-    animation: fadeIn 0.4s ease-out forwards;
+    animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   .animate-slide-up {
-    animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-pulse-subtle {
+    animation: pulseSubtle 2.5s infinite ease-in-out;
   }
 
   .animate-spin-slow {
-    animation: spin 2s linear infinite;
+    animation: spin 3s linear infinite;
   }
 }
 
@@ -113,6 +142,23 @@
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(24px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseSubtle {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.05); opacity: 0.9; }
+}
+
+/* Respect user's motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -5,6 +5,7 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { SplashPage } from './pages/SplashPage';
 import { LoginPage } from './pages/LoginPage';
@@ -25,35 +26,37 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public */}
-          <Route path="/" element={<SplashPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public */}
+            <Route path="/" element={<SplashPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* Protected */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/users/:id" element={<PublicProfilePage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/items/new" element={<AddItemPage />} />
-            <Route path="/items/:id" element={<ItemDetailPage />} />
-            <Route path="/rentals" element={<MyRentalsPage />} />
-            <Route path="/requests" element={<RequestsPage />} />
-            <Route path="/chats" element={<ChatsPage />} />
-            <Route path="/rentals/:id" element={<RentalDetailPage />} />
-          </Route>
+            {/* Protected */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/users/:id" element={<PublicProfilePage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/items/new" element={<AddItemPage />} />
+              <Route path="/items/:id" element={<ItemDetailPage />} />
+              <Route path="/rentals" element={<MyRentalsPage />} />
+              <Route path="/requests" element={<RequestsPage />} />
+              <Route path="/chats" element={<ChatsPage />} />
+              <Route path="/rentals/:id" element={<RentalDetailPage />} />
+            </Route>
 
-          {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

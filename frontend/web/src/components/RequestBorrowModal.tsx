@@ -1,6 +1,10 @@
 /**
- * src/components/RequestBorrowModal.tsx
- * Modal for borrowing an item — date pickers, booked-date conflicts, live cost calculation, and submit.
+ * src/components/RequestBorrowModal.tsx (web)
+ * Modal for borrowing an item:
+ * - Date pickers with conflict calculation
+ * - Live cost summary with ₹ formatting
+ * - Brand gradient action button
+ * - Complete dark mode support
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -9,6 +13,7 @@ import { rentalsService, type BookedDateRange } from '../services/rentals.servic
 import type { Item } from '../services/items.service';
 import { formatINR } from '../utils/currency';
 import { formatDateDMY } from '../utils/date';
+import { X, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 interface RequestBorrowModalProps {
   item: Item;
@@ -34,7 +39,6 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  // Fetch booked dates on mount / open
   useEffect(() => {
     if (!isOpen) return;
     let mounted = true;
@@ -43,15 +47,12 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
       .then((ranges) => {
         if (mounted) setBookedDates(ranges);
       })
-      .catch(() => {
-        // ignore booked date load failure
-      });
+      .catch(() => {});
     return () => {
       mounted = false;
     };
   }, [isOpen, item.id]);
 
-  // Check overlap with booked dates
   const overlapConflict = useMemo(() => {
     if (!startDate || !endDate) return null;
     for (const b of bookedDates) {
@@ -60,39 +61,30 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
       }
     }
     return null;
-  }, [startDate, endDate, bookedDates]);
+  }, [bookedDates, startDate, endDate]);
 
-  // Days and total calculation
-  const { days, totalPrice } = useMemo(() => {
-    if (!startDate || !endDate || endDate < startDate) {
-      return { days: 0, totalPrice: 0 };
-    }
+  const days = useMemo(() => {
+    if (!startDate || !endDate) return 0;
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const diff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    const d = Math.max(1, diff);
-    const price = Number((d * item.pricePerDay).toFixed(2));
-    return { days: d, totalPrice: price };
-  }, [startDate, endDate, item.pricePerDay]);
+    const diffTime = end.getTime() - start.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  }, [startDate, endDate]);
 
-  if (!isOpen) return null;
+  const totalPrice = days * item.pricePerDay;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (startDate < todayStr) {
-      setError('Start date cannot be in the past.');
+    if (days <= 0) {
+      setError('End date must be after start date.');
       return;
     }
-    if (endDate < startDate) {
-      setError('End date must be on or after start date.');
-      return;
-    }
+
     if (overlapConflict) {
-      setError(
-        `Selected dates overlap with an existing booking (${formatDateDMY(overlapConflict.startDate)} to ${formatDateDMY(overlapConflict.endDate)}).`,
-      );
+      setError('The selected dates overlap with an existing booking.');
       return;
     }
 
@@ -110,64 +102,68 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
         onClose();
         navigate('/rentals');
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg =
-        err?.response?.data?.message ??
-        'Failed to submit rental request. Please check your dates and try again.';
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        'Failed to submit rental request. Please try again.';
       setError(msg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isSubmitting) onClose();
       }}
     >
-      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-neutral-100 animate-scale-up">
+      <div className="bg-white dark:bg-dark-surface rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-neutral-200 dark:border-dark-border animate-slide-up">
         {/* Header */}
-        <div className="p-6 border-b border-neutral-100 flex items-center justify-between bg-gradient-to-r from-primary-50/50 to-white">
+        <div className="p-6 border-b border-neutral-100 dark:border-dark-border flex items-center justify-between bg-gradient-to-r from-primary-50/60 to-white dark:from-dark-card/50 dark:to-dark-surface">
           <div>
-            <h3 className="text-xl font-bold text-neutral-900">Request to Borrow</h3>
-            <p className="text-sm text-neutral-500 mt-0.5">{item.title}</p>
+            <h3 className="text-xl font-extrabold text-neutral-900 dark:text-dark-text tracking-tight">Request to Borrow</h3>
+            <p className="text-xs sm:text-sm text-neutral-500 dark:text-dark-muted mt-0.5 font-medium">{item.title}</p>
           </div>
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-500 hover:bg-neutral-200 transition-colors"
+            className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-dark-card flex items-center justify-center text-neutral-500 hover:text-neutral-900 dark:hover:text-dark-text transition-colors"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
         {success ? (
           <div className="p-8 text-center space-y-4">
-            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl animate-bounce">
-              ✓
+            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto text-3xl animate-bounce">
+              <CheckCircle2 className="w-9 h-9" />
             </div>
-            <h4 className="text-xl font-bold text-neutral-900">Request Submitted! 🎉</h4>
-            <p className="text-sm text-neutral-600">
-              Your request was sent to {item.owner?.name ?? 'the owner'}. Redirecting to your
-              rentals…
+            <h4 className="text-xl font-bold text-neutral-900 dark:text-dark-text">Request Submitted! 🎉</h4>
+            <p className="text-xs sm:text-sm text-neutral-600 dark:text-dark-muted">
+              Your request was sent to {item.owner?.name ?? 'the owner'}. Redirecting to your rentals…
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            {/* Booked dates warning banner if any */}
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {/* Booked dates warning banner */}
             {bookedDates.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900">
-                <span className="font-semibold block mb-1">📅 Reserved Dates:</span>
+              <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-3 text-xs text-amber-900 dark:text-amber-300">
+                <span className="font-bold flex items-center gap-1.5 mb-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Reserved Dates:
+                </span>
                 <div className="flex flex-wrap gap-1.5">
                   {bookedDates.map((b, i) => (
                     <span
                       key={i}
-                      className="px-2 py-0.5 bg-amber-100 border border-amber-300 rounded font-medium"
+                      className="px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-500/40 rounded-md font-medium text-[11px]"
                     >
-                      {b.startDate} → {b.endDate}
+                      {formatDateDMY(b.startDate)} → {formatDateDMY(b.endDate)}
                     </span>
                   ))}
                 </div>
@@ -177,7 +173,7 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
             {/* Dates row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold uppercase text-neutral-600 mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-dark-muted mb-1.5">
                   Start Date
                 </label>
                 <input
@@ -186,11 +182,11 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 text-sm font-medium"
+                  className="form-field"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase text-neutral-600 mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-dark-muted mb-1.5">
                   End Date
                 </label>
                 <input
@@ -199,23 +195,26 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 text-sm font-medium"
+                  className="form-field"
                 />
               </div>
             </div>
 
             {/* Overlap Error */}
             {overlapConflict && (
-              <p className="text-red-600 text-xs font-medium bg-red-50 p-2.5 rounded-lg border border-red-200">
-                ⚠️ Dates overlap with a confirmed booking ({formatDateDMY(overlapConflict.startDate)} to{' '}
-                {formatDateDMY(overlapConflict.endDate)}). Please select different dates.
+              <p className="text-danger text-xs font-semibold bg-red-50 dark:bg-red-500/10 p-3 rounded-xl border border-red-200 dark:border-red-500/30 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <span>
+                  Dates overlap with a confirmed booking ({formatDateDMY(overlapConflict.startDate)} to{' '}
+                  {formatDateDMY(overlapConflict.endDate)}).
+                </span>
               </p>
             )}
 
             {/* Note to Owner */}
             <div>
-              <label className="block text-xs font-semibold uppercase text-neutral-600 mb-1.5">
-                Note to Owner <span className="text-neutral-400 font-normal">(optional)</span>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-dark-muted mb-1.5">
+                Note to Owner <span className="text-neutral-400 font-normal lowercase">(optional)</span>
               </label>
               <textarea
                 value={note}
@@ -223,32 +222,32 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
                 placeholder="Let the owner know what you'll be using this for, pick up time preferences, etc."
                 rows={3}
                 maxLength={500}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 text-sm placeholder:text-neutral-400"
+                className="form-field resize-none"
               />
-              <p className="text-[11px] text-neutral-400 text-right mt-1">
+              <p className="text-[11px] text-neutral-400 dark:text-dark-muted text-right mt-1 font-medium">
                 {note.length}/500 characters
               </p>
             </div>
 
             {/* Price Summary Calculation Card */}
-            <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-200/80 space-y-2 text-sm">
-              <div className="flex justify-between text-neutral-600">
+            <div className="bg-neutral-50 dark:bg-dark-card/60 rounded-2xl p-4 border border-neutral-200/80 dark:border-dark-border space-y-2 text-xs sm:text-sm">
+              <div className="flex justify-between text-neutral-600 dark:text-dark-muted">
                 <span>
                   Rate ({days} {days === 1 ? 'day' : 'days'} × {formatINR(item.pricePerDay)})
                 </span>
-                <span className="font-semibold text-neutral-900">{formatINR(totalPrice)}</span>
+                <span className="font-bold text-neutral-900 dark:text-dark-text">{formatINR(totalPrice)}</span>
               </div>
               {item.deposit > 0 && (
-                <div className="flex justify-between text-neutral-600">
+                <div className="flex justify-between text-neutral-600 dark:text-dark-muted">
                   <span>Refundable Security Deposit</span>
-                  <span className="font-semibold text-neutral-900">
+                  <span className="font-bold text-neutral-900 dark:text-dark-text">
                     {formatINR(item.deposit)}
                   </span>
                 </div>
               )}
-              <div className="pt-2 border-t border-neutral-200 flex justify-between font-bold text-base text-neutral-900">
+              <div className="pt-2 border-t border-neutral-200 dark:border-dark-border flex justify-between font-extrabold text-sm sm:text-base text-neutral-900 dark:text-dark-text">
                 <span>Total Due on Handover</span>
-                <span className="text-primary-600">
+                <span className="text-accent-600 dark:text-accent-400">
                   {formatINR(totalPrice + (item.deposit ?? 0))}
                 </span>
               </div>
@@ -256,7 +255,7 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
 
             {/* Global Error Banner */}
             {error && (
-              <div className="p-3 rounded-xl bg-red-50 text-red-700 text-xs border border-red-200 font-medium">
+              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-500/10 text-danger text-xs border border-red-200 dark:border-red-500/30 font-medium">
                 {error}
               </div>
             )}
@@ -267,14 +266,14 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="btn-outline flex-1 py-3 text-sm"
+                className="btn-outline flex-1 py-3 text-xs sm:text-sm font-bold"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || Boolean(overlapConflict) || days <= 0}
-                className="btn-primary flex-1 py-3 text-sm font-semibold shadow-md"
+                className="btn-primary flex-1 py-3 text-xs sm:text-sm font-bold shadow-md"
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">

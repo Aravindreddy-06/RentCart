@@ -1,83 +1,47 @@
 /**
  * src/components/StatusBadge.tsx (mobile)
- * Status badge for rental agreements.
+ * Status badge with dot and tinted background.
+ * Exact specification tokens:
+ * PENDING amber, APPROVED teal/green, ACTIVE blue, RETURNED indigo, REJECTED red, CANCELLED grey.
  */
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import type { RentalStatus } from '../services/rentals.service';
+import { useTheme } from '../context/ThemeContext';
+import { STATUS_THEMES, type RentalStatus } from '../utils/colors';
 
 interface Props {
   status: RentalStatus;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export function StatusBadge({ status, size = 'md' }: Props) {
-  const configs: Record<
-    RentalStatus,
-    { label: string; bg: string; text: string; dot: string }
-  > = {
-    PENDING: {
-      label: 'Pending',
-      bg: '#fef3c7',
-      text: '#92400e',
-      dot: '#f59e0b',
-    },
-    APPROVED: {
-      label: 'Approved',
-      bg: '#dbeafe',
-      text: '#1e40af',
-      dot: '#3b82f6',
-    },
-    ACTIVE: {
-      label: 'Active',
-      bg: '#dcfce7',
-      text: '#166534',
-      dot: '#22c55e',
-    },
-    RETURNED: {
-      label: 'Returned',
-      bg: '#f3e8ff',
-      text: '#6b21a8',
-      dot: '#a855f7',
-    },
-    REJECTED: {
-      label: 'Declined',
-      bg: '#fee2e2',
-      text: '#991b1b',
-      dot: '#ef4444',
-    },
-    CANCELLED: {
-      label: 'Cancelled',
-      bg: '#f3f4f6',
-      text: '#4b5563',
-      dot: '#9ca3af',
-    },
-  };
-
-  const config = configs[status] ?? {
-    label: status,
-    bg: '#f3f4f6',
-    text: '#4b5563',
-    dot: '#9ca3af',
-  };
+  const { isDark } = useTheme();
+  const config = STATUS_THEMES[status] ?? STATUS_THEMES.PENDING;
 
   const isSmall = size === 'sm';
+  const isLarge = size === 'lg';
+
+  const bg = isDark ? config.darkBg : config.bg;
+  const fg = isDark ? config.darkFg : config.fg;
+  const border = isDark ? config.darkBorder : config.border;
 
   return (
     <View
       style={[
         styles.badge,
-        { backgroundColor: config.bg },
+        { backgroundColor: bg, borderColor: border },
         isSmall && styles.badgeSm,
+        isLarge && styles.badgeLg,
       ]}
     >
-      <View style={[styles.dot, { backgroundColor: config.dot }]} />
+      <View style={[styles.dot, { backgroundColor: fg }]} />
       <Text
         style={[
           styles.text,
-          { color: config.text },
+          { color: fg },
           isSmall && styles.textSm,
+          isLarge && styles.textLg,
         ]}
       >
         {config.label}
@@ -91,13 +55,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
     alignSelf: 'flex-start',
   },
   badgeSm: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 2.5,
+  },
+  badgeLg: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
   dot: {
     width: 6,
@@ -111,5 +80,10 @@ const styles = StyleSheet.create({
   },
   textSm: {
     fontSize: 11,
+    fontWeight: '600',
+  },
+  textLg: {
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

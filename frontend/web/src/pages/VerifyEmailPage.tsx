@@ -1,17 +1,18 @@
 /**
- * src/pages/VerifyEmailPage.tsx
- * 6-box OTP verification page for email verification:
- * - Auto-advance, paste support, backspace navigation
- * - Masked email display
- * - 60-second resend countdown with rate limit handling
- * - Friendly error states with attempts left
- * - Auto-login to /home on verification success
+ * src/pages/VerifyEmailPage.tsx (web)
+ * Polished 6-box OTP verification page:
+ * - Hero illustration with friendly SVG & emojis
+ * - Soft tinted gradient background with dark mode support
+ * - Active OTP box highlighted with teal border and soft glow
+ * - Brand gradient primary button
+ * - Preserved OTP auto-advance, paste, countdown, and verification flow
  */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/auth.service';
+import { CheckCircle2, AlertCircle, RefreshCw, MailCheck } from 'lucide-react';
 
 function maskEmail(email: string): string {
   const [local, domain] = email.split('@');
@@ -38,12 +39,10 @@ export function VerifyEmailPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
 
-  // Resend cooldown timer
   const [cooldownSeconds, setCooldownSeconds] = useState(60);
   const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
-    // Focus first input on mount
     inputRefs.current[0]?.focus();
   }, []);
 
@@ -56,7 +55,6 @@ export function VerifyEmailPage() {
   }, [cooldownSeconds]);
 
   const handleOtpChange = (index: number, value: string) => {
-    // Clean to digit
     const digit = value.replace(/\D/g, '').slice(-1);
     const newOtp = [...otp];
     newOtp[index] = digit;
@@ -67,7 +65,6 @@ export function VerifyEmailPage() {
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Auto submit if all 6 digits entered
     if (digit && index === 5 && newOtp.every((d) => d !== '')) {
       triggerVerify(newOtp.join(''));
     }
@@ -106,104 +103,105 @@ export function VerifyEmailPage() {
   };
 
   const triggerVerify = async (codeToVerify?: string) => {
-    const fullCode = codeToVerify || otp.join('');
-    if (fullCode.length !== 6) {
-      setErrorMessage('Please enter all 6 digits of the code.');
-      return;
-    }
-    if (!email) {
-      setErrorMessage('Missing email address. Please register or sign in again.');
-      return;
-    }
+    const code = codeToVerify || otp.join('');
+    if (code.length !== 6) return;
 
     setIsSubmitting(true);
     setErrorMessage('');
-    setAttemptsLeft(null);
+    setSuccessMessage('');
 
     try {
-      await verifyEmail(email, fullCode);
-      setSuccessMessage('Email verified successfully! Logging you in…');
+      await verifyEmail(email, code);
+      setSuccessMessage('Email verified successfully! Redirecting…');
       setTimeout(() => {
         navigate('/home', { replace: true });
-      }, 800);
-    } catch (err: any) {
-      const resp = err.response?.data;
-      const msg = resp?.message || 'Verification failed. Please try again.';
+      }, 1200);
+    } catch (err: unknown) {
+      const resp = (err as { response?: { data?: { code?: string; message?: string; attemptsLeft?: number } } })?.response?.data;
+      const msg = resp?.message || 'Verification failed. Please check the code and try again.';
       setErrorMessage(msg);
       if (typeof resp?.attemptsLeft === 'number') {
         setAttemptsLeft(resp.attemptsLeft);
       }
+      setOtp(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleResend = async () => {
-    if (cooldownSeconds > 0 || isResending || !email) return;
+    if (cooldownSeconds > 0 || isResending) return;
 
     setIsResending(true);
     setErrorMessage('');
     setSuccessMessage('');
+
     try {
-      const res = await authService.resendOtp({ email, purpose: 'EMAIL_VERIFICATION' });
-      setSuccessMessage(res.message || 'A new verification code has been sent.');
+      await authService.resendOtp({ email, purpose: 'EMAIL_VERIFICATION' });
+      setSuccessMessage('A fresh verification code has been sent to your email.');
       setCooldownSeconds(60);
+      setAttemptsLeft(null);
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
-    } catch (err: any) {
-      const resp = err.response?.data;
-      if (err.response?.status === 429 && resp?.retryAfterSeconds) {
-        setCooldownSeconds(resp.retryAfterSeconds);
+    } catch (err: unknown) {
+      const resp = (err as { response?: { data?: { code?: string; message?: string } } })?.response?.data;
+      if (resp?.code === 'RATE_LIMITED') {
+        setErrorMessage(resp.message || 'Too many attempts. Please try again later.');
+      } else {
+        setErrorMessage(resp?.message || 'Failed to resend code. Please try again.');
       }
-      setErrorMessage(resp?.message || 'Failed to resend code. Please wait a moment.');
     } finally {
       setIsResending(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 flex items-center justify-center p-4 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-[#E6F7F4]/60 via-neutral-50 to-white dark:from-dark-bg dark:via-dark-bg dark:to-dark-surface flex items-center justify-center p-4 py-12 transition-colors duration-200">
       <div className="w-full max-w-md animate-slide-up">
-        {/* Header Icon & Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-500 shadow-lg mb-4 text-white">
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-            </svg>
+        {/* Header with Illustration */}
+        <div className="text-center mb-6">
+          <div className="relative inline-flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary-600 to-[#12C2A8] shadow-glow flex items-center justify-center text-white">
+              <MailCheck className="w-8 h-8" />
+            </div>
+            <span className="absolute -top-1.5 -right-2 text-base select-none">📬</span>
+            <span className="absolute -bottom-1 -left-2 text-sm select-none">🔒</span>
           </div>
-          <h1 className="text-3xl font-bold text-neutral-900">Check your email</h1>
-          <p className="text-neutral-500 mt-2 text-sm leading-relaxed">
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-dark-text tracking-tight">
+            Verify your email
+          </h1>
+          <p className="text-neutral-500 dark:text-dark-muted mt-1 text-sm">
             We sent a 6-digit verification code to
             {email ? (
-              <span className="block font-semibold text-neutral-800 mt-0.5">{maskEmail(email)}</span>
+              <span className="block font-semibold text-neutral-800 dark:text-dark-text mt-0.5">
+                {maskEmail(email)}
+              </span>
             ) : (
-              <span className="block font-semibold text-neutral-800 mt-0.5">your email address</span>
+              <span className="block font-semibold text-neutral-800 dark:text-dark-text mt-0.5">your email address</span>
             )}
           </p>
         </div>
 
         {/* Card */}
-        <div className="card p-8">
+        <div className="card p-6 sm:p-8 shadow-card dark:shadow-card-dark">
           {/* Success Banner */}
           {successMessage && (
-            <div className="mb-6 px-4 py-3 rounded-xl bg-primary-50 border border-primary-200 text-primary-800 text-sm flex items-center gap-2">
-              <svg className="w-5 h-5 text-primary-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
-              </svg>
+            <div className="mb-6 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-400 text-sm flex items-center gap-2.5">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
               <span>{successMessage}</span>
             </div>
           )}
 
           {/* Error Banner */}
           {errorMessage && (
-            <div className="mb-6 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-2">
-              <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-              </svg>
+            <div className="mb-6 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400 text-sm flex items-start gap-2.5">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium">{errorMessage}</p>
+                <p className="font-semibold">{errorMessage}</p>
                 {attemptsLeft !== null && attemptsLeft > 0 && (
-                  <p className="text-xs text-red-600 mt-0.5">
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
                     {attemptsLeft} attempt{attemptsLeft === 1 ? '' : 's'} remaining before this code is invalidated.
                   </p>
                 )}
@@ -211,9 +209,9 @@ export function VerifyEmailPage() {
             </div>
           )}
 
-          {/* 6-box OTP input */}
+          {/* 6-box OTP input with active box highlighted in teal */}
           <div className="mb-6">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-500 text-center mb-3">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-dark-muted text-center mb-3">
               Enter 6-Digit Code
             </label>
             <div className="flex justify-between gap-2 sm:gap-3">
@@ -234,15 +232,15 @@ export function VerifyEmailPage() {
                   onPaste={handlePaste}
                   className={`w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold rounded-xl border-2 transition-all outline-none ${
                     errorMessage
-                      ? 'border-red-300 bg-red-50/50 text-red-700 focus:border-red-500'
+                      ? 'border-red-300 dark:border-red-500/50 bg-red-50/50 dark:bg-red-500/10 text-red-700 dark:text-red-400 focus:border-red-500'
                       : digit
-                      ? 'border-primary-500 bg-primary-50/40 text-neutral-900 focus:border-primary-600'
-                      : 'border-neutral-200 bg-white text-neutral-900 focus:border-primary-500 focus:ring-4 focus:ring-primary-100'
+                      ? 'border-primary-500 bg-primary-50/40 dark:bg-primary-500/10 text-neutral-900 dark:text-dark-text focus:border-primary-600 dark:focus:border-primary-400 focus:ring-4 focus:ring-primary-500/20'
+                      : 'border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text focus:border-primary-500 dark:focus:border-primary-400 focus:ring-4 focus:ring-primary-500/20'
                   }`}
                 />
               ))}
             </div>
-            <p className="text-xs text-neutral-400 text-center mt-3">Code expires in 10 minutes</p>
+            <p className="text-xs text-neutral-400 dark:text-dark-muted text-center mt-3 font-medium">Code expires in 10 minutes</p>
           </div>
 
           {/* Submit Button */}
@@ -250,7 +248,7 @@ export function VerifyEmailPage() {
             type="button"
             onClick={() => triggerVerify()}
             disabled={isSubmitting || otp.some((d) => !d)}
-            className="btn-primary w-full py-3 text-base shadow-sm"
+            className="btn-primary w-full py-3 text-sm font-bold shadow-sm"
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center gap-2">
@@ -262,33 +260,38 @@ export function VerifyEmailPage() {
             )}
           </button>
 
-          {/* Resend Cooldown Section */}
-          <div className="mt-6 pt-5 border-t border-neutral-100 text-center">
-            <p className="text-sm text-neutral-500 mb-2">Didn't receive the email?</p>
+          {/* Resend OTP */}
+          <div className="mt-6 pt-5 border-t border-neutral-100 dark:border-dark-border text-center">
+            <p className="text-xs text-neutral-500 dark:text-dark-muted mb-2 font-medium">
+              Didn't receive the email? Check your spam folder or
+            </p>
             {cooldownSeconds > 0 ? (
-              <p className="text-xs font-medium text-neutral-400">
-                Resend code in <span className="text-neutral-700 font-bold">{cooldownSeconds}s</span>
+              <p className="text-xs font-semibold text-neutral-400 dark:text-dark-muted">
+                Resend code in <span className="text-primary-600 dark:text-primary-400">{cooldownSeconds}s</span>
               </p>
             ) : (
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={isResending}
-                className="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline disabled:opacity-50"
               >
-                {isResending ? 'Sending new code…' : 'Resend verification code'}
+                <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
+                <span>{isResending ? 'Sending new code…' : 'Resend verification code'}</span>
               </button>
             )}
           </div>
-        </div>
 
-        {/* Back to sign in */}
-        <p className="text-center mt-6 text-sm text-neutral-500">
-          Wrong email address?{' '}
-          <Link to="/login" className="text-primary-600 font-semibold hover:text-primary-700 transition-colors">
-            Back to sign in
-          </Link>
-        </p>
+          {/* Back to sign in */}
+          <div className="mt-4 text-center">
+            <Link
+              to="/login"
+              className="text-xs font-medium text-neutral-500 dark:text-dark-muted hover:text-neutral-900 dark:hover:text-dark-text transition-colors"
+            >
+              ← Back to sign in
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

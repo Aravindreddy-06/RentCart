@@ -1,8 +1,11 @@
 /**
- * src/pages/ForgotPasswordPage.tsx
- * Request password reset OTP code.
- * Always returns generic success response to prevent account enumeration,
- * then navigates to /reset-password.
+ * src/pages/ForgotPasswordPage.tsx (web)
+ * Polished forgot password screen:
+ * - Hero illustration made from simple SVG & emojis
+ * - Soft tinted gradient background with dark mode support
+ * - Mail icon inside email input with teal focus glow
+ * - Brand gradient primary button
+ * - Preserved request flow and redirection
  */
 
 import { useState } from 'react';
@@ -11,6 +14,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { authService } from '../services/auth.service';
+import { Mail, KeyRound, AlertCircle } from 'lucide-react';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -37,61 +41,68 @@ export function ForgotPasswordPage() {
           infoMessage: 'If an account exists with this email, a 6-digit reset code has been sent.',
         },
       });
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Something went wrong. Please try again.';
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Something went wrong. Please try again.';
       setApiError(msg);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-[#E6F7F4]/60 via-neutral-50 to-white dark:from-dark-bg dark:via-dark-bg dark:to-dark-surface flex items-center justify-center p-4 transition-colors duration-200">
       <div className="w-full max-w-md animate-slide-up">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-500 shadow-lg mb-4 text-white">
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
-            </svg>
+        {/* Header with Illustration */}
+        <div className="text-center mb-6">
+          <div className="relative inline-flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary-600 to-[#12C2A8] shadow-glow flex items-center justify-center text-white">
+              <KeyRound className="w-8 h-8" />
+            </div>
+            <span className="absolute -top-1.5 -right-2 text-base select-none">🔑</span>
           </div>
-          <h1 className="text-3xl font-bold text-neutral-900">Forgot password?</h1>
-          <p className="text-neutral-500 mt-1 text-sm">
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-dark-text tracking-tight">
+            Forgot password?
+          </h1>
+          <p className="text-neutral-500 dark:text-dark-muted mt-1 text-sm max-w-xs mx-auto">
             Enter your email and we'll send you a 6-digit code to reset your password.
           </p>
         </div>
 
         {/* Card */}
-        <div className="card p-8">
+        <div className="card p-6 sm:p-8 shadow-card dark:shadow-card-dark">
           {apiError && (
-            <div className="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
-              <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-              </svg>
-              {apiError}
+            <div className="mb-5 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400 text-sm flex items-center gap-2.5">
+              <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+              <span>{apiError}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <div>
-              <label htmlFor="forgot-email" className="block text-sm font-medium text-neutral-700 mb-1.5">
+              <label htmlFor="forgot-email" className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-dark-muted mb-1.5">
                 Email address
               </label>
-              <input
-                id="forgot-email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                className={`form-field ${errors.email ? 'form-field-error' : ''}`}
-                {...register('email')}
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400 dark:text-neutral-500">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <input
+                  id="forgot-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  className={`form-field pl-10 ${errors.email ? 'form-field-error' : ''}`}
+                  {...register('email')}
+                />
+              </div>
               {errors.email && (
-                <p className="mt-1.5 text-xs text-red-600">{errors.email.message}</p>
+                <p className="mt-1.5 text-xs text-danger font-medium">{errors.email.message}</p>
               )}
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="btn-primary w-full py-3 text-base"
+              className="btn-primary w-full py-3 text-sm font-bold mt-2 shadow-sm"
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
@@ -104,9 +115,9 @@ export function ForgotPasswordPage() {
             </button>
           </form>
 
-          <p className="text-center mt-6 text-sm text-neutral-500">
+          <p className="text-center mt-6 text-sm text-neutral-500 dark:text-dark-muted">
             Remember your password?{' '}
-            <Link to="/login" className="text-primary-600 font-semibold hover:text-primary-700 transition-colors">
+            <Link to="/login" className="text-primary-600 dark:text-primary-400 font-bold hover:underline transition-colors">
               Back to sign in
             </Link>
           </p>

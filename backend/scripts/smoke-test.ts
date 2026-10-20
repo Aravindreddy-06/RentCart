@@ -406,8 +406,14 @@ async function runSmokeTests() {
     }
     console.log('✓ Borrower can read pickup location while APPROVED');
 
-    // Activate rental
-    const activateRes = await req(`/rentals/${rental1Id}/activate`, 'PATCH', undefined, ownerToken);
+    // Activate without confirmWithoutPin returns 400
+    const activateFail = await req(`/rentals/${rental1Id}/activate`, 'PATCH', undefined, ownerToken);
+    if (activateFail.status !== 400) {
+      throw new Error(`Expected 400 for activate without confirmWithoutPin, got: ${activateFail.status}`);
+    }
+
+    // Activate rental with confirmWithoutPin: true
+    const activateRes = await req(`/rentals/${rental1Id}/activate`, 'PATCH', { confirmWithoutPin: true }, ownerToken);
     if (activateRes.status !== 200) throw new Error(`Activate failed: ${JSON.stringify(activateRes.data)}`);
 
     const borrowerGetPickupActive = await req(`/rentals/${rental1Id}/pickup`, 'GET', undefined, borrowerToken);
@@ -587,8 +593,9 @@ async function runSmokeTests() {
 
     // ── 18. Auto-stop tracking on status change ───────────────────────────────
     console.log('\n[18] Testing Auto-stop tracking on status change...');
-    // While tracking is active, owner activates rental
-    await req(`/rentals/${rental3Id}/activate`, 'PATCH', undefined, ownerToken);
+    // While tracking is active, owner activates rental with confirmWithoutPin
+    const act3Res = await req(`/rentals/${rental3Id}/activate`, 'PATCH', { confirmWithoutPin: true }, ownerToken);
+    if (act3Res.status !== 200) throw new Error(`Activate rental3 failed: ${JSON.stringify(act3Res.data)}`);
     const liveLocAfterStatus = await prisma.liveLocation.findUnique({ where: { rentalId: rental3Id } });
     if (liveLocAfterStatus !== null) {
       throw new Error('LiveLocation row was not deleted when rental was activated!');
@@ -758,6 +765,286 @@ async function runSmokeTests() {
       throw new Error(`Expected currency "INR" in rental.item, got: ${testRentalData.item?.currency}`);
     }
     console.log('✓ Rental responses include currency: "INR"');
+
+    // ── 21. HANDOVER PIN FLOW TESTS ───────────────────────────────────────────
+    console.log('\n======================================================');
+    console.log('🔑 Starting Handover PIN Smoke Tests...');
+    console.log('======================================================\n');
+
+    // 21.1 Request and approve a new rental, verify PIN generated and HANDOVER_PIN_READY notification
+    console.log('[21.1] Testing PIN generated on approve & HANDOVER_PIN_READY notification...');
+    const pinRentalReq = await req(
+      '/rentals',
+      'POST',
+      {
+        itemId: item.id,
+        startDate: '2026-12-10',
+        endDate: '2026-12-12',
+        borrowerNote: 'Testing handover PIN flow',
+      },
+      borrowerToken,
+    );
+    if (pinRentalReq.status !== 201) throw new Error(`Create pin test rental failed: ${JSON.stringify(pinRentalReq.data)}`);
+    const pinRentalId = pinRentalReq.data.data.id;
+
+    const approvePinRes = await req(
+      `/rentals/${pinRentalId}/approve`,
+      'PATCH',
+      {
+        pickupLatitude: 37.7749,
+        pickupLongitude: -122.4194,
+        pickupAddress: '742 Evergreen Terrace, Springfield',
+      },
+      ownerToken,
+    );
+    if (approvePinRes.status !== 200) throw new Error(`Approve pin rental failed: ${JSON.stringify(approvePinRes.data)}`);
+    console.log('✓ Rental approved successfully');
+
+    // Check borrower received HANDOVER_PIN_READY notification and PIN is NOT in the text
+    const borrowerNotifsRes = await req('/notifications', 'GET', undefined, borrowerToken);
+    const pinNotif = borrowerNotifsRes.data.data?.notifications?.find(
+      (n: any) => n.type === 'HANDOVER_PIN_READY' && n.data?.rentalId === pinRentalId,
+    );
+    if (!pinNotif) throw new Error('HANDOVER_PIN_READY notification not received by borrower');
+    if (!pinNotif.body.includes('Your pickup PIN is ready') || /\b\d{4}\b/.test(pinNotif.body)) {
+      throw new Error(`Notification text contains unexpected PIN or wrong message: ${pinNotif.body}`);
+    }
+    console.log('✓ Borrower received HANDOVER_PIN_READY notification with no PIN in text');
+
+    // 21.2 Borrower can read it while APPROVED
+    console.log('\n[21.2] Testing borrower can read PIN while APPROVED...');
+    const borrowerGetPin = await req(`/rentals/${pinRentalId}/handover-pin`, 'GET', undefined, borrowerToken);
+    if (borrowerGetPin.status !== 200 || !borrowerGetPin.data.data.pin || !/^\d{4}$/.test(borrowerGetPin.data.data.pin)) {
+      throw new Error(`Borrower failed to read valid 4-digit PIN: ${JSON.stringify(borrowerGetPin.data)}`);
+    }
+    const realPin = borrowerGetPin.data.data.pin;
+    console.log('✓ Borrower successfully read 4-digit PIN');
+
+    // 21.3 Owner gets 403 reading it
+    console.log('\n[21.3] Testing owner gets 403 reading PIN...');
+    const ownerGetPin = await req(`/rentals/${pinRentalId}/handover-pin`, 'GET', undefined, ownerToken);
+    if (ownerGetPin.status !== 403) {
+      throw new Error(`Expected 403 for owner reading PIN, got: ${ownerGetPin.status}`);
+    }
+    console.log('✓ Owner gets 403 reading PIN');
+
+    // 21.4 Third user gets 403
+    console.log('\n[21.4] Testing third user gets 403 reading PIN...');
+    const strangerGetPin = await req(`/rentals/${pinRentalId}/handover-pin`, 'GET', undefined, strangerToken);
+    if (strangerGetPin.status !== 403) {
+      throw new Error(`Expected 403 for third user reading PIN, got: ${strangerGetPin.status}`);
+    }
+    console.log('✓ Third user (stranger) gets 403 reading PIN');
+
+    // 21.5 Malformed PIN returns 400
+    console.log('\n[21.5] Testing malformed PIN returns 400...');
+    const malformed1 = await req(`/rentals/${pinRentalId}/handover/verify`, 'POST', { pin: '12' }, ownerToken);
+    if (malformed1.status !== 400) throw new Error(`Expected 400 for 2-digit PIN, got: ${malformed1.status}`);
+
+    const malformed2 = await req(`/rentals/${pinRentalId}/handover/verify`, 'POST', { pin: 'abcd' }, ownerToken);
+    if (malformed2.status !== 400) throw new Error(`Expected 400 for non-numeric PIN, got: ${malformed2.status}`);
+
+    const malformed3 = await req(`/rentals/${pinRentalId}/handover/verify`, 'POST', {}, ownerToken);
+    if (malformed3.status !== 400) throw new Error(`Expected 400 for missing PIN, got: ${malformed3.status}`);
+    console.log('✓ Malformed PINs (too short, non-numeric, empty) return 400');
+
+    // 21.6 Wrong PIN returns 400 with attemptsLeft
+    console.log('\n[21.6] Testing wrong PIN returns 400 with attemptsLeft...');
+    const bogusPin = realPin === '0000' ? '9999' : '0000';
+    const wrongPinRes1 = await req(`/rentals/${pinRentalId}/handover/verify`, 'POST', { pin: bogusPin }, ownerToken);
+    if (wrongPinRes1.status !== 400 || wrongPinRes1.data.attemptsLeft !== 4) {
+      throw new Error(`Expected 400 and attemptsLeft=4, got: ${wrongPinRes1.status} ${JSON.stringify(wrongPinRes1.data)}`);
+    }
+    console.log(`✓ Wrong PIN rejected with 400 and attemptsLeft: ${wrongPinRes1.data.attemptsLeft}`);
+
+    // 21.7 5 wrong attempts then 429 with retryAfterSeconds
+    console.log('\n[21.7] Testing 5 wrong attempts locks rental with 429...');
+    for (let i = 2; i <= 4; i++) {
+      const resp = await req(`/rentals/${pinRentalId}/handover/verify`, 'POST', { pin: bogusPin }, ownerToken);
+      if (resp.status !== 400 || resp.data.attemptsLeft !== 5 - i) {
+        throw new Error(`Unexpected attempt ${i} response: ${JSON.stringify(resp.data)}`);
+      }
+    }
+
+    // 5th attempt triggers lockout
+    const fifthAttempt = await req(`/rentals/${pinRentalId}/handover/verify`, 'POST', { pin: bogusPin }, ownerToken);
+    if (fifthAttempt.status !== 429 || typeof fifthAttempt.data.retryAfterSeconds !== 'number') {
+      throw new Error(`Expected 429 with retryAfterSeconds on 5th wrong attempt, got: ${fifthAttempt.status} ${JSON.stringify(fifthAttempt.data)}`);
+    }
+    console.log(`✓ 5th wrong attempt returned 429 with retryAfterSeconds: ${fifthAttempt.data.retryAfterSeconds}`);
+
+    // Subsequent attempt while locked also returns 429
+    const lockedAttempt = await req(`/rentals/${pinRentalId}/handover/verify`, 'POST', { pin: realPin }, ownerToken);
+    if (lockedAttempt.status !== 429) {
+      throw new Error(`Expected 429 while locked even with correct PIN, got: ${lockedAttempt.status}`);
+    }
+    console.log('✓ Subsequent attempt while locked returns 429');
+
+    // 21.8 Correct PIN makes the rental ACTIVE & emits notifications
+    console.log('\n[21.8] Testing correct PIN verification makes rental ACTIVE...');
+    // Create another approved rental for successful verification test
+    const successRentalReq = await req(
+      '/rentals',
+      'POST',
+      {
+        itemId: item.id,
+        startDate: '2026-12-15',
+        endDate: '2026-12-17',
+      },
+      borrowerToken,
+    );
+    const successRentalId = successRentalReq.data.data.id;
+    await req(
+      `/rentals/${successRentalId}/approve`,
+      'PATCH',
+      {
+        pickupLatitude: 37.7749,
+        pickupLongitude: -122.4194,
+        pickupAddress: '742 Evergreen Terrace, Springfield',
+      },
+      ownerToken,
+    );
+
+    // Borrower fetches the PIN
+    const successBorrowerPinRes = await req(`/rentals/${successRentalId}/handover-pin`, 'GET', undefined, borrowerToken);
+    const successPin = successBorrowerPinRes.data.data.pin;
+
+    // Owner verifies with correct PIN
+    const verifySuccessRes = await req(`/rentals/${successRentalId}/handover/verify`, 'POST', { pin: successPin }, ownerToken);
+    if (verifySuccessRes.status !== 200 || verifySuccessRes.data.data.status !== 'ACTIVE') {
+      throw new Error(`Verification with correct PIN failed: ${verifySuccessRes.status} ${JSON.stringify(verifySuccessRes.data)}`);
+    }
+    console.log('✓ Verification succeeded! Rental status transitioned to ACTIVE');
+
+    // Check HANDOVER_CONFIRMED notification for both users
+    const bNotifs = await req('/notifications', 'GET', undefined, borrowerToken);
+    const bHandoverConfirmed = bNotifs.data.data?.notifications?.find(
+      (n: any) => n.type === 'HANDOVER_CONFIRMED' && n.data?.rentalId === successRentalId,
+    );
+    if (!bHandoverConfirmed) throw new Error('Borrower did not receive HANDOVER_CONFIRMED notification');
+
+    const oNotifs = await req('/notifications', 'GET', undefined, ownerToken);
+    const oHandoverConfirmed = oNotifs.data.data?.notifications?.find(
+      (n: any) => n.type === 'HANDOVER_CONFIRMED' && n.data?.rentalId === successRentalId,
+    );
+    if (!oHandoverConfirmed) throw new Error('Owner did not receive HANDOVER_CONFIRMED notification');
+    console.log('✓ Both borrower and owner received HANDOVER_CONFIRMED notification');
+
+    // 21.9 PIN unavailable after ACTIVE
+    console.log('\n[21.9] Testing PIN is unavailable after rental becomes ACTIVE...');
+    const pinAfterActive = await req(`/rentals/${successRentalId}/handover-pin`, 'GET', undefined, borrowerToken);
+    if (pinAfterActive.status !== 409) {
+      throw new Error(`Expected 409 for reading PIN after ACTIVE, got: ${pinAfterActive.status}`);
+    }
+    console.log('✓ GET /handover-pin returns 409 after rental is ACTIVE');
+
+    // 21.10 PIN never appears in rental details, lists, items, or notifications
+    console.log('\n[21.10] Testing PIN privacy across all endpoints...');
+    const getRentalRes = await req(`/rentals/${successRentalId}`, 'GET', undefined, borrowerToken);
+    const rentalObj = getRentalRes.data.data;
+    if (
+      'handoverPinHash' in rentalObj ||
+      'handoverPinEnc' in rentalObj ||
+      'handoverPinCreatedAt' in rentalObj ||
+      'handoverPinAttempts' in rentalObj ||
+      'handoverPinLockedUntil' in rentalObj
+    ) {
+      throw new Error('PIN field leaked in GET /api/rentals/:id!');
+    }
+
+    const mineRes = await req('/rentals/mine', 'GET', undefined, borrowerToken);
+    const myRentals = mineRes.data.data.rentals || mineRes.data.data;
+    for (const r of myRentals) {
+      if ('handoverPinHash' in r || 'handoverPinEnc' in r) {
+        throw new Error('PIN field leaked in GET /api/rentals/mine!');
+      }
+    }
+
+    const incomingRes = await req('/rentals/incoming', 'GET', undefined, ownerToken);
+    const incomingRentals = incomingRes.data.data.rentals || incomingRes.data.data;
+    for (const r of incomingRentals) {
+      if ('handoverPinHash' in r || 'handoverPinEnc' in r) {
+        throw new Error('PIN field leaked in GET /api/rentals/incoming!');
+      }
+    }
+    console.log('✓ Privacy verified: PIN fields never appear in rental details, lists, or items');
+
+    // 21.11 Lazy PIN generation for existing APPROVED rental without PIN
+    console.log('\n[21.11] Testing lazy PIN generation for approved rental without PIN...');
+    // Create an approved rental manually without PIN fields
+    const manualApproved = await prisma.rental.create({
+      data: {
+        itemId: item.id,
+        borrowerId: borrower.id,
+        startDate: new Date('2026-12-25'),
+        endDate: new Date('2026-12-27'),
+        totalPrice: 40,
+        status: 'APPROVED',
+        pickupLatitude: 37.7749,
+        pickupLongitude: -122.4194,
+        pickupAddress: '742 Evergreen Terrace, Springfield',
+      },
+    });
+
+    const lazyPinRes = await req(`/rentals/${manualApproved.id}/handover-pin`, 'GET', undefined, borrowerToken);
+    if (lazyPinRes.status !== 200 || !lazyPinRes.data.data.pin || !/^\d{4}$/.test(lazyPinRes.data.data.pin)) {
+      throw new Error(`Lazy PIN generation failed: ${JSON.stringify(lazyPinRes.data)}`);
+    }
+    console.log(`✓ Lazy PIN generated successfully for existing approved rental: ${lazyPinRes.data.data.pin}`);
+
+    // Verify it works with the owner
+    const lazyVerify = await req(`/rentals/${manualApproved.id}/handover/verify`, 'POST', { pin: lazyPinRes.data.data.pin }, ownerToken);
+    if (lazyVerify.status !== 200 || lazyVerify.data.data.status !== 'ACTIVE') {
+      throw new Error(`Verification with lazily generated PIN failed: ${JSON.stringify(lazyVerify.data)}`);
+    }
+    console.log('✓ Lazily generated PIN successfully verified by owner');
+
+    // 21.12 Return item as before and verify review flow still works
+    console.log('\n[21.12] Testing item return and review flow after PIN activation...');
+    const returnSuccessRes = await req(`/rentals/${successRentalId}/return`, 'PATCH', undefined, ownerToken);
+    if (returnSuccessRes.status !== 200 || returnSuccessRes.data.data.status !== 'RETURNED') {
+      throw new Error(`Item return failed: ${returnSuccessRes.status} ${JSON.stringify(returnSuccessRes.data)}`);
+    }
+    console.log('✓ Item returned successfully, rental status transitioned to RETURNED');
+
+    // Borrower reviews owner
+    const borrowerReviewRes = await req(
+      '/reviews',
+      'POST',
+      {
+        rentalId: successRentalId,
+        rating: 5,
+        comment: 'Super easy handover with the 4-digit PIN! Highly recommended.',
+      },
+      borrowerToken,
+    );
+    if (borrowerReviewRes.status !== 201) {
+      throw new Error(`Borrower review submission failed: ${borrowerReviewRes.status} ${JSON.stringify(borrowerReviewRes.data)}`);
+    }
+    console.log('✓ Borrower submitted review successfully');
+
+    // Owner reviews borrower
+    const ownerReviewRes = await req(
+      '/reviews',
+      'POST',
+      {
+        rentalId: successRentalId,
+        rating: 5,
+        comment: 'Great borrower, verified PIN smoothly and returned item on time.',
+      },
+      ownerToken,
+    );
+    if (ownerReviewRes.status !== 201) {
+      throw new Error(`Owner review submission failed: ${ownerReviewRes.status} ${JSON.stringify(ownerReviewRes.data)}`);
+    }
+    console.log('✓ Owner submitted review successfully');
+
+    // Check reviews status endpoint
+    const reviewStatusRes = await req(`/rentals/${successRentalId}/review-status`, 'GET', undefined, borrowerToken);
+    if (reviewStatusRes.status !== 200 || reviewStatusRes.data.data.canReview !== false) {
+      throw new Error(`Review status check failed: ${JSON.stringify(reviewStatusRes.data)}`);
+    }
+    console.log('✓ Review flow completed and status verified successfully');
 
     console.log('\n======================================================');
     console.log('🎉 ALL BACKEND SMOKE TESTS PASSED 100%!');

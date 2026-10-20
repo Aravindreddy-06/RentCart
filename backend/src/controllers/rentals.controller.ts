@@ -51,12 +51,22 @@ const StartTrackingSchema = z
   })
   .optional();
 
+const VerifyHandoverPinSchema = z.object({
+  pin: z.string().regex(/^\d{4}$/, 'PIN must be a 4-digit numeric code'),
+});
+
 function getParamId(req: Request): string {
   const id = req.params['id'];
   return Array.isArray(id) ? id[0] : id;
 }
 
 function handleServiceError(err: unknown, res: Response, next: NextFunction) {
+  if (err instanceof rentalsService.LockedError) {
+    return failure(res, err.message, 429, undefined, { retryAfterSeconds: err.retryAfterSeconds });
+  }
+  if (err instanceof rentalsService.WrongPinError) {
+    return failure(res, err.message, 400, undefined, { attemptsLeft: err.attemptsLeft });
+  }
   if (
     err instanceof rentalsService.ValidationError ||
     err instanceof rentalsService.ForbiddenError ||
@@ -261,7 +271,19 @@ export async function cancelRental(req: Request, res: Response, next: NextFuncti
 
 export async function activateRental(req: Request, res: Response, next: NextFunction) {
   try {
-    const rental = await rentalsService.activateRental(getParamId(req), req.user!.userId);
+    const confirmWithoutPin = req.body?.confirmWithoutPin === true;
+    if (!confirmWithoutPin) {
+      return failure(
+        res,
+        'Confirmation required: pass confirmWithoutPin: true to activate without a PIN',
+        400,
+      );
+    }
+    const rental = await rentalsService.activateRental(
+      getParamId(req),
+      req.user!.userId,
+      confirmWithoutPin,
+    );
     return success(res, rental);
   } catch (err) {
     handleServiceError(err, res, next);
@@ -271,6 +293,33 @@ export async function activateRental(req: Request, res: Response, next: NextFunc
 export async function returnRental(req: Request, res: Response, next: NextFunction) {
   try {
     const rental = await rentalsService.returnRental(getParamId(req), req.user!.userId);
+    return success(res, rental);
+  } catch (err) {
+    handleServiceError(err, res, next);
+  }
+}
+
+export async function getHandoverPin(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await rentalsService.getHandoverPin(getParamId(req), req.user!.userId);
+    return success(res, result);
+  } catch (err) {
+    handleServiceError(err, res, next);
+  }
+}
+
+export async function verifyHandover(req: Request, res: Response, next: NextFunction) {
+  try {
+    const parsed = VerifyHandoverPinSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return failure(res, 'PIN must be a 4-digit numeric code', 400, parsed.error.flatten().fieldErrors);
+    }
+
+    const rental = await rentalsService.verifyHandoverPin(
+      getParamId(req),
+      req.user!.userId,
+      parsed.data.pin,
+    );
     return success(res, rental);
   } catch (err) {
     handleServiceError(err, res, next);

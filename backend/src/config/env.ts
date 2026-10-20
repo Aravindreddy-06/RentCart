@@ -28,4 +28,8 @@ export const env = {
   SMTP_USER: process.env.SMTP_USER,
   SMTP_PASS: process.env.SMTP_PASS,
   MAIL_FROM: process.env.MAIL_FROM ?? 'RentCart <noreply@rentcart.app>',
+  HANDOVER_PIN_SECRET: process.env.HANDOVER_PIN_SECRET || 'rentcart-super-secret-handover-pin-secret-key-32b',
+  HANDOVER_PIN_ENC_KEY: process.env.HANDOVER_PIN_ENC_KEY || '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+  REQUIRE_RETURN_PIN: process.env.REQUIRE_RETURN_PIN === 'true',
+  requireReturnPin: process.env.REQUIRE_RETURN_PIN === 'true',
 } as const;

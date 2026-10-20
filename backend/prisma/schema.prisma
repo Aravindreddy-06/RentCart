@@ -33,6 +33,8 @@ enum NotificationType {
   PICKUP_LOCATION_SHARED
   BORROWER_ON_THE_WAY
   BORROWER_ARRIVED
+  HANDOVER_PIN_READY
+  HANDOVER_CONFIRMED
 }
 
 enum OtpPurpose {
@@ -110,9 +112,15 @@ model Rental {
   pickupLongitude Float?
   pickupAddress   String?
   pickupNote      String?
-  pickupTimeFrom  DateTime?
-  pickupTimeTo    DateTime?
-  createdAt       DateTime      @default(now())
+  pickupTimeFrom         DateTime?
+  pickupTimeTo           DateTime?
+  handoverPinHash        String?
+  handoverPinEnc         String?
+  handoverPinCreatedAt   DateTime?
+  handoverPinAttempts    Int           @default(0)
+  handoverPinLockedUntil DateTime?
+  handoverVerifiedAt     DateTime?
+  createdAt              DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   // Relations

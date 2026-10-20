@@ -1,7 +1,12 @@
 /**
  * src/screens/AddItemScreen.tsx (mobile)
- * Add Item — image picker, form, validation, upload, and create.
- * Replaces the old CreateItemScreen with full photo support.
+ * Vibrant, modern item creation flow:
+ * - Tinted section cards
+ * - Image picker tiles with dashed teal border and plus icon
+ * - Category chips with themed icons and colors
+ * - Active focus states with teal glow
+ * - Brand gradient publish button
+ * - Full dark mode support via useTheme
  */
 
 import React, { useState } from 'react';
@@ -21,16 +26,23 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { AppStackParamList } from '../navigation/types';
 import { itemsService } from '../services/items.service';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
+import {
+  colors,
+  gradients,
+  radius,
+  shadows,
+  CATEGORY_THEMES,
+  CategoryKey,
+} from '../utils/colors';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'AddItem'>;
 
-const CATEGORIES = ['Tools', 'Electronics', 'Kitchen', 'Sports', 'Books', 'Other'] as const;
-type Category = (typeof CATEGORIES)[number];
-
-// ── Validation ────────────────────────────────────────────────────────────────
+const CATEGORIES: CategoryKey[] = ['Tools', 'Electronics', 'Kitchen', 'Sports', 'Books', 'Other'];
 
 interface FormErrors {
   title?: string;
@@ -55,19 +67,19 @@ function validate(title: string, description: string, pricePerDay: string): Form
   return errors;
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
 export default function AddItemScreen({ navigation }: Props) {
+  const { isDark, themeColors } = useTheme();
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<Category>('Tools');
+  const [category, setCategory] = useState<CategoryKey>('Tools');
   const [pricePerDay, setPricePerDay] = useState('');
   const [deposit, setDeposit] = useState('');
   const [imageUris, setImageUris] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
-  // ── Image picker ────────────────────────────────────────────────────────────
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const pickImages = async () => {
     const remaining = 5 - imageUris.length;
@@ -102,8 +114,6 @@ export default function AddItemScreen({ navigation }: Props) {
     setImageUris((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
-
   const handleSubmit = async () => {
     const validationErrors = validate(title, description, pricePerDay);
     setErrors(validationErrors);
@@ -133,18 +143,19 @@ export default function AddItemScreen({ navigation }: Props) {
       ]);
     } catch (err: unknown) {
       const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-        ?? 'Failed to publish item. Please try again.';
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        'Failed to publish item. Please try again.';
       Alert.alert('Error', message);
     } finally {
       setLoading(false);
     }
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────────
-
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      edges={['bottom']}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -155,123 +166,283 @@ export default function AddItemScreen({ navigation }: Props) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* ── Photos ─────────────────────────────────────────────────────── */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Photos ({imageUris.length}/5)</Text>
+          {/* ── Photos Section ─────────────────────────────────────────────── */}
+          <View
+            style={[
+              styles.sectionCard,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconBadge}>
+                <Ionicons name="images" size={16} color={colors.primary[500]} />
+              </View>
+              <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+                Photos ({imageUris.length}/5)
+              </Text>
+            </View>
 
-            {imageUris.length > 0 && (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.photoRow}
-              >
-                {imageUris.map((uri, i) => (
-                  <View key={i} style={styles.photoThumbContainer}>
-                    <Image source={{ uri }} style={styles.photoThumb} resizeMode="cover" />
-                    <TouchableOpacity
-                      style={styles.removePhotoBtn}
-                      onPress={() => removeImage(i)}
-                      hitSlop={{ top: 4, right: 4, bottom: 4, left: 4 }}
-                    >
-                      <Text style={styles.removePhotoBtnText}>✕</Text>
-                    </TouchableOpacity>
+            <View style={styles.photoGrid}>
+              {imageUris.map((uri, i) => (
+                <View key={i} style={styles.photoThumbContainer}>
+                  <Image source={{ uri }} style={styles.photoThumb} resizeMode="cover" />
+                  <TouchableOpacity
+                    style={styles.removePhotoBtn}
+                    onPress={() => removeImage(i)}
+                    hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}
+                  >
+                    <Ionicons name="close" size={14} color="#ffffff" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+
+              {imageUris.length < 5 && (
+                <TouchableOpacity
+                  style={[
+                    styles.addPhotoTile,
+                    {
+                      borderColor: colors.primary[500],
+                      backgroundColor: isDark
+                        ? 'rgba(15, 157, 138, 0.12)'
+                        : colors.primary[50],
+                    },
+                  ]}
+                  onPress={pickImages}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.plusCircle}>
+                    <Ionicons name="add" size={22} color="#ffffff" />
                   </View>
-                ))}
-              </ScrollView>
-            )}
-
-            {imageUris.length < 5 && (
-              <TouchableOpacity style={styles.addPhotoBtn} onPress={pickImages}>
-                <Text style={styles.addPhotoBtnIcon}>📷</Text>
-                <Text style={styles.addPhotoBtnText}>Add Photos</Text>
-                <Text style={styles.addPhotoBtnSub}>JPG, PNG, WebP · Max 5 MB each</Text>
-              </TouchableOpacity>
-            )}
+                  <Text style={[styles.addPhotoTileText, { color: colors.primary[600] }]}>
+                    Add Photo
+                  </Text>
+                  <Text
+                    style={[styles.addPhotoTileSub, { color: themeColors.textMuted }]}
+                  >
+                    Up to 5 MB
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
-          {/* ── Item Details ───────────────────────────────────────────────── */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Item Details</Text>
+          {/* ── Item Details Section ───────────────────────────────────────── */}
+          <View
+            style={[
+              styles.sectionCard,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconBadge}>
+                <Ionicons name="create" size={16} color={colors.primary[500]} />
+              </View>
+              <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+                Item Details
+              </Text>
+            </View>
 
             {/* Title */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Title *</Text>
+              <Text style={[styles.label, { color: themeColors.text }]}>Title *</Text>
               <TextInput
-                style={[styles.input, errors.title && styles.inputError]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                    borderColor:
+                      focusedField === 'title'
+                        ? colors.primary[500]
+                        : errors.title
+                        ? colors.danger
+                        : themeColors.border,
+                    color: themeColors.text,
+                  },
+                  focusedField === 'title' && styles.inputFocused,
+                ]}
                 placeholder="e.g. DeWalt Cordless Drill 20V"
-                placeholderTextColor={colors.gray[400]}
+                placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
                 value={title}
-                onChangeText={(t) => { setTitle(t); setErrors((e) => ({ ...e, title: undefined })); }}
+                onFocus={() => setFocusedField('title')}
+                onBlur={() => setFocusedField(null)}
+                onChangeText={(t) => {
+                  setTitle(t);
+                  setErrors((e) => ({ ...e, title: undefined }));
+                }}
                 returnKeyType="next"
               />
               {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
             </View>
 
-            {/* Category */}
+            {/* Category selection chips with icons */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Category *</Text>
+              <Text style={[styles.label, { color: themeColors.text }]}>Category *</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 style={styles.catScroll}
+                contentContainerStyle={{ gap: 8, paddingVertical: 4 }}
               >
-                {CATEGORIES.map((cat) => (
-                  <TouchableOpacity
-                    key={cat}
-                    style={[styles.catChip, category === cat && styles.catChipActive]}
-                    onPress={() => setCategory(cat)}
-                  >
-                    <Text style={[styles.catChipText, category === cat && styles.catChipTextActive]}>
-                      {cat}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {CATEGORIES.map((cat) => {
+                  const isActive = category === cat;
+                  const theme = CATEGORY_THEMES[cat];
+
+                  return (
+                    <TouchableOpacity
+                      key={cat}
+                      style={[
+                        styles.catChip,
+                        {
+                          backgroundColor: isActive
+                            ? theme.primary
+                            : isDark
+                            ? theme.darkTint
+                            : theme.tint,
+                          borderColor: isActive
+                            ? theme.primary
+                            : isDark
+                            ? theme.darkBorder
+                            : theme.border,
+                        },
+                      ]}
+                      onPress={() => setCategory(cat)}
+                      activeOpacity={0.75}
+                    >
+                      <Ionicons
+                        name={theme.ioniconName}
+                        size={14}
+                        color={isActive ? '#ffffff' : theme.primary}
+                        style={{ marginRight: 6 }}
+                      />
+                      <Text
+                        style={[
+                          styles.catChipText,
+                          {
+                            color: isActive ? '#ffffff' : theme.primary,
+                            fontWeight: isActive ? '700' : '600',
+                          },
+                        ]}
+                      >
+                        {cat}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </ScrollView>
             </View>
 
             {/* Description */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Description *</Text>
+              <Text style={[styles.label, { color: themeColors.text }]}>
+                Description *
+              </Text>
               <TextInput
-                style={[styles.input, styles.textArea, errors.description && styles.inputError]}
-                placeholder="Describe the condition, what's included, and pickup rules…"
-                placeholderTextColor={colors.gray[400]}
+                style={[
+                  styles.input,
+                  styles.textArea,
+                  {
+                    backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                    borderColor:
+                      focusedField === 'desc'
+                        ? colors.primary[500]
+                        : errors.description
+                        ? colors.danger
+                        : themeColors.border,
+                    color: themeColors.text,
+                  },
+                  focusedField === 'desc' && styles.inputFocused,
+                ]}
+                placeholder="Describe the item condition, what accessories are included, and rules for borrowing…"
+                placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
                 value={description}
-                onChangeText={(t) => { setDescription(t); setErrors((e) => ({ ...e, description: undefined })); }}
+                onFocus={() => setFocusedField('desc')}
+                onBlur={() => setFocusedField(null)}
+                onChangeText={(t) => {
+                  setDescription(t);
+                  setErrors((e) => ({ ...e, description: undefined }));
+                }}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
               />
-              {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
+              {errors.description && (
+                <Text style={styles.errorText}>{errors.description}</Text>
+              )}
             </View>
 
             {/* Pricing row */}
             <View style={styles.pricingRow}>
               <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                <Text style={styles.label}>Price per day (₹) *</Text>
-                <View style={[styles.currencyInputRow, errors.pricePerDay && styles.inputError]}>
+                <Text style={[styles.label, { color: themeColors.text }]}>
+                  Price per day (₹) *
+                </Text>
+                <View
+                  style={[
+                    styles.currencyInputRow,
+                    {
+                      backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                      borderColor:
+                        focusedField === 'price'
+                          ? colors.primary[500]
+                          : errors.pricePerDay
+                          ? colors.danger
+                          : themeColors.border,
+                    },
+                    focusedField === 'price' && styles.inputFocused,
+                  ]}
+                >
                   <Text style={styles.currencyPrefix}>₹</Text>
                   <TextInput
-                    style={styles.currencyTextInput}
+                    style={[styles.currencyTextInput, { color: themeColors.text }]}
                     placeholder="150"
-                    placeholderTextColor={colors.gray[400]}
+                    placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
                     keyboardType="numeric"
                     value={pricePerDay}
-                    onChangeText={(t) => { setPricePerDay(t); setErrors((e) => ({ ...e, pricePerDay: undefined })); }}
+                    onFocus={() => setFocusedField('price')}
+                    onBlur={() => setFocusedField(null)}
+                    onChangeText={(t) => {
+                      setPricePerDay(t);
+                      setErrors((e) => ({ ...e, pricePerDay: undefined }));
+                    }}
                   />
                 </View>
-                {errors.pricePerDay && <Text style={styles.errorText}>{errors.pricePerDay}</Text>}
+                {errors.pricePerDay && (
+                  <Text style={styles.errorText}>{errors.pricePerDay}</Text>
+                )}
               </View>
+
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>Deposit (₹)</Text>
-                <View style={styles.currencyInputRow}>
+                <Text style={[styles.label, { color: themeColors.text }]}>
+                  Deposit (₹)
+                </Text>
+                <View
+                  style={[
+                    styles.currencyInputRow,
+                    {
+                      backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[50],
+                      borderColor:
+                        focusedField === 'deposit'
+                          ? colors.primary[500]
+                          : themeColors.border,
+                    },
+                    focusedField === 'deposit' && styles.inputFocused,
+                  ]}
+                >
                   <Text style={styles.currencyPrefix}>₹</Text>
                   <TextInput
-                    style={styles.currencyTextInput}
+                    style={[styles.currencyTextInput, { color: themeColors.text }]}
                     placeholder="500"
-                    placeholderTextColor={colors.gray[400]}
+                    placeholderTextColor={isDark ? colors.dark.textMuted : colors.neutral[400]}
                     keyboardType="numeric"
                     value={deposit}
+                    onFocus={() => setFocusedField('deposit')}
+                    onBlur={() => setFocusedField(null)}
                     onChangeText={setDeposit}
                   />
                 </View>
@@ -279,17 +450,27 @@ export default function AddItemScreen({ navigation }: Props) {
             </View>
           </View>
 
-          {/* ── Submit ─────────────────────────────────────────────────────── */}
+          {/* ── Submit Button with Brand Gradient ─────────────────────────── */}
           <TouchableOpacity
-            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
             disabled={loading}
+            onPress={handleSubmit}
+            activeOpacity={0.85}
           >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.submitButtonText}>Publish Item</Text>
-            )}
+            <LinearGradient
+              colors={gradients.brand as unknown as [string, string, ...string[]]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.submitButton}
+            >
+              {loading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <View style={styles.submitButtonInner}>
+                  <Ionicons name="checkmark-circle-outline" size={20} color="#ffffff" />
+                  <Text style={styles.submitButtonText}>Publish Item</Text>
+                </View>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -300,170 +481,170 @@ export default function AddItemScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.gray[50],
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 36,
   },
-  section: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
+  sectionCard: {
+    borderRadius: radius.lg,
+    padding: 18,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    ...shadows.sm,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14,
+  },
+  sectionIconBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: 'rgba(15, 157, 138, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sectionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.gray[900],
-    marginBottom: 12,
+    fontSize: 16,
+    fontWeight: '800',
   },
-  photoRow: {
-    marginBottom: 10,
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
   },
   photoThumbContainer: {
+    width: 90,
+    height: 90,
+    borderRadius: radius.md,
+    overflow: 'hidden',
     position: 'relative',
-    marginRight: 10,
+    ...shadows.sm,
   },
   photoThumb: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-    backgroundColor: colors.gray[200],
+    width: '100%',
+    height: '100%',
   },
   removePhotoBtn: {
     position: 'absolute',
-    top: -6,
-    right: -6,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    top: 5,
+    right: 5,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(0,0,0,0.65)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  removePhotoBtnText: {
-    color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  addPhotoBtn: {
+  addPhotoTile: {
+    width: 90,
+    height: 90,
+    borderRadius: radius.md,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: colors.gray[300],
-    borderRadius: 12,
-    padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 6,
   },
-  addPhotoBtnIcon: {
-    fontSize: 28,
-    marginBottom: 6,
+  plusCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.primary[500],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
-  addPhotoBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.gray[600],
-    marginBottom: 2,
-  },
-  addPhotoBtnSub: {
+  addPhotoTileText: {
     fontSize: 11,
-    color: colors.gray[400],
+    fontWeight: '700',
+  },
+  addPhotoTileSub: {
+    fontSize: 9,
   },
   inputGroup: {
     marginBottom: 14,
   },
   label: {
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.gray[700],
-    marginBottom: 5,
+    fontWeight: '700',
+    marginBottom: 6,
   },
   input: {
-    borderWidth: 1,
-    borderColor: colors.gray[300],
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    fontSize: 15,
-    color: colors.gray[900],
-    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
   },
-  currencyInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: colors.gray[300],
-    borderRadius: 10,
-    paddingHorizontal: 12,
-  },
-  currencyPrefix: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.gray[600],
-    marginRight: 6,
-  },
-  currencyTextInput: {
-    flex: 1,
-    paddingVertical: 11,
-    fontSize: 15,
-    color: colors.gray[900],
-  },
-  inputError: {
-    borderColor: colors.error,
+  inputFocused: {
+    borderColor: colors.primary[500],
   },
   textArea: {
-    height: 96,
-  },
-  errorText: {
-    fontSize: 12,
-    color: colors.error,
-    marginTop: 4,
+    height: 100,
+    textAlignVertical: 'top',
   },
   catScroll: {
-    flexDirection: 'row',
+    marginBottom: 4,
   },
   catChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 16,
-    backgroundColor: colors.gray[100],
-    marginRight: 8,
+    borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: colors.gray[200],
-  },
-  catChipActive: {
-    backgroundColor: colors.primary[600],
-    borderColor: colors.primary[600],
   },
   catChipText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: colors.gray[700],
-  },
-  catChipTextActive: {
-    color: '#ffffff',
-    fontWeight: '700',
+    fontSize: 12,
   },
   pricingRow: {
     flexDirection: 'row',
   },
-  submitButton: {
-    backgroundColor: colors.primary[600],
-    borderRadius: 14,
-    paddingVertical: 16,
+  currencyInputRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    borderWidth: 1.5,
+    borderRadius: radius.md,
+    paddingHorizontal: 12,
+    height: 48,
   },
-  submitButtonDisabled: {
-    opacity: 0.6,
+  currencyPrefix: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.accent[500],
+    marginRight: 6,
+  },
+  currencyTextInput: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '700',
+    paddingVertical: 0,
+  },
+  errorText: {
+    color: colors.danger,
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  submitButton: {
+    borderRadius: radius.md,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
+  },
+  submitButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   submitButtonText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });

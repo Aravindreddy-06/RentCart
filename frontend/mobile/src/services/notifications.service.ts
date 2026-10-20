@@ -17,7 +17,9 @@ export type NotificationType =
   | 'NEW_MESSAGE'
   | 'PICKUP_LOCATION_SHARED'
   | 'BORROWER_ON_THE_WAY'
-  | 'BORROWER_ARRIVED';
+  | 'BORROWER_ARRIVED'
+  | 'HANDOVER_PIN_READY'
+  | 'HANDOVER_CONFIRMED';
 
 export interface NotificationItem {
   id: string;

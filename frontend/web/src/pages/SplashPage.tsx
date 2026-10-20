@@ -1,7 +1,10 @@
 /**
- * src/pages/SplashPage.tsx
- * Loading/splash screen shown while checking for a stored auth token.
- * Animates the RentCart logo, then routes to Home or Login.
+ * src/pages/SplashPage.tsx (web)
+ * Splash screen shown while checking authentication state:
+ * - Full-screen brand gradient (#0F9D8A -> #12C2A8)
+ * - White logo with gentle pulse/scale animation
+ * - Tagline fading in
+ * - Subtle loading indicator
  */
 
 import { useEffect } from 'react';
@@ -14,27 +17,29 @@ export function SplashPage() {
 
   useEffect(() => {
     if (!isLoading) {
-      // Small delay so the animation is visible
       const timeout = setTimeout(() => {
         navigate(isAuthenticated ? '/home' : '/login', { replace: true });
-      }, 800);
+      }, 700);
       return () => clearTimeout(timeout);
     }
   }, [isLoading, isAuthenticated, navigate]);
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-primary-500 to-primary-700">
-      {/* Logo container */}
-      <div className="flex flex-col items-center gap-4 animate-fade-in">
-        {/* Cart icon */}
-        <div className="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center backdrop-blur-sm
-                        shadow-2xl border border-white/30">
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-tr from-[#09665A] via-[#0F9D8A] to-[#12C2A8] overflow-hidden select-none">
+      {/* Decorative background glows */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#12C2A8]/30 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Main Logo & Content */}
+      <div className="relative z-10 flex flex-col items-center gap-6 animate-fade-in text-center px-4">
+        {/* Pulsing Logo Badge */}
+        <div className="w-24 h-24 bg-white/15 rounded-3xl flex items-center justify-center backdrop-blur-md shadow-2xl border border-white/30 animate-pulse-subtle">
           <svg
-            className="w-14 h-14 text-white"
+            className="w-14 h-14 text-white drop-shadow-md"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
-            strokeWidth={1.5}
+            strokeWidth={1.75}
           >
             <path
               strokeLinecap="round"
@@ -44,23 +49,24 @@ export function SplashPage() {
           </svg>
         </div>
 
-        {/* Brand name */}
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-white tracking-tight">RentCart</h1>
-          <p className="text-primary-100 mt-1 text-base font-medium">
-            Borrow from your neighbours
+        {/* Brand Name & Tagline */}
+        <div className="space-y-1.5">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight drop-shadow-sm">
+            Rent<span className="text-[#C2EBE4]">Cart</span>
+          </h1>
+          <p className="text-primary-100 text-sm sm:text-base font-medium max-w-xs animate-slide-up">
+            Borrow smart, rent local
           </p>
         </div>
 
-        {/* Loading spinner */}
-        <div className="mt-6">
-          <div className="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin-slow"
-               style={{ borderWidth: 3 }} />
+        {/* Subtle loading indicator */}
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin-slow" />
         </div>
       </div>
 
       {/* Bottom tagline */}
-      <p className="absolute bottom-12 text-primary-100/70 text-sm font-medium">
+      <p className="absolute bottom-10 text-white/70 text-xs sm:text-sm font-medium tracking-wide">
         Community sharing, made simple
       </p>
     </div>
