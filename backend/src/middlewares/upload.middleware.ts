@@ -1,28 +1,21 @@
 /**
  * src/middlewares/upload.middleware.ts
- * Multer configuration for image uploads.
- * Accepts up to 5 images (jpg/png/webp, max 5 MB each).
- * Files are saved to backend/uploads/.
+ * Multer configuration with in-memory storage (no files written to disk)
+ * and rate limiting for image uploads.
  */
 
 import multer, { FileFilterCallback } from 'multer';
-import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
+import rateLimit from 'express-rate-limit';
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, path.join(__dirname, '../../uploads'));
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${uuidv4()}${ext}`);
-  },
-});
+// In-memory storage for Cloudinary streaming (no local disk writes)
+const storage = multer.memoryStorage();
 
 const fileFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
-  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
-  if (allowed.includes(file.mimetype)) {
+  const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const allowedExtensions = /\.(jpe?g|png|webp)$/i;
+
+  if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.test(file.originalname)) {
     cb(null, true);
   } else {
     cb(new Error('Only JPG, PNG, and WebP images are allowed'));
@@ -47,3 +40,19 @@ export const uploadAvatar = multer({
   },
 }).single('avatar');
 
+/**
+ * Rate limit uploads per user (20 uploads per 10 minutes).
+ * Falls back to IP address if req.user is absent.
+ */
+export const uploadLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 20, // 20 requests per window
+  keyGenerator: (req: Request) => req.user?.userId || req.ip || 'anonymous',
+  validate: { keyGeneratorIpFallback: false },
+  message: {
+    success: false,
+    message: 'Too many upload requests. Please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});

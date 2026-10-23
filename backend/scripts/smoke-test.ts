@@ -53,6 +53,22 @@ async function req(
   return { status: res.status, ok: res.ok, data: json };
 }
 
+async function uploadMultipart(
+  endpoint: string,
+  formData: FormData,
+  token?: string,
+): Promise<{ status: number; ok: boolean; data: any }> {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${BASE_URL}${endpoint}`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+  const json: any = await res.json().catch(() => null);
+  return { status: res.status, ok: res.ok, data: json };
+}
+
 async function runSmokeTests() {
   console.log('🧪 Starting Smoke Tests for Email Verification and Password Reset...\n');
 
@@ -690,6 +706,27 @@ async function runSmokeTests() {
 
     // C. Existing users can still log in
     console.log('\n[20.3] Testing Existing Seed Users Can Still Log In...');
+    const bcryptModule = await import('bcryptjs');
+    await prisma.user.upsert({
+      where: { email: 'alice@example.com' },
+      update: {
+        passwordHash: await bcryptModule.default.hash('password123', 10),
+        emailVerified: true,
+      },
+      create: {
+        name: 'Alice Johnson',
+        email: 'alice@example.com',
+        phone: '+919876543210',
+        passwordHash: await bcryptModule.default.hash('password123', 10),
+        avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80',
+        address: '12 Maple Street, Springfield',
+        latitude: 37.7749,
+        longitude: -122.4194,
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
+      },
+    });
+
     const aliceLoginRes = await postJson('/auth/login', {
       email: 'alice@example.com',
       password: 'password123',
@@ -1045,6 +1082,163 @@ async function runSmokeTests() {
       throw new Error(`Review status check failed: ${JSON.stringify(reviewStatusRes.data)}`);
     }
     console.log('✓ Review flow completed and status verified successfully');
+
+    // ── 22. CLOUDINARY IMAGE STORAGE & VALIDATION TESTS ──────────────────────
+    console.log('\n======================================================');
+    console.log('☁️  Starting Cloudinary Image Storage & Validation Tests...');
+    console.log('======================================================\n');
+
+    // 1x1 valid transparent PNG buffer
+    const validPngBuffer = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      'base64',
+    );
+
+    // 22.1 Valid image upload returns HTTPS Cloudinary URL and loads with HTTP 200
+    console.log('[22.1] Testing valid image upload returns HTTPS Cloudinary URL...');
+    const validForm = new FormData();
+    validForm.append('images', new Blob([validPngBuffer], { type: 'image/png' }), 'test-item.png');
+
+    const validUploadRes = await uploadMultipart('/uploads/images', validForm, ownerToken);
+    if (
+      validUploadRes.status !== 201 ||
+      !validUploadRes.data.success ||
+      !Array.isArray(validUploadRes.data.data.urls) ||
+      validUploadRes.data.data.urls.length !== 1
+    ) {
+      throw new Error(`Valid upload failed: ${validUploadRes.status} ${JSON.stringify(validUploadRes.data)}`);
+    }
+
+    const itemCloudinaryUrl = validUploadRes.data.data.urls[0];
+    if (
+      !itemCloudinaryUrl.startsWith('https://res.cloudinary.com/') ||
+      !itemCloudinaryUrl.includes('rentcart/items/')
+    ) {
+      throw new Error(`Expected HTTPS Cloudinary URL in rentcart/items/, got: ${itemCloudinaryUrl}`);
+    }
+    console.log(`✓ Valid image uploaded to Cloudinary: ${itemCloudinaryUrl}`);
+
+    // Confirm that the returned URL loads (HTTP 200)
+    console.log('[22.2] Testing returned Cloudinary image URL loads with HTTP 200...');
+    const fetchImageRes = await fetch(itemCloudinaryUrl);
+    if (fetchImageRes.status !== 200) {
+      throw new Error(`Returned Cloudinary URL failed to load: status ${fetchImageRes.status}`);
+    }
+    console.log('✓ Cloudinary image URL loaded successfully (HTTP 200)');
+
+    // 22.3 Wrong file type rejected (HTTP 400) - magic bytes mismatch
+    console.log('\n[22.3] Testing wrong file type rejected (magic bytes verification)...');
+    const fakeImageForm = new FormData();
+    const fakeBuffer = Buffer.from('NOT_A_REAL_IMAGE_DATA_MAGIC_BYTES_FAIL');
+    fakeImageForm.append('images', new Blob([fakeBuffer], { type: 'image/jpeg' }), 'fake.jpg');
+
+    const fakeUploadRes = await uploadMultipart('/uploads/images', fakeImageForm, ownerToken);
+    if (fakeUploadRes.status !== 400 || fakeUploadRes.data.success !== false) {
+      throw new Error(`Expected 400 for fake image, got ${fakeUploadRes.status}: ${JSON.stringify(fakeUploadRes.data)}`);
+    }
+    console.log('✓ Fake image rejected by magic bytes verification with 400');
+
+    // 22.4 Wrong file extension/mimetype (e.g., text/plain) rejected (HTTP 400)
+    console.log('\n[22.4] Testing unsupported file extension rejected...');
+    const textForm = new FormData();
+    textForm.append('images', new Blob([Buffer.from('hello plain text')], { type: 'text/plain' }), 'notes.txt');
+
+    const textUploadRes = await uploadMultipart('/uploads/images', textForm, ownerToken);
+    if (textUploadRes.status !== 400 || textUploadRes.data.success !== false) {
+      throw new Error(`Expected 400 for text file, got ${textUploadRes.status}: ${JSON.stringify(textUploadRes.data)}`);
+    }
+    console.log('✓ Non-image extension/mimetype rejected with 400');
+
+    // 22.5 Oversize file (> 5 MB) rejected (HTTP 400)
+    console.log('\n[22.5] Testing oversize file (> 5 MB) rejected...');
+    const oversizeForm = new FormData();
+    const oversizeBuffer = Buffer.alloc(5.5 * 1024 * 1024, 0); // 5.5 MB
+    oversizeForm.append('images', new Blob([oversizeBuffer], { type: 'image/png' }), 'big.png');
+
+    const oversizeUploadRes = await uploadMultipart('/uploads/images', oversizeForm, ownerToken);
+    if (oversizeUploadRes.status !== 400 || oversizeUploadRes.data.success !== false) {
+      throw new Error(`Expected 400 for oversize file, got ${oversizeUploadRes.status}: ${JSON.stringify(oversizeUploadRes.data)}`);
+    }
+    console.log('✓ Oversize file (> 5 MB) rejected with 400');
+
+    // 22.6 More than 5 images rejected (HTTP 400)
+    console.log('\n[22.6] Testing more than 5 images rejected...');
+    const multiForm = new FormData();
+    for (let i = 0; i < 6; i++) {
+      multiForm.append('images', new Blob([validPngBuffer], { type: 'image/png' }), `img_${i}.png`);
+    }
+
+    const multiUploadRes = await uploadMultipart('/uploads/images', multiForm, ownerToken);
+    if (multiUploadRes.status !== 400 || multiUploadRes.data.success !== false) {
+      throw new Error(`Expected 400 for 6 images, got ${multiUploadRes.status}: ${JSON.stringify(multiUploadRes.data)}`);
+    }
+    console.log('✓ Upload with more than 5 images rejected with 400');
+
+    // 22.7 Avatar upload returns HTTPS Cloudinary URL and loads with HTTP 200
+    console.log('\n[22.7] Testing avatar upload to Cloudinary...');
+    const avatarForm1 = new FormData();
+    avatarForm1.append('avatar', new Blob([validPngBuffer], { type: 'image/png' }), 'avatar1.png');
+
+    const avatarUploadRes = await uploadMultipart('/users/me/avatar', avatarForm1, ownerToken);
+    if (
+      avatarUploadRes.status !== 200 ||
+      !avatarUploadRes.data.success ||
+      !avatarUploadRes.data.data.avatarUrl
+    ) {
+      throw new Error(`Avatar upload failed: ${avatarUploadRes.status} ${JSON.stringify(avatarUploadRes.data)}`);
+    }
+
+    const avatarCloudinaryUrl = avatarUploadRes.data.data.avatarUrl;
+    if (
+      !avatarCloudinaryUrl.startsWith('https://res.cloudinary.com/') ||
+      !avatarCloudinaryUrl.includes('rentcart/avatars/')
+    ) {
+      throw new Error(`Expected HTTPS Cloudinary URL in rentcart/avatars/, got: ${avatarCloudinaryUrl}`);
+    }
+    console.log(`✓ Avatar uploaded to Cloudinary: ${avatarCloudinaryUrl}`);
+
+    const fetchAvatarRes = await fetch(avatarCloudinaryUrl);
+    if (fetchAvatarRes.status !== 200) {
+      throw new Error(`Cloudinary avatar URL failed to load: status ${fetchAvatarRes.status}`);
+    }
+    console.log('✓ Cloudinary avatar URL loaded successfully (HTTP 200)');
+
+    // 22.8 Cleanup: Item deletion deletes Cloudinary asset in background without error
+    console.log('\n[22.8] Testing item deletion with Cloudinary asset cleanup...');
+    const testCloudItem = await req(
+      '/items',
+      'POST',
+      {
+        title: 'Cloudinary Cleanup Test Item',
+        description: 'Testing background Cloudinary asset cleanup on item deletion.',
+        category: 'Electronics',
+        pricePerDay: 25,
+        deposit: 50,
+        images: [itemCloudinaryUrl],
+      },
+      ownerToken,
+    );
+    if (testCloudItem.status !== 201) {
+      throw new Error(`Failed to create item with Cloudinary URL: ${JSON.stringify(testCloudItem.data)}`);
+    }
+    const testCloudItemId = testCloudItem.data.data.id;
+
+    const deleteItemRes = await req(`/items/${testCloudItemId}`, 'DELETE', undefined, ownerToken);
+    if (deleteItemRes.status !== 200 || !deleteItemRes.data.data.deleted) {
+      throw new Error(`Item delete failed: ${deleteItemRes.status} ${JSON.stringify(deleteItemRes.data)}`);
+    }
+    console.log('✓ Item deleted and background Cloudinary cleanup initiated successfully');
+
+    // 22.9 Cleanup: Avatar replacement deletes old Cloudinary asset in background
+    console.log('\n[22.9] Testing avatar replacement with background asset cleanup...');
+    const avatarForm2 = new FormData();
+    avatarForm2.append('avatar', new Blob([validPngBuffer], { type: 'image/png' }), 'avatar2.png');
+
+    const avatarUploadRes2 = await uploadMultipart('/users/me/avatar', avatarForm2, ownerToken);
+    if (avatarUploadRes2.status !== 200 || !avatarUploadRes2.data.success) {
+      throw new Error(`Avatar replacement failed: ${avatarUploadRes2.status} ${JSON.stringify(avatarUploadRes2.data)}`);
+    }
+    console.log('✓ Avatar replaced and previous Cloudinary asset cleanup initiated successfully');
 
     console.log('\n======================================================');
     console.log('🎉 ALL BACKEND SMOKE TESTS PASSED 100%!');

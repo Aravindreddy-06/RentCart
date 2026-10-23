@@ -24,10 +24,22 @@ export function createApp() {
   const app = express();
 
   // ── Security headers ──────────────────────────────────────────────────────
-  // Allow images to be served from /uploads without CSP interference
+  // Allow images to be served from Cloudinary and /uploads without CSP interference
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: {
+        directives: {
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          'img-src': [
+            "'self'",
+            'data:',
+            'blob:',
+            'https://res.cloudinary.com',
+            'https://images.unsplash.com',
+          ],
+        },
+      },
     }),
   );
 
@@ -48,8 +60,10 @@ export function createApp() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // ── Static file serving — uploaded images ─────────────────────────────────
-  app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+  // ── Static file serving — uploaded images (development only) ──────────────
+  if (env.NODE_ENV === 'development') {
+    app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+  }
 
   // ── Health check ──────────────────────────────────────────────────────────
   app.get('/api/health', (_req, res) => {

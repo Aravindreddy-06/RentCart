@@ -7,7 +7,12 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import * as usersService from '../services/users.service';
 import { success, failure } from '../utils/response';
-import { env } from '../config/env';
+import {
+  isAllowedImageBuffer,
+  uploadImageStream,
+  deleteCloudinaryAsset,
+  CloudinaryUploadError,
+} from '../services/cloudinary.service';
 
 // ─── Zod Schemas ─────────────────────────────────────────────────────────────
 
@@ -60,7 +65,18 @@ export async function updateMe(req: Request, res: Response, next: NextFunction) 
       data.phone = normalizePhone(data.phone);
     }
 
+    let previousAvatarUrl: string | null = null;
+    if (data.avatarUrl !== undefined) {
+      const current = await usersService.getUserProfile(userId);
+      previousAvatarUrl = current?.avatarUrl ?? null;
+    }
+
     const updated = await usersService.updateUserProfile(userId, data);
+
+    if (previousAvatarUrl && previousAvatarUrl !== data.avatarUrl) {
+      deleteCloudinaryAsset(previousAvatarUrl);
+    }
+
     return success(res, updated);
   } catch (err) {
     if (err instanceof PhoneValidationError) {
@@ -77,11 +93,27 @@ export async function uploadAvatar(req: Request, res: Response, next: NextFuncti
       return failure(res, 'No avatar image uploaded', 400);
     }
 
-    const avatarUrl = `${env.PUBLIC_BASE_URL}/uploads/${req.file.filename}`;
-    const user = await usersService.updateUserAvatar(userId, avatarUrl);
+    // Verify magic bytes
+    if (!isAllowedImageBuffer(req.file.buffer)) {
+      return failure(res, 'Only JPG, PNG, and WebP images are allowed', 400);
+    }
 
-    return success(res, { avatarUrl, user });
-  } catch (err) {
+    const currentProfile = await usersService.getUserProfile(userId);
+    const previousAvatarUrl = currentProfile?.avatarUrl;
+
+    const { secureUrl, publicId } = await uploadImageStream(req.file.buffer, 'rentcart/avatars');
+    const user = await usersService.updateUserAvatar(userId, secureUrl);
+
+    // Clean up previous Cloudinary avatar asset in the background
+    if (previousAvatarUrl && previousAvatarUrl !== secureUrl) {
+      deleteCloudinaryAsset(previousAvatarUrl);
+    }
+
+    return success(res, { avatarUrl: secureUrl, user, publicId });
+  } catch (err: any) {
+    if (err instanceof CloudinaryUploadError) {
+      return failure(res, err.message, err.statusCode);
+    }
     next(err);
   }
 }

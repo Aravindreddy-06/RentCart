@@ -7,6 +7,7 @@
 import prisma from '../prisma/client';
 import { Prisma } from '@prisma/client';
 import { CURRENCY } from '../config/constants';
+import { deleteCloudinaryAssets } from './cloudinary.service';
 
 export interface ItemsQuery {
   search?: string;
@@ -358,6 +359,17 @@ export async function createItem(data: CreateItemInput) {
 }
 
 export async function updateItem(id: string, data: UpdateItemInput) {
+  let removedImages: string[] = [];
+  if (data.images !== undefined) {
+    const existing = await prisma.item.findUnique({
+      where: { id },
+      select: { images: true },
+    });
+    if (existing?.images) {
+      removedImages = existing.images.filter((img) => !data.images!.includes(img));
+    }
+  }
+
   const item = await prisma.item.update({
     where: { id },
     data: {
@@ -374,11 +386,27 @@ export async function updateItem(id: string, data: UpdateItemInput) {
       owner: { select: ownerSelect },
     },
   });
+
+  if (removedImages.length > 0) {
+    deleteCloudinaryAssets(removedImages);
+  }
+
   return { ...item, currency: CURRENCY };
 }
 
 export async function deleteItem(id: string) {
-  return prisma.item.delete({ where: { id } });
+  const existing = await prisma.item.findUnique({
+    where: { id },
+    select: { images: true },
+  });
+
+  const deleted = await prisma.item.delete({ where: { id } });
+
+  if (existing?.images && existing.images.length > 0) {
+    deleteCloudinaryAssets(existing.images);
+  }
+
+  return deleted;
 }
 
 export async function toggleAvailability(id: string, isAvailable: boolean) {
