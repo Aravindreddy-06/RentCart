@@ -71,23 +71,53 @@ RentCart/
    DATABASE_URL="postgresql://user:password@localhost:5432/rentcart?schema=public"
    JWT_SECRET="your-super-secret-jwt-key"
    JWT_REFRESH_SECRET="your-super-secret-refresh-jwt-key"
-   JWT_EXPIRES_IN="15m"
-   JWT_REFRESH_EXPIRES_IN="7d"
    CLIENT_ORIGINS="http://localhost:5173,http://localhost:19006"
    PUBLIC_BASE_URL="http://10.221.161.232:4000"
+
+   # Handover & Return PIN Security
+   HANDOVER_PIN_SECRET="your-32-byte-hex-hmac-secret-here-min-32-chars"
+   HANDOVER_PIN_ENC_KEY="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+   REQUIRE_RETURN_PIN=false
+
+   # Cloudinary Media Storage
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+
+   # Email Provider Configuration
+   # Choose "brevo" (HTTPS API, recommended on Render) or "smtp" (Nodemailer)
+   # Defaults to "smtp" in development; must be set explicitly when NODE_ENV=production.
+   MAIL_PROVIDER=brevo
+
+   # --- Option A: Brevo HTTPS API (Recommended for Render & Production) ---
+   BREVO_API_KEY=xkeysib-your-brevo-api-key
+   MAIL_FROM_EMAIL=your-verified-sender@example.com
+   MAIL_FROM_NAME=RentCart
+
+   # --- Option B: Nodemailer SMTP (Traditional SMTP) ---
    SMTP_HOST=smtp.gmail.com
    SMTP_PORT=465
    SMTP_USER=your_email@gmail.com
    SMTP_PASS=your16characterapppassword
    MAIL_FROM="RentCart <your_email@gmail.com>"
-   HANDOVER_PIN_SECRET="your-32-byte-hex-hmac-secret-here-min-32-chars"
-   HANDOVER_PIN_ENC_KEY="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-   REQUIRE_RETURN_PIN=false
    ```
 
+   > **Why Brevo? (SMTP is Blocked on Render & Cloud Hosts):**
+   > - Cloud hosting platforms such as **Render**, **Vercel**, and **AWS Lambda** block outbound connections on standard SMTP ports (25, 465, and 587) to prevent spam abuse. As a result, standard SMTP clients (like Nodemailer) will hang or timeout when deployed on Render.
+   > - RentCart includes a built-in **Brevo HTTPS API provider** (`MAIL_PROVIDER=brevo`) that transmits transactional emails via `POST https://api.brevo.com/v3/smtp/email` over standard HTTPS (port 443) using Node's built-in `fetch`, bypassing all SMTP firewall restrictions with zero extra dependencies.
+
+   > **Brevo Setup & Sender Verification:**
+   > 1. Sign up for a free account at [Brevo (formerly Sendinblue)](https://www.brevo.com).
+   > 2. **Verify Sender Email:** Navigate to **Senders, Domains & Dedicated IPs** &rarr; **Senders** and add/verify your sender email address (e.g., `rentcart.app@gmail.com`). Brevo will only dispatch emails from verified senders.
+   > 3. **Generate API Key:** Navigate to **SMTP & API** &rarr; **API Keys**, click **Generate a new API key**, and set it as `BREVO_API_KEY`.
+   > 4. Set `MAIL_FROM_EMAIL` to your verified sender address and `MAIL_FROM_NAME` to `RentCart`.
+   > 5. On server startup, RentCart verifies the key via `GET https://api.brevo.com/v3/account` and logs `✅  Email provider (Brevo) ready`.
+
    > **Note on SMTP / Gmail App Password:**
-   > - To send real emails via Gmail, enable 2-Step Verification on your Google Account, generate a 16-character **App Password** under Security, and set `SMTP_USER` and `SMTP_PASS`.
-   > - **Development Fallback:** If SMTP is unconfigured or fails in `NODE_ENV=development`, RentCart prints OTP codes directly to the backend terminal so development and local testing work seamlessly without active SMTP credentials.
+   > - If using `MAIL_PROVIDER=smtp` with Gmail, enable 2-Step Verification on your Google Account, generate a 16-character **App Password** under Security, and set `SMTP_USER` and `SMTP_PASS`.
+
+   > **Development Fallback:**
+   > - When running in `NODE_ENV=development` with no email provider configured, RentCart safely prints OTP codes directly to the terminal console so that registration and password-reset flows work seamlessly during local development without email credentials.
 
    > **Note on `PUBLIC_BASE_URL`:**
    > `PUBLIC_BASE_URL` is used to build absolute URLs for uploaded static images served at `/uploads`. When running on a local network for mobile device access, replace the IP with your machine's LAN IP so phones can load images.

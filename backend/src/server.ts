@@ -8,7 +8,7 @@ import { createApp } from './app';
 import { env } from './config/env';
 import prisma from './prisma/client';
 import { initSocketIO } from './socket';
-import { verifySmtpConnection } from './services/mail.service';
+import { verifyEmailConnection } from './services/mail.service';
 import { startOtpCleanupJob } from './services/otp.service';
 import { startTrackingCleanupJob } from './services/tracking.service';
 
@@ -17,8 +17,8 @@ async function bootstrap() {
   await prisma.$connect();
   console.log('✅  Database connected');
 
-  // Verify SMTP connection on startup
-  verifySmtpConnection();
+  // Verify email provider connection on startup
+  await verifyEmailConnection();
 
   // Start periodic OTP cleanup job
   startOtpCleanupJob();

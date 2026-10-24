@@ -19,48 +19,216 @@ export function getDevOtp(email: string): string | undefined {
   return devOtpStore.get(email.toLowerCase())?.otp;
 }
 
-export function isSmtpConfigured(): boolean {
-  return Boolean(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);
+export interface SendMailOptions {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+  otpForDev?: string;
+  purposeForDev?: string;
 }
 
-let transporter: Transporter | null = null;
+export interface MailProvider {
+  readonly name: 'brevo' | 'smtp';
+  isConfigured(): boolean;
+  verify(): Promise<void>;
+  sendMail(options: { to: string; subject: string; html: string; text: string }): Promise<void>;
+}
 
-if (isSmtpConfigured()) {
-  transporter = nodemailer.createTransport({
-    host: env.SMTP_HOST,
-    port: env.SMTP_PORT,
-    secure: env.SMTP_PORT === 465,
-    auth: {
-      user: env.SMTP_USER,
-      pass: env.SMTP_PASS,
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
-  });
+class BrevoMailProvider implements MailProvider {
+  readonly name = 'brevo' as const;
+
+  isConfigured(): boolean {
+    return Boolean(env.BREVO_API_KEY && env.MAIL_FROM_EMAIL);
+  }
+
+  async verify(): Promise<void> {
+    if (!this.isConfigured()) {
+      console.warn(
+        '⚠️  Brevo email provider is configured, but BREVO_API_KEY or MAIL_FROM_EMAIL is missing.',
+      );
+      return;
+    }
+
+    try {
+      const res = await fetch('https://api.brevo.com/v3/account', {
+        method: 'GET',
+        headers: {
+          'api-key': env.BREVO_API_KEY!,
+          Accept: 'application/json',
+        },
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (res.ok) {
+        console.log('✅  Email provider (Brevo) ready');
+      } else {
+        console.warn(`⚠️  Email provider (Brevo) verification failed: HTTP ${res.status}`);
+      }
+    } catch {
+      console.warn('⚠️  Email provider (Brevo) verification failed: HTTP status unavailable');
+    }
+  }
+
+  async sendMail(options: {
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+  }): Promise<void> {
+    if (!this.isConfigured()) {
+      const error = new Error(
+        'Email delivery service is currently unavailable. Please try again later.',
+      );
+      (error as any).statusCode = 503;
+      throw error;
+    }
+
+    let res: Response;
+    try {
+      res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': env.BREVO_API_KEY!,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          sender: {
+            name: env.MAIL_FROM_NAME || 'RentCart',
+            email: env.MAIL_FROM_EMAIL,
+          },
+          to: [{ email: options.to }],
+          subject: options.subject,
+          htmlContent: options.html,
+          textContent: options.text,
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+    } catch {
+      console.error('[brevo] Delivery failed: HTTP status unavailable');
+      const error = new Error(
+        'Email delivery service is currently unavailable. Please try again later.',
+      );
+      (error as any).statusCode = 503;
+      throw error;
+    }
+
+    if (!res.ok) {
+      console.error(`[brevo] Delivery failed: HTTP ${res.status}`);
+      const error = new Error(
+        'Email delivery service is currently unavailable. Please try again later.',
+      );
+      (error as any).statusCode = 503;
+      throw error;
+    }
+  }
+}
+
+class SmtpMailProvider implements MailProvider {
+  readonly name = 'smtp' as const;
+  private transporter: Transporter | null = null;
+
+  constructor() {
+    if (this.isConfigured()) {
+      this.transporter = nodemailer.createTransport({
+        host: env.SMTP_HOST,
+        port: env.SMTP_PORT,
+        secure: env.SMTP_PORT === 465,
+        auth: {
+          user: env.SMTP_USER,
+          pass: env.SMTP_PASS,
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
+      });
+    }
+  }
+
+  isConfigured(): boolean {
+    return Boolean(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);
+  }
+
+  async verify(): Promise<void> {
+    if (!this.transporter || !this.isConfigured()) {
+      if (env.NODE_ENV === 'development') {
+        console.log(
+          'ℹ️  SMTP not configured. In development, OTP codes will be printed to console.',
+        );
+      } else {
+        console.warn('⚠️  SMTP is not configured.');
+      }
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      this.transporter!.verify((error: Error | null) => {
+        if (error) {
+          console.warn(`⚠️  SMTP connection verification failed: ${error.message}`);
+        } else {
+          console.log('✅  SMTP connection verified and ready');
+        }
+        resolve();
+      });
+    });
+  }
+
+  async sendMail(options: {
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+  }): Promise<void> {
+    if (!this.transporter || !this.isConfigured()) {
+      const error = new Error(
+        'Email delivery service is currently unavailable. Please try again later.',
+      );
+      (error as any).statusCode = 503;
+      throw error;
+    }
+
+    try {
+      await this.transporter.sendMail({
+        from: env.MAIL_FROM,
+        to: options.to,
+        subject: options.subject,
+        text: options.text,
+        html: options.html,
+      });
+    } catch (err: any) {
+      console.error(`[smtp] Delivery failed: HTTP status ${err?.responseCode || 'unavailable'}`);
+      const error = new Error(
+        'Email delivery service is currently unavailable. Please try again later.',
+      );
+      (error as any).statusCode = 503;
+      throw error;
+    }
+  }
+}
+
+const brevoProvider = new BrevoMailProvider();
+const smtpProvider = new SmtpMailProvider();
+
+export const activeProvider: MailProvider =
+  env.MAIL_PROVIDER === 'brevo' ? brevoProvider : smtpProvider;
+
+export function isSmtpConfigured(): boolean {
+  return smtpProvider.isConfigured();
+}
+
+export function isMailConfigured(): boolean {
+  return activeProvider.isConfigured();
 }
 
 /**
- * Verify SMTP connection on startup without crashing the application.
+ * Verify email provider connection on startup without crashing the application.
  */
-export function verifySmtpConnection(): void {
-  if (!transporter) {
-    if (env.NODE_ENV === 'development') {
-      console.log('ℹ️  SMTP not configured. In development, OTP codes will be printed to console.');
-    } else {
-      console.warn('⚠️  SMTP is not configured.');
-    }
-    return;
-  }
-
-  transporter.verify((error: Error | null) => {
-    if (error) {
-      console.warn(`⚠️  SMTP connection verification failed: ${error.message}`);
-    } else {
-      console.log('✅  SMTP connection verified and ready');
-    }
-  });
+export async function verifyEmailConnection(): Promise<void> {
+  await activeProvider.verify();
 }
+
+export const verifySmtpConnection = verifyEmailConnection;
 
 function renderHtmlEmail(title: string, preheader: string, contentHtml: string): string {
   return `<!DOCTYPE html>
@@ -103,24 +271,17 @@ function renderHtmlEmail(title: string, preheader: string, contentHtml: string):
 }
 
 /**
- * Send an email via Nodemailer or output to console in dev mode if SMTP unconfigured.
+ * Send an email via the active provider or output to console in dev mode if unconfigured.
  */
-async function dispatchEmail(params: {
-  to: string;
-  subject: string;
-  text: string;
-  html: string;
-  otpForDev?: string;
-  purposeForDev?: string;
-}): Promise<void> {
-  const { to, subject, text, html, otpForDev, purposeForDev } = params;
+export async function sendMail(options: SendMailOptions): Promise<void> {
+  const { to, subject, text, html, otpForDev, purposeForDev } = options;
 
   if (otpForDev && purposeForDev) {
     setDevOtp(to, purposeForDev, otpForDev);
   }
 
-  // Development fallback when SMTP is not configured
-  if (!isSmtpConfigured() || !transporter) {
+  // Development fallback when no provider is configured
+  if (!activeProvider.isConfigured()) {
     if (env.NODE_ENV === 'development') {
       console.log(`\n======================================================`);
       console.log(`[RentCart DEV MAIL]`);
@@ -130,33 +291,20 @@ async function dispatchEmail(params: {
         console.log(`OTP Code: ${otpForDev} (valid 10 minutes)`);
       }
       console.log(`======================================================\n`);
-    }
-    return;
-  }
-
-  try {
-    await transporter.sendMail({
-      from: env.MAIL_FROM,
-      to,
-      subject,
-      text,
-      html,
-    });
-  } catch (err: any) {
-    // If running in development and external SMTP fails, log and fallback gracefully
-    if (env.NODE_ENV === 'development') {
-      console.warn(`[SMTP Warning] Could not deliver email via SMTP: ${err.message}`);
-      if (otpForDev) {
-        console.log(`[RentCart DEV MAIL FALLBACK] OTP Code: ${otpForDev}`);
-      }
       return;
     }
 
-    const error = new Error('Email delivery service is currently unavailable. Please try again later.');
+    const error = new Error(
+      'Email delivery service is currently unavailable. Please try again later.',
+    );
     (error as any).statusCode = 503;
     throw error;
   }
+
+  await activeProvider.sendMail({ to, subject, html, text });
 }
+
+const dispatchEmail = sendMail;
 
 /**
  * Send 6-digit OTP for email verification.
@@ -174,7 +322,7 @@ export async function sendEmailVerificationOtp(to: string, otp: string): Promise
        <p class="otp-code">${otp}</p>
        <div class="otp-caption">⏱️ Valid for 10 minutes</div>
      </div>
-     <p class="muted"><strong>Important:</strong> If you did not request this verification code or create a RentCart account, please ignore this email. Your email address remains secure.</p>`
+     <p class="muted"><strong>Important:</strong> If you did not request this verification code or create a RentCart account, please ignore this email. Your email address remains secure.</p>`,
   );
 
   await dispatchEmail({
@@ -203,7 +351,7 @@ export async function sendPasswordResetOtp(to: string, otp: string): Promise<voi
        <p class="otp-code">${otp}</p>
        <div class="otp-caption">⏱️ Valid for 10 minutes</div>
      </div>
-     <p class="muted"><strong>Didn't request this?</strong> If you did not request a password reset, you can safely ignore this email. Your existing password will remain unchanged.</p>`
+     <p class="muted"><strong>Didn't request this?</strong> If you did not request a password reset, you can safely ignore this email. Your existing password will remain unchanged.</p>`,
   );
 
   await dispatchEmail({
@@ -231,7 +379,7 @@ export async function sendPasswordChangedNotification(to: string): Promise<void>
      <div style="background:#f8fafc;border-left:4px solid #0F9D8A;padding:16px;border-radius:4px;margin:20px 0;">
        <p style="margin:0;font-size:14px;color:#334155;"><strong>Date & Time:</strong> ${new Date().toUTCString()}</p>
      </div>
-     <p class="muted"><strong>Did not make this change?</strong> If you did not change your password, please reset your password immediately using the "Forgot Password" link on the login page.</p>`
+     <p class="muted"><strong>Did not make this change?</strong> If you did not change your password, please reset your password immediately using the "Forgot Password" link on the login page.</p>`,
   );
 
   await dispatchEmail({
