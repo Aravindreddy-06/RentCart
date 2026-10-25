@@ -111,42 +111,115 @@ export default function RequestsScreen() {
   }, [fetchRequests]);
 
   const handleApproveClick = (rental: Rental) => {
-    setApprovingRental(rental);
-    setPickupLocation({
-      latitude: rental.pickupLatitude ?? user?.latitude ?? 13.0827,
-      longitude: rental.pickupLongitude ?? user?.longitude ?? 80.2707,
-      address: rental.pickupAddress || user?.address || '',
-    });
-    setPickupNote(rental.pickupNote || '');
-    setPickupTimeFrom(rental.pickupTimeFrom ? rental.pickupTimeFrom.slice(0, 16) : '');
-    setPickupTimeTo(rental.pickupTimeTo ? rental.pickupTimeTo.slice(0, 16) : '');
-    setPickupError('');
+    try {
+      if (!rental) {
+        Alert.alert('Error', 'Unable to approve: rental information is missing.');
+        return;
+      }
+      setApprovingRental(rental);
+
+      const initialLat =
+        typeof rental.pickupLatitude === 'number' && !isNaN(rental.pickupLatitude)
+          ? rental.pickupLatitude
+          : typeof user?.latitude === 'number' && !isNaN(user.latitude)
+          ? user.latitude
+          : 13.0827;
+      const initialLng =
+        typeof rental.pickupLongitude === 'number' && !isNaN(rental.pickupLongitude)
+          ? rental.pickupLongitude
+          : typeof user?.longitude === 'number' && !isNaN(user.longitude)
+          ? user.longitude
+          : 80.2707;
+      const initialAddress =
+        (typeof rental.pickupAddress === 'string' && rental.pickupAddress.trim()) ||
+        (typeof user?.address === 'string' && user.address.trim()) ||
+        '';
+
+      setPickupLocation({
+        latitude: initialLat,
+        longitude: initialLng,
+        address: initialAddress,
+      });
+      setPickupNote(typeof rental.pickupNote === 'string' ? rental.pickupNote : '');
+      setPickupTimeFrom(rental.pickupTimeFrom ? rental.pickupTimeFrom.slice(0, 16) : '');
+      setPickupTimeTo(rental.pickupTimeTo ? rental.pickupTimeTo.slice(0, 16) : '');
+      setPickupError('');
+    } catch (err: any) {
+      console.error('[RequestsScreen] handleApproveClick error:', err);
+      Alert.alert('Error', 'Failed to open approval dialog: ' + (err?.message || 'Unknown error'));
+    }
   };
 
   const confirmApprove = async () => {
-    if (!approvingRental) return;
-    if (!pickupLocation.address.trim()) {
-      setPickupError('Please provide a pickup address.');
-      return;
-    }
-
-    setIsApproving(true);
-    setPickupError('');
     try {
+      if (!approvingRental) {
+        Alert.alert('Error', 'No rental selected for approval.');
+        return;
+      }
+
+      const trimmedAddress = (pickupLocation?.address || '').trim();
+      if (!trimmedAddress) {
+        const msg = 'Please provide a pickup address before approving.';
+        setPickupError(msg);
+        Alert.alert('Missing Address', msg);
+        return;
+      }
+
+      const lat =
+        typeof pickupLocation?.latitude === 'number' && !isNaN(pickupLocation.latitude)
+          ? pickupLocation.latitude
+          : typeof user?.latitude === 'number' && !isNaN(user.latitude)
+          ? user.latitude
+          : 13.0827;
+
+      const lng =
+        typeof pickupLocation?.longitude === 'number' && !isNaN(pickupLocation.longitude)
+          ? pickupLocation.longitude
+          : typeof user?.longitude === 'number' && !isNaN(user.longitude)
+          ? user.longitude
+          : 80.2707;
+
+      const trimmedNote = (pickupNote || '').trim();
+
+      let formattedFrom: string | null = null;
+      if (pickupTimeFrom) {
+        const d = new Date(pickupTimeFrom);
+        if (!isNaN(d.getTime())) {
+          formattedFrom = d.toISOString();
+        }
+      }
+
+      let formattedTo: string | null = null;
+      if (pickupTimeTo) {
+        const d = new Date(pickupTimeTo);
+        if (!isNaN(d.getTime())) {
+          formattedTo = d.toISOString();
+        }
+      }
+
+      setIsApproving(true);
+      setPickupError('');
+
       await rentalsService.approve(approvingRental.id, {
-        pickupLatitude: pickupLocation.latitude,
-        pickupLongitude: pickupLocation.longitude,
-        pickupAddress: pickupLocation.address.trim(),
-        pickupNote: pickupNote.trim() ? pickupNote.trim() : null,
-        pickupTimeFrom: pickupTimeFrom ? new Date(pickupTimeFrom).toISOString() : null,
-        pickupTimeTo: pickupTimeTo ? new Date(pickupTimeTo).toISOString() : null,
+        pickupLatitude: lat,
+        pickupLongitude: lng,
+        pickupAddress: trimmedAddress,
+        pickupNote: trimmedNote.length > 0 ? trimmedNote : null,
+        pickupTimeFrom: formattedFrom,
+        pickupTimeTo: formattedTo,
       });
-      const approvedTitle = approvingRental.item.title;
+
+      const approvedTitle = approvingRental.item?.title || 'Rental';
       setApprovingRental(null);
       Alert.alert('Approved! ✓', `Request for "${approvedTitle}" has been approved with confirmed pickup point.`);
       fetchRequests(true);
     } catch (err: any) {
-      setPickupError(err?.response?.data?.message ?? 'Failed to approve request. Please check pickup coordinates.');
+      const errorMsg =
+        err?.response?.data?.message ??
+        err?.message ??
+        'Failed to approve request. Please check pickup coordinates.';
+      setPickupError(errorMsg);
+      Alert.alert('Approval Failed', errorMsg);
     } finally {
       setIsApproving(false);
     }

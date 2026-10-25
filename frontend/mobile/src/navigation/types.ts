@@ -1,7 +1,4 @@
-/**
- * src/navigation/types.ts (mobile)
- * Navigation type definitions for TypeScript.
- */
+import { NavigatorScreenParams } from '@react-navigation/native';
 
 export type AuthStackParamList = {
   Login: { message?: string } | undefined;
@@ -11,8 +8,16 @@ export type AuthStackParamList = {
   ResetPassword: { email?: string; infoMessage?: string } | undefined;
 };
 
+export type MainTabParamList = {
+  HomeTab: undefined;
+  RequestsTab: undefined;
+  MessagesTab: undefined;
+  MyRentalsTab: undefined;
+  ProfileTab: undefined;
+};
+
 export type AppStackParamList = {
-  MainTabs: undefined;
+  MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   Home: undefined;
   ItemDetail: { itemId: string };
   AddItem: undefined;
@@ -31,12 +36,4 @@ export type AppStackParamList = {
   PublicProfile: { userId: string };
   Notifications: undefined;
   Chat: { rentalId: string; otherUserName?: string; title?: string };
-};
-
-export type MainTabParamList = {
-  HomeTab: undefined;
-  RequestsTab: undefined;
-  MessagesTab: undefined;
-  MyRentalsTab: undefined;
-  ProfileTab: undefined;
 };

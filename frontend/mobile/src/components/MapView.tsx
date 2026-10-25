@@ -15,6 +15,9 @@ import {
   ViewStyle,
 } from 'react-native';
 import { colors, radius, spacing } from '../utils/colors';
+import { isGoogleMapsKeyAvailable } from '../utils/maps';
+
+export { isGoogleMapsKeyAvailable };
 
 // Try to require react-native-maps lazily to avoid top-level crashes
 let RNMaps: any = null;
@@ -39,7 +42,17 @@ export interface MapViewProps {
   style?: ViewStyle;
 }
 
-export async function openMapNavigation(latitude: number, longitude: number, label?: string) {
+export async function openMapNavigation(latitude?: number | null, longitude?: number | null, label?: string) {
+  if (
+    typeof latitude !== 'number' ||
+    typeof longitude !== 'number' ||
+    isNaN(latitude) ||
+    isNaN(longitude)
+  ) {
+    console.warn('[MapView] openMapNavigation called with invalid coordinates:', latitude, longitude);
+    return;
+  }
+
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
   const nativeScheme = Platform.select({
     ios: `maps:0,0?q=${encodeURIComponent(label || 'Pickup')}&ll=${latitude},${longitude}`,
@@ -63,25 +76,25 @@ export async function openMapNavigation(latitude: number, longitude: number, lab
   }
 }
 
-interface ErrorBoundaryProps {
+export interface MapErrorBoundaryProps {
   children: ReactNode;
   fallback: (error: Error) => ReactNode;
 }
 
-interface ErrorBoundaryState {
+export interface MapErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
 }
 
-class MapErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false, error: null };
+export class MapErrorBoundary extends Component<MapErrorBoundaryProps, MapErrorBoundaryState> {
+  state: MapErrorBoundaryState = { hasError: false, error: null };
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): MapErrorBoundaryState {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, info: any) {
-    console.warn('[MapView] Render error caught by boundary:', error.message, info);
+    console.warn('[MapView] Render error caught by boundary:', error?.message, info);
   }
 
   render() {
@@ -92,7 +105,7 @@ class MapErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState>
   }
 }
 
-function FallbackView({
+export function FallbackView({
   pickupMarker,
   address,
   height = 200,
@@ -103,6 +116,12 @@ function FallbackView({
   height?: number;
   showNavigateButton?: boolean;
 }) {
+  const hasValidCoords =
+    typeof pickupMarker?.latitude === 'number' &&
+    typeof pickupMarker?.longitude === 'number' &&
+    !isNaN(pickupMarker.latitude) &&
+    !isNaN(pickupMarker.longitude);
+
   return (
     <View style={[styles.fallbackContainer, { height }]}>
       <View style={styles.fallbackHeader}>
@@ -114,7 +133,7 @@ function FallbackView({
               {address}
             </Text>
           ) : null}
-          {pickupMarker ? (
+          {hasValidCoords && pickupMarker ? (
             <Text style={styles.fallbackCoords}>
               {pickupMarker.latitude.toFixed(4)}, {pickupMarker.longitude.toFixed(4)}
             </Text>
@@ -122,7 +141,7 @@ function FallbackView({
         </View>
       </View>
 
-      {showNavigateButton && pickupMarker ? (
+      {showNavigateButton && hasValidCoords && pickupMarker ? (
         <TouchableOpacity
           style={styles.navigateBtn}
           onPress={() => openMapNavigation(pickupMarker.latitude, pickupMarker.longitude, pickupMarker.label)}
@@ -145,23 +164,38 @@ function InternalMapView({
 }: MapViewProps) {
   const mapRef = useRef<any>(null);
   const [mapFailed, setMapFailed] = useState(false);
+  const hasMapsKey = isGoogleMapsKeyAvailable();
 
   useEffect(() => {
-    if (mapRef.current && pickupMarker && borrowerMarker) {
-      mapRef.current.fitToCoordinates(
-        [
-          { latitude: pickupMarker.latitude, longitude: pickupMarker.longitude },
-          { latitude: borrowerMarker.latitude, longitude: borrowerMarker.longitude },
-        ],
-        {
-          edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
-          animated: true,
-        },
-      );
+    try {
+      if (
+        mapRef.current &&
+        typeof pickupMarker?.latitude === 'number' &&
+        typeof pickupMarker?.longitude === 'number' &&
+        typeof borrowerMarker?.latitude === 'number' &&
+        typeof borrowerMarker?.longitude === 'number' &&
+        !isNaN(pickupMarker.latitude) &&
+        !isNaN(pickupMarker.longitude) &&
+        !isNaN(borrowerMarker.latitude) &&
+        !isNaN(borrowerMarker.longitude)
+      ) {
+        mapRef.current.fitToCoordinates(
+          [
+            { latitude: pickupMarker.latitude, longitude: pickupMarker.longitude },
+            { latitude: borrowerMarker.latitude, longitude: borrowerMarker.longitude },
+          ],
+          {
+            edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
+            animated: true,
+          },
+        );
+      }
+    } catch (err) {
+      console.warn('[MapView] fitToCoordinates failed:', err);
     }
   }, [pickupMarker?.latitude, pickupMarker?.longitude, borrowerMarker?.latitude, borrowerMarker?.longitude]);
 
-  if (mapFailed || !RNMaps || !RNMaps.default) {
+  if (mapFailed || !hasMapsKey || !RNMaps || !RNMaps.default) {
     return (
       <FallbackView
         pickupMarker={pickupMarker}
@@ -175,8 +209,14 @@ function InternalMapView({
   const NativeMap = RNMaps.default;
   const Marker = RNMaps.Marker;
 
-  const centerLat = pickupMarker?.latitude ?? 37.7749;
-  const centerLng = pickupMarker?.longitude ?? -122.4194;
+  const centerLat =
+    typeof pickupMarker?.latitude === 'number' && !isNaN(pickupMarker.latitude)
+      ? pickupMarker.latitude
+      : 13.0827;
+  const centerLng =
+    typeof pickupMarker?.longitude === 'number' && !isNaN(pickupMarker.longitude)
+      ? pickupMarker.longitude
+      : 80.2707;
 
   return (
     <View style={[styles.mapContainer, { height }, style]}>

@@ -349,6 +349,23 @@ export default function ChatScreen({ route, navigation }: Props) {
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color={colors.primary[500]} />
           </View>
+        ) : messages.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <View
+              style={[
+                styles.emptyIconBg,
+                { backgroundColor: isDark ? colors.dark.surfaceHover : colors.primary[50] },
+              ]}
+            >
+              <Ionicons name="chatbubbles" size={36} color={colors.primary[500]} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
+              No messages yet
+            </Text>
+            <Text style={[styles.emptySubtitle, { color: themeColors.textMuted }]}>
+              Say hello and coordinate rental handover details!
+            </Text>
+          </View>
         ) : (
           <FlatList
             data={messages}
@@ -366,7 +383,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               ) : null
             }
             ListEmptyComponent={
-              <View style={styles.emptyContainer}>
+              <View style={styles.emptyContainerInverted}>
                 <View
                   style={[
                     styles.emptyIconBg,
@@ -477,6 +494,7 @@ const styles = StyleSheet.create({
   },
   contextText: {
     fontSize: 13,
+    flex: 1,
   },
   contextTitle: {
     fontWeight: '700',
@@ -518,6 +536,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: colors.primary[600],
+    textAlign: 'center',
   },
   bubbleRow: {
     flexDirection: 'row',
@@ -530,7 +549,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   bubble: {
-    maxWidth: '78%',
+    maxWidth: '82%',
     borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -547,16 +566,19 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 15,
     lineHeight: 20,
+    flexShrink: 1,
   },
   theirBubbleText: {
     fontSize: 15,
     lineHeight: 20,
+    flexShrink: 1,
   },
   bubbleFooter: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
     marginTop: 4,
+    gap: 4,
   },
   myTimestampText: {
     fontSize: 10,
@@ -581,10 +603,18 @@ const styles = StyleSheet.create({
     color: colors.primary[500],
   },
   emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+  },
+  emptyContainerInverted: {
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 32,
+    paddingHorizontal: 24,
+    paddingVertical: 32,
     transform: [{ scaleY: -1 }],
   },
   emptyIconBg: {
@@ -598,11 +628,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 17,
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: 6,
+    textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 13,
+    lineHeight: 18,
     textAlign: 'center',
+    maxWidth: 280,
   },
   readOnlyBanner: {
     flexDirection: 'row',
@@ -617,7 +650,8 @@ const styles = StyleSheet.create({
   },
   readOnlySubtitle: {
     fontSize: 12,
-    marginTop: 1,
+    lineHeight: 16,
+    marginTop: 2,
   },
   inputContainer: {
     flexDirection: 'row',

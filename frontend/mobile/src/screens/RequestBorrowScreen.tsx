@@ -20,6 +20,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -62,6 +63,7 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
   const [bookedDates, setBookedDates] = useState<BookedDateRange[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const startDateStr = formatDateStr(startDate);
   const endDateStr = formatDateStr(endDate);
@@ -99,6 +101,28 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
     return { days: d, totalPrice: Number((d * pricePerDay).toFixed(2)) };
   }, [startDate, endDate, pricePerDay]);
 
+  const handleViewMyRentals = () => {
+    setShowSuccessModal(false);
+    // Reset back stack to MainTabs with MyRentalsTab active
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: 'MainTabs',
+          params: {
+            screen: 'MyRentalsTab',
+          },
+        },
+      ],
+    });
+  };
+
+  const handleDismiss = () => {
+    setShowSuccessModal(false);
+    // Return to Item Details and clear RequestBorrow from back stack
+    navigation.goBack();
+  };
+
   const handleSubmit = async () => {
     setError('');
     const todayStr = formatDateStr(today);
@@ -126,25 +150,15 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
         borrowerNote: note.trim() || undefined,
       });
 
-      Alert.alert(
-        'Request Sent! 🎉',
-        `Your request has been sent to ${ownerName}. You can track it under My Rentals.`,
-        [
-          {
-            text: 'View My Rentals',
-            onPress: () => {
-              navigation.navigate('MainTabs');
-            },
-          },
-        ],
-      );
+      // Close the form & reset loading state
+      setIsSubmitting(false);
+      setShowSuccessModal(true);
     } catch (err: any) {
+      setIsSubmitting(false);
       const msg =
         err?.response?.data?.message ??
         'Failed to submit request. Please check your dates and try again.';
       setError(msg);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -458,6 +472,107 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Themed Success Dialog Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleDismiss}
+      >
+        <TouchableOpacity
+          style={[
+            styles.modalOverlay,
+            { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.75)' : 'rgba(0, 0, 0, 0.5)' },
+          ]}
+          activeOpacity={1}
+          onPress={handleDismiss}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+            style={[
+              styles.dialogCard,
+              {
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            {/* Top Close Icon Button */}
+            <TouchableOpacity
+              onPress={handleDismiss}
+              style={[
+                styles.dialogCloseBtn,
+                { backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[100] },
+              ]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="close" size={18} color={themeColors.text} />
+            </TouchableOpacity>
+
+            {/* Success Icon Badge */}
+            <View
+              style={[
+                styles.dialogIconBadge,
+                {
+                  backgroundColor: isDark ? 'rgba(15, 157, 138, 0.2)' : colors.primary[50],
+                  borderColor: isDark ? 'rgba(15, 157, 138, 0.4)' : colors.primary[200],
+                },
+              ]}
+            >
+              <Ionicons name="paper-plane" size={32} color={colors.primary[500]} />
+            </View>
+
+            {/* Title */}
+            <Text style={[styles.dialogTitle, { color: themeColors.text }]}>
+              Request Sent! 🎉
+            </Text>
+
+            {/* Description */}
+            <Text style={[styles.dialogMessage, { color: themeColors.textMuted }]}>
+              Your request has been sent to{' '}
+              <Text style={{ fontWeight: '700', color: themeColors.text }}>{ownerName}</Text>.
+              You can track approval status and coordinate handover under My Rentals.
+            </Text>
+
+            {/* Action Buttons */}
+            <View style={styles.dialogActions}>
+              <TouchableOpacity
+                style={styles.dialogPrimaryBtnWrapper}
+                onPress={handleViewMyRentals}
+                activeOpacity={0.88}
+              >
+                <LinearGradient
+                  colors={gradients.brand as unknown as [string, string, ...string[]]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.dialogPrimaryBtn}
+                >
+                  <Ionicons name="receipt-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text style={styles.dialogPrimaryBtnText}>View My Rentals</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.dialogSecondaryBtn,
+                  {
+                    backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[100],
+                    borderColor: themeColors.border,
+                  },
+                ]}
+                onPress={handleDismiss}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.dialogSecondaryBtnText, { color: themeColors.text }]}>
+                  Back to Item Details
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -633,5 +748,89 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '800',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  dialogCard: {
+    width: '100%',
+    maxWidth: 380,
+    borderRadius: radius.xl,
+    padding: 24,
+    borderWidth: 1,
+    alignItems: 'center',
+    position: 'relative',
+    ...shadows.lg,
+  },
+  dialogCloseBtn: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  dialogIconBadge: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  dialogTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  dialogMessage: {
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  dialogActions: {
+    width: '100%',
+    gap: 10,
+  },
+  dialogPrimaryBtnWrapper: {
+    width: '100%',
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    ...shadows.sm,
+  },
+  dialogPrimaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  dialogPrimaryBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  dialogSecondaryBtn: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  dialogSecondaryBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

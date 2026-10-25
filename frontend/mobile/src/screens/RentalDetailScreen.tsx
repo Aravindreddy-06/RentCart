@@ -361,52 +361,142 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
 
   // Pickup Modal open helpers
   const openApprovePickupModal = () => {
-    if (!rental) return;
-    setIsEditingPickup(false);
-    setPickupFormLocation({
-      latitude: rental.pickupLatitude ?? user?.latitude ?? 13.0827,
-      longitude: rental.pickupLongitude ?? user?.longitude ?? 80.2707,
-      address: rental.pickupAddress || user?.address || '',
-    });
-    setPickupFormNote(rental.pickupNote || '');
-    setPickupFormTimeFrom(rental.pickupTimeFrom ? rental.pickupTimeFrom.slice(0, 16) : '');
-    setPickupFormTimeTo(rental.pickupTimeTo ? rental.pickupTimeTo.slice(0, 16) : '');
-    setPickupSaveError('');
-    setShowPickupModal(true);
+    try {
+      if (!rental) {
+        Alert.alert('Error', 'Unable to approve: rental details not loaded.');
+        return;
+      }
+      setIsEditingPickup(false);
+      const initialLat =
+        typeof rental.pickupLatitude === 'number' && !isNaN(rental.pickupLatitude)
+          ? rental.pickupLatitude
+          : typeof user?.latitude === 'number' && !isNaN(user.latitude)
+          ? user.latitude
+          : 13.0827;
+      const initialLng =
+        typeof rental.pickupLongitude === 'number' && !isNaN(rental.pickupLongitude)
+          ? rental.pickupLongitude
+          : typeof user?.longitude === 'number' && !isNaN(user.longitude)
+          ? user.longitude
+          : 80.2707;
+      const initialAddress =
+        (typeof rental.pickupAddress === 'string' && rental.pickupAddress.trim()) ||
+        (typeof user?.address === 'string' && user.address.trim()) ||
+        '';
+
+      setPickupFormLocation({
+        latitude: initialLat,
+        longitude: initialLng,
+        address: initialAddress,
+      });
+      setPickupFormNote(typeof rental.pickupNote === 'string' ? rental.pickupNote : '');
+      setPickupFormTimeFrom(rental.pickupTimeFrom ? rental.pickupTimeFrom.slice(0, 16) : '');
+      setPickupFormTimeTo(rental.pickupTimeTo ? rental.pickupTimeTo.slice(0, 16) : '');
+      setPickupSaveError('');
+      setShowPickupModal(true);
+    } catch (err: any) {
+      console.error('[RentalDetailScreen] openApprovePickupModal error:', err);
+      Alert.alert('Error', 'Unable to open approval dialog: ' + (err?.message || 'Unknown error'));
+    }
   };
 
   const openEditPickupModal = () => {
-    if (!rental) return;
-    setIsEditingPickup(true);
-    setPickupFormLocation({
-      latitude: rental.pickupLatitude ?? user?.latitude ?? 13.0827,
-      longitude: rental.pickupLongitude ?? user?.longitude ?? 80.2707,
-      address: rental.pickupAddress || user?.address || '',
-    });
-    setPickupFormNote(rental.pickupNote || '');
-    setPickupFormTimeFrom(rental.pickupTimeFrom ? rental.pickupTimeFrom.slice(0, 16) : '');
-    setPickupFormTimeTo(rental.pickupTimeTo ? rental.pickupTimeTo.slice(0, 16) : '');
-    setPickupSaveError('');
-    setShowPickupModal(true);
+    try {
+      if (!rental) {
+        Alert.alert('Error', 'Rental details not loaded.');
+        return;
+      }
+      setIsEditingPickup(true);
+      const initialLat =
+        typeof rental.pickupLatitude === 'number' && !isNaN(rental.pickupLatitude)
+          ? rental.pickupLatitude
+          : typeof user?.latitude === 'number' && !isNaN(user.latitude)
+          ? user.latitude
+          : 13.0827;
+      const initialLng =
+        typeof rental.pickupLongitude === 'number' && !isNaN(rental.pickupLongitude)
+          ? rental.pickupLongitude
+          : typeof user?.longitude === 'number' && !isNaN(user.longitude)
+          ? user.longitude
+          : 80.2707;
+      const initialAddress =
+        (typeof rental.pickupAddress === 'string' && rental.pickupAddress.trim()) ||
+        (typeof user?.address === 'string' && user.address.trim()) ||
+        '';
+
+      setPickupFormLocation({
+        latitude: initialLat,
+        longitude: initialLng,
+        address: initialAddress,
+      });
+      setPickupFormNote(typeof rental.pickupNote === 'string' ? rental.pickupNote : '');
+      setPickupFormTimeFrom(rental.pickupTimeFrom ? rental.pickupTimeFrom.slice(0, 16) : '');
+      setPickupFormTimeTo(rental.pickupTimeTo ? rental.pickupTimeTo.slice(0, 16) : '');
+      setPickupSaveError('');
+      setShowPickupModal(true);
+    } catch (err: any) {
+      console.error('[RentalDetailScreen] openEditPickupModal error:', err);
+      Alert.alert('Error', 'Unable to open edit pickup dialog: ' + (err?.message || 'Unknown error'));
+    }
   };
 
   const handleSavePickup = async () => {
-    if (!rental) return;
-    if (!pickupFormLocation.address.trim()) {
-      setPickupSaveError('Please provide a pickup address.');
-      return;
-    }
-
-    setIsSavingPickup(true);
-    setPickupSaveError('');
     try {
+      if (!rental) {
+        Alert.alert('Error', 'Rental details not loaded.');
+        return;
+      }
+
+      const trimmedAddress = (pickupFormLocation?.address || '').trim();
+      if (!trimmedAddress) {
+        const msg = 'Please provide a pickup address before approving.';
+        setPickupSaveError(msg);
+        Alert.alert('Missing Address', msg);
+        return;
+      }
+
+      const lat =
+        typeof pickupFormLocation?.latitude === 'number' && !isNaN(pickupFormLocation.latitude)
+          ? pickupFormLocation.latitude
+          : typeof user?.latitude === 'number' && !isNaN(user.latitude)
+          ? user.latitude
+          : 13.0827;
+
+      const lng =
+        typeof pickupFormLocation?.longitude === 'number' && !isNaN(pickupFormLocation.longitude)
+          ? pickupFormLocation.longitude
+          : typeof user?.longitude === 'number' && !isNaN(user.longitude)
+          ? user.longitude
+          : 80.2707;
+
+      const trimmedNote = (pickupFormNote || '').trim();
+
+      let formattedFrom: string | null = null;
+      if (pickupFormTimeFrom) {
+        const d = new Date(pickupFormTimeFrom);
+        if (!isNaN(d.getTime())) {
+          formattedFrom = d.toISOString();
+        }
+      }
+
+      let formattedTo: string | null = null;
+      if (pickupFormTimeTo) {
+        const d = new Date(pickupFormTimeTo);
+        if (!isNaN(d.getTime())) {
+          formattedTo = d.toISOString();
+        }
+      }
+
+      setIsSavingPickup(true);
+      setPickupSaveError('');
+
       const payload = {
-        pickupLatitude: pickupFormLocation.latitude,
-        pickupLongitude: pickupFormLocation.longitude,
-        pickupAddress: pickupFormLocation.address.trim(),
-        pickupNote: pickupFormNote.trim() ? pickupFormNote.trim() : null,
-        pickupTimeFrom: pickupFormTimeFrom ? new Date(pickupFormTimeFrom).toISOString() : null,
-        pickupTimeTo: pickupFormTimeTo ? new Date(pickupFormTimeTo).toISOString() : null,
+        pickupLatitude: lat,
+        pickupLongitude: lng,
+        pickupAddress: trimmedAddress,
+        pickupNote: trimmedNote.length > 0 ? trimmedNote : null,
+        pickupTimeFrom: formattedFrom,
+        pickupTimeTo: formattedTo,
       };
 
       if (isEditingPickup) {
@@ -419,7 +509,12 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
       setShowPickupModal(false);
       fetchRental(true);
     } catch (err: any) {
-      setPickupSaveError(err?.response?.data?.message ?? 'Failed to save pickup location.');
+      const errorMsg =
+        err?.response?.data?.message ??
+        err?.message ??
+        'Failed to save pickup location.';
+      setPickupSaveError(errorMsg);
+      Alert.alert(isEditingPickup ? 'Update Failed' : 'Approval Failed', errorMsg);
     } finally {
       setIsSavingPickup(false);
     }
@@ -525,7 +620,12 @@ export default function RentalDetailScreen({ route, navigation }: Props) {
   };
 
   const handleApprove = async () => {
-    openApprovePickupModal();
+    try {
+      openApprovePickupModal();
+    } catch (err: any) {
+      console.error('[RentalDetailScreen] handleApprove error:', err);
+      Alert.alert('Error', 'Unable to initiate approval: ' + (err?.message || 'Unknown error'));
+    }
   };
 
 

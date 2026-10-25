@@ -1,10 +1,10 @@
 /**
  * src/components/LocationPicker.tsx (mobile)
  * Reusable location picker with "Use my current location", map pin selection,
- * address editing, permission handling, and fallback when maps are unavailable.
+ * address editing, permission handling, and robust fallback when maps are unavailable.
  */
 
-import React, { useState, useRef } from 'react';
+import React, { Component, ReactNode, useState, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -14,12 +14,12 @@ import {
   ActivityIndicator,
   Linking,
   Platform,
-  Alert,
 } from 'react-native';
 import * as Location from 'expo-location';
 import { colors, radius, spacing } from '../utils/colors';
+import { isGoogleMapsKeyAvailable } from '../utils/maps';
 
-// Try to require react-native-maps lazily
+// Try to require react-native-maps lazily to avoid top-level crashes
 let RNMaps: any = null;
 try {
   RNMaps = require('react-native-maps');
@@ -40,7 +40,39 @@ export interface LocationPickerProps {
   error?: string;
 }
 
-export function LocationPicker({
+export interface LocationPickerErrorBoundaryProps {
+  children: ReactNode;
+  fallback: (error: Error) => ReactNode;
+}
+
+export interface LocationPickerErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export class LocationPickerErrorBoundary extends Component<
+  LocationPickerErrorBoundaryProps,
+  LocationPickerErrorBoundaryState
+> {
+  state: LocationPickerErrorBoundaryState = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error): LocationPickerErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: any) {
+    console.warn('[LocationPicker] Render error caught by boundary:', error?.message, info);
+  }
+
+  render() {
+    if (this.state.hasError && this.state.error) {
+      return this.props.fallback(this.state.error);
+    }
+    return this.props.children;
+  }
+}
+
+function InternalLocationPicker({
   value,
   onChange,
   height = 180,
@@ -52,8 +84,20 @@ export function LocationPicker({
   const [showSettingsBtn, setShowSettingsBtn] = useState(false);
   const [mapError, setMapError] = useState(false);
 
-  const lat = typeof value.latitude === 'number' && !isNaN(value.latitude) ? value.latitude : 13.0827;
-  const lng = typeof value.longitude === 'number' && !isNaN(value.longitude) ? value.longitude : 80.2707;
+  const hasKey = isGoogleMapsKeyAvailable();
+  const NativeMap = RNMaps?.default;
+  const Marker = RNMaps?.Marker;
+  const canRenderMap = hasKey && !mapError && Boolean(NativeMap) && Boolean(Marker);
+
+  const lat =
+    typeof value?.latitude === 'number' && !isNaN(value.latitude)
+      ? value.latitude
+      : 13.0827;
+  const lng =
+    typeof value?.longitude === 'number' && !isNaN(value.longitude)
+      ? value.longitude
+      : 80.2707;
+  const address = typeof value?.address === 'string' ? value.address : '';
 
   const handleUseCurrentLocation = async () => {
     setLocating(true);
@@ -85,7 +129,7 @@ export function LocationPicker({
       const curLng = Number(position.coords.longitude.toFixed(6));
 
       // Attempt reverse geocoding
-      let addressStr = value.address;
+      let addressStr = address;
       try {
         const reverseResults = await Location.reverseGeocodeAsync({
           latitude: curLat,
@@ -104,7 +148,7 @@ export function LocationPicker({
           }
         }
       } catch {
-        // Fallback to coordinates
+        // Fallback to existing or coordinates
       }
 
       onChange({
@@ -113,17 +157,21 @@ export function LocationPicker({
         address: addressStr || `${curLat}, ${curLng}`,
       });
 
-      // Animate map if available
-      if (mapRef.current) {
-        mapRef.current.animateToRegion(
-          {
-            latitude: curLat,
-            longitude: curLng,
-            latitudeDelta: 0.015,
-            longitudeDelta: 0.015,
-          },
-          500,
-        );
+      // Animate map if mounted and available
+      if (mapRef.current && canRenderMap) {
+        try {
+          mapRef.current.animateToRegion(
+            {
+              latitude: curLat,
+              longitude: curLng,
+              latitudeDelta: 0.015,
+              longitudeDelta: 0.015,
+            },
+            500,
+          );
+        } catch {
+          // Ignore animation failure
+        }
       }
     } catch (err: any) {
       setGeoError(err?.message || 'Could not retrieve your current location.');
@@ -139,13 +187,10 @@ export function LocationPicker({
       onChange({
         latitude: Number(coords.latitude.toFixed(6)),
         longitude: Number(coords.longitude.toFixed(6)),
-        address: value.address,
+        address,
       });
     }
   };
-
-  const NativeMap = RNMaps?.default;
-  const Marker = RNMaps?.Marker;
 
   return (
     <View style={styles.container}>
@@ -191,8 +236,14 @@ export function LocationPicker({
       <View style={styles.inputWrapper}>
         <TextInput
           style={[styles.input, error ? styles.inputError : null]}
-          value={value.address}
-          onChangeText={(text) => onChange({ ...value, address: text })}
+          value={address}
+          onChangeText={(text) =>
+            onChange({
+              latitude: lat,
+              longitude: lng,
+              address: text,
+            })
+          }
           placeholder="e.g. Anna Nagar, Chennai (or landmark)"
           placeholderTextColor={colors.neutral[400]}
         />
@@ -201,7 +252,7 @@ export function LocationPicker({
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       {/* Map display or fallback */}
-      {!mapError && NativeMap && Marker ? (
+      {canRenderMap ? (
         <View style={[styles.mapContainer, { height }]}>
           <NativeMap
             ref={mapRef}
@@ -228,17 +279,114 @@ export function LocationPicker({
           </View>
         </View>
       ) : (
-        <View style={[styles.fallbackContainer, { height: 100 }]}>
-          <Text style={styles.fallbackTitle}>📍 Selected Coordinates</Text>
-          <Text style={styles.fallbackCoords}>
-            Lat: {lat.toFixed(5)}, Lng: {lng.toFixed(5)}
-          </Text>
+        <View style={styles.fallbackContainer}>
+          <View style={styles.fallbackHeaderRow}>
+            <Text style={styles.fallbackTitle}>📍 Selected Coordinates</Text>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                {!hasKey ? 'Map key missing' : 'Map unavailable'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.coordsRow}>
+            <View style={styles.coordField}>
+              <Text style={styles.coordLabel}>Latitude</Text>
+              <TextInput
+                style={styles.coordInput}
+                value={String(lat)}
+                onChangeText={(text) => {
+                  const val = parseFloat(text);
+                  onChange({
+                    latitude: isNaN(val) ? lat : val,
+                    longitude: lng,
+                    address,
+                  });
+                }}
+                keyboardType="numeric"
+                placeholder="13.0827"
+                placeholderTextColor={colors.neutral[400]}
+              />
+            </View>
+            <View style={styles.coordField}>
+              <Text style={styles.coordLabel}>Longitude</Text>
+              <TextInput
+                style={styles.coordInput}
+                value={String(lng)}
+                onChangeText={(text) => {
+                  const val = parseFloat(text);
+                  onChange({
+                    latitude: lat,
+                    longitude: isNaN(val) ? lng : val,
+                    address,
+                  });
+                }}
+                keyboardType="numeric"
+                placeholder="80.2707"
+                placeholderTextColor={colors.neutral[400]}
+              />
+            </View>
+          </View>
+
           <Text style={styles.fallbackNote}>
-            Type your address above or use "Use my location".
+            Enter your pickup address above or tap "Use my location" to autofill your GPS position.
           </Text>
         </View>
       )}
     </View>
+  );
+}
+
+export function LocationPicker(props: LocationPickerProps) {
+  const lat =
+    typeof props.value?.latitude === 'number' && !isNaN(props.value.latitude)
+      ? props.value.latitude
+      : 13.0827;
+  const lng =
+    typeof props.value?.longitude === 'number' && !isNaN(props.value.longitude)
+      ? props.value.longitude
+      : 80.2707;
+  const address = typeof props.value?.address === 'string' ? props.value.address : '';
+
+  return (
+    <LocationPickerErrorBoundary
+      fallback={() => (
+        <View style={styles.container}>
+          <View style={styles.headerRow}>
+            <Text style={styles.label}>
+              Pickup Address & Location <Text style={styles.required}>*</Text>
+            </Text>
+          </View>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={[styles.input, props.error ? styles.inputError : null]}
+              value={address}
+              onChangeText={(text) =>
+                props.onChange({
+                  latitude: lat,
+                  longitude: lng,
+                  address: text,
+                })
+              }
+              placeholder="e.g. Anna Nagar, Chennai"
+              placeholderTextColor={colors.neutral[400]}
+            />
+          </View>
+          {props.error ? <Text style={styles.errorText}>{props.error}</Text> : null}
+          <View style={styles.fallbackContainer}>
+            <Text style={styles.fallbackTitle}>📍 Coordinates</Text>
+            <Text style={styles.fallbackCoords}>
+              Lat: {lat.toFixed(5)}, Lng: {lng.toFixed(5)}
+            </Text>
+            <Text style={styles.fallbackNote}>
+              Location map is temporarily unavailable. Address text will be used for pickup.
+            </Text>
+          </View>
+        </View>
+      )}
+    >
+      <InternalLocationPicker {...props} />
+    </LocationPickerErrorBoundary>
   );
 }
 
@@ -355,21 +503,61 @@ const styles = StyleSheet.create({
     borderColor: colors.neutral[200],
     backgroundColor: colors.neutral[50],
     padding: spacing.md,
-    justifyContent: 'center',
-    gap: 4,
+    gap: spacing.sm,
+  },
+  fallbackHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   fallbackTitle: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: colors.neutral[800],
+  },
+  badge: {
+    backgroundColor: colors.neutral[200],
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  badgeText: {
+    fontSize: 11,
+    color: colors.neutral[700],
+    fontWeight: '600',
+  },
+  coordsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  coordField: {
+    flex: 1,
+    gap: 4,
+  },
+  coordLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.neutral[600],
+  },
+  coordInput: {
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.neutral[300],
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 6,
+    fontSize: 13,
+    color: colors.neutral[800],
+    fontFamily: Platform.select({ ios: 'Courier', default: 'monospace' }),
   },
   fallbackCoords: {
     fontSize: 12,
     fontFamily: Platform.select({ ios: 'Courier', default: 'monospace' }),
-    color: colors.neutral[600],
+    color: colors.neutral[700],
   },
   fallbackNote: {
     fontSize: 11,
-    color: colors.neutral[400],
+    color: colors.neutral[500],
+    lineHeight: 15,
   },
 });

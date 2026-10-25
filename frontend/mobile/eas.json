@@ -10,7 +10,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://rentcart-api.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://rentcart-api.onrender.com/api",
+        "GOOGLE_MAPS_API_KEY": "GOOGLE_MAPS_API_KEY"
       }
     },
     "production": {
@@ -18,7 +19,8 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://rentcart-api.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://rentcart-api.onrender.com/api",
+        "GOOGLE_MAPS_API_KEY": "GOOGLE_MAPS_API_KEY"
       }
     }
   }
