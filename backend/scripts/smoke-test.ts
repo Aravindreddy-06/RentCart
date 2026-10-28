@@ -22,6 +22,7 @@ import { getDevOtp } from '../src/services/mail.service';
 import { OtpPurpose } from '@prisma/client';
 import { io as ioClient } from 'socket.io-client';
 import { signAccessToken } from '../src/utils/jwt';
+import { env } from '../src/config/env';
 
 const TEST_PORT = 4123;
 const BASE_URL = `http://localhost:${TEST_PORT}/api`;
@@ -459,11 +460,22 @@ async function runSmokeTests() {
     console.log('✓ Borrower gets 403 and null coordinates after rental is RETURNED');
 
     // Test cancelled rental
+    const itemCancelTest = await prisma.item.create({
+      data: {
+        ownerId: owner.id,
+        title: 'Cancel Test Item',
+        description: 'For cancel pickup 403 test',
+        category: 'Tools',
+        pricePerDay: 15,
+        deposit: 25,
+        isAvailable: true,
+      },
+    });
     const rentRes2 = await req(
       '/rentals',
       'POST',
       {
-        itemId: item.id,
+        itemId: itemCancelTest.id,
         startDate: '2026-11-25',
         endDate: '2026-11-27',
       },
@@ -617,6 +629,7 @@ async function runSmokeTests() {
       throw new Error('LiveLocation row was not deleted when rental was activated!');
     }
     console.log('✓ LiveLocation row automatically cleaned up on status transition away from APPROVED');
+    await req(`/rentals/${rental3Id}/return`, 'PATCH', undefined, ownerToken);
 
     // ── 19. Privacy checks: pickup point never appears in GET /api/items or public profiles ──
     console.log('\n[19] Testing Privacy checks in items and public profiles...');
@@ -810,11 +823,22 @@ async function runSmokeTests() {
 
     // 21.1 Request and approve a new rental, verify PIN generated and HANDOVER_PIN_READY notification
     console.log('[21.1] Testing PIN generated on approve & HANDOVER_PIN_READY notification...');
+    const pinItem = await prisma.item.create({
+      data: {
+        ownerId: owner.id,
+        title: 'Pin Test Item',
+        description: 'Testing handover PIN flow',
+        category: 'Tools',
+        pricePerDay: 20,
+        deposit: 50,
+        isAvailable: true,
+      },
+    });
     const pinRentalReq = await req(
       '/rentals',
       'POST',
       {
-        itemId: item.id,
+        itemId: pinItem.id,
         startDate: '2026-12-10',
         endDate: '2026-12-12',
         borrowerNote: 'Testing handover PIN flow',
@@ -920,11 +944,22 @@ async function runSmokeTests() {
     // 21.8 Correct PIN makes the rental ACTIVE & emits notifications
     console.log('\n[21.8] Testing correct PIN verification makes rental ACTIVE...');
     // Create another approved rental for successful verification test
+    const pinItemSuccess = await prisma.item.create({
+      data: {
+        ownerId: owner.id,
+        title: 'Pin Success Test Item',
+        description: 'Testing handover PIN success',
+        category: 'Tools',
+        pricePerDay: 20,
+        deposit: 50,
+        isAvailable: true,
+      },
+    });
     const successRentalReq = await req(
       '/rentals',
       'POST',
       {
-        itemId: item.id,
+        itemId: pinItemSuccess.id,
         startDate: '2026-12-15',
         endDate: '2026-12-17',
       },
@@ -1009,9 +1044,20 @@ async function runSmokeTests() {
     // 21.11 Lazy PIN generation for existing APPROVED rental without PIN
     console.log('\n[21.11] Testing lazy PIN generation for approved rental without PIN...');
     // Create an approved rental manually without PIN fields
+    const pinItemManual = await prisma.item.create({
+      data: {
+        ownerId: owner.id,
+        title: 'Pin Manual Test Item',
+        description: 'Testing lazy PIN generation',
+        category: 'Tools',
+        pricePerDay: 20,
+        deposit: 50,
+        isAvailable: true,
+      },
+    });
     const manualApproved = await prisma.rental.create({
       data: {
-        itemId: item.id,
+        itemId: pinItemManual.id,
         borrowerId: borrower.id,
         startDate: new Date('2026-12-25'),
         endDate: new Date('2026-12-27'),
@@ -1240,6 +1286,269 @@ async function runSmokeTests() {
     }
     console.log('✓ Avatar replaced and previous Cloudinary asset cleanup initiated successfully');
 
+    // ── 23. DUPLICATE RENTAL PROTECTION & COOLDOWN TESTS ───────────────────
+    console.log('\n======================================================');
+    console.log('🛡️ Starting Duplicate Rental Protection Smoke Tests...');
+    console.log('======================================================\n');
+
+    const dupItem = await prisma.item.create({
+      data: {
+        ownerId: owner.id,
+        title: 'Duplicate Protection Test Item',
+        description: 'Testing duplicate rental protection rules.',
+        category: 'Electronics',
+        pricePerDay: 30,
+        deposit: 100,
+        isAvailable: true,
+      },
+    });
+
+    const testToday = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(testToday.getDate() + 7);
+    const nextWeekEnd = new Date();
+    nextWeekEnd.setDate(testToday.getDate() + 8);
+    const startStr = nextWeek.toISOString().split('T')[0];
+    const endStr = nextWeekEnd.toISOString().split('T')[0];
+
+    // 23.1 Initial request status returns NONE
+    console.log('[23.1] Testing initial my-request-status...');
+    const statusInitial = await req(`/items/${dupItem.id}/my-request-status`, 'GET', undefined, borrowerToken);
+    if (statusInitial.status !== 200 || statusInitial.data.data.state !== 'NONE') {
+      throw new Error(`Expected state NONE, got: ${JSON.stringify(statusInitial.data)}`);
+    }
+    console.log('✓ Initial request status is NONE');
+
+    // 23.2 Create first request -> 201 PENDING
+    console.log('\n[23.2] Creating first rental request...');
+    const req1 = await req('/rentals', 'POST', {
+      itemId: dupItem.id,
+      startDate: startStr,
+      endDate: endStr,
+    }, borrowerToken);
+    if (req1.status !== 201 || req1.data.data.status !== 'PENDING') {
+      throw new Error(`First rental creation failed: ${JSON.stringify(req1.data)}`);
+    }
+    const dupRental1Id = req1.data.data.id;
+    console.log('✓ First rental request created with status PENDING');
+
+    // 23.3 Second request while PENDING returns 409 DUPLICATE_REQUEST
+    console.log('\n[23.3] Testing duplicate request while PENDING returns 409...');
+    const req2 = await req('/rentals', 'POST', {
+      itemId: dupItem.id,
+      startDate: startStr,
+      endDate: endStr,
+    }, borrowerToken);
+    if (
+      req2.status !== 409 ||
+      req2.data.code !== 'DUPLICATE_REQUEST' ||
+      req2.data.existingRentalId !== dupRental1Id ||
+      req2.data.existingStatus !== 'PENDING' ||
+      !req2.data.message?.includes('active request')
+    ) {
+      throw new Error(`Expected 409 DUPLICATE_REQUEST with existingRentalId, got: ${JSON.stringify(req2.data)}`);
+    }
+    console.log('✓ Second request while PENDING returned 409 DUPLICATE_REQUEST with existingRentalId and existingStatus');
+
+    // 23.4 Verify GET /api/items/:id/my-request-status returns PENDING
+    console.log('\n[23.4] Checking my-request-status returns PENDING...');
+    const statusPending = await req(`/items/${dupItem.id}/my-request-status`, 'GET', undefined, borrowerToken);
+    if (
+      statusPending.status !== 200 ||
+      statusPending.data.data.state !== 'PENDING' ||
+      statusPending.data.data.rentalId !== dupRental1Id
+    ) {
+      throw new Error(`Expected state PENDING with rentalId, got: ${JSON.stringify(statusPending.data)}`);
+    }
+    console.log('✓ Request status returned PENDING with rentalId');
+
+    // 23.5 After approval a new request returns 409 DUPLICATE_REQUEST
+    console.log('\n[23.5] Testing new request after approval returns 409 DUPLICATE_REQUEST...');
+    const approveRes = await req(`/rentals/${dupRental1Id}/approve`, 'PATCH', {
+      pickupLatitude: 37.7749,
+      pickupLongitude: -122.4194,
+      pickupAddress: '742 Evergreen Terrace, Springfield',
+    }, ownerToken);
+    if (approveRes.status !== 200 || approveRes.data.data.status !== 'APPROVED') {
+      throw new Error(`Approval failed: ${JSON.stringify(approveRes.data)}`);
+    }
+
+    const statusApproved = await req(`/items/${dupItem.id}/my-request-status`, 'GET', undefined, borrowerToken);
+    if (statusApproved.data.data.state !== 'APPROVED' || statusApproved.data.data.rentalId !== dupRental1Id) {
+      throw new Error(`Expected state APPROVED, got: ${JSON.stringify(statusApproved.data)}`);
+    }
+
+    const reqAfterApproved = await req('/rentals', 'POST', {
+      itemId: dupItem.id,
+      startDate: startStr,
+      endDate: endStr,
+    }, borrowerToken);
+    if (
+      reqAfterApproved.status !== 409 ||
+      reqAfterApproved.data.code !== 'DUPLICATE_REQUEST' ||
+      reqAfterApproved.data.existingRentalId !== dupRental1Id ||
+      reqAfterApproved.data.existingStatus !== 'APPROVED'
+    ) {
+      throw new Error(`Expected 409 DUPLICATE_REQUEST after approval, got: ${JSON.stringify(reqAfterApproved.data)}`);
+    }
+    console.log('✓ New request after approval returned 409 DUPLICATE_REQUEST');
+
+    // 23.6 After rejection a new request returns 429 with canRequestAt
+    console.log('\n[23.6] Testing rejection cooldown and 429 response...');
+    const dupItemReject = await prisma.item.create({
+      data: {
+        ownerId: owner.id,
+        title: 'Rejection Cooldown Test Item',
+        description: 'Testing rejection cooldown rules.',
+        category: 'Tools',
+        pricePerDay: 40,
+        deposit: 50,
+        isAvailable: true,
+      },
+    });
+
+    const reqReject1 = await req('/rentals', 'POST', {
+      itemId: dupItemReject.id,
+      startDate: startStr,
+      endDate: endStr,
+    }, borrowerToken);
+    if (reqReject1.status !== 201) {
+      throw new Error(`Failed to create request for rejection test: ${JSON.stringify(reqReject1.data)}`);
+    }
+    const rejectRentalId = reqReject1.data.data.id;
+
+    const rejectRes = await req(`/rentals/${rejectRentalId}/reject`, 'PATCH', { ownerNote: 'Not available currently' }, ownerToken);
+    if (rejectRes.status !== 200 || rejectRes.data.data.status !== 'REJECTED') {
+      throw new Error(`Reject failed: ${JSON.stringify(rejectRes.data)}`);
+    }
+    console.log('✓ Rental rejected by owner');
+
+    const statusRejected = await req(`/items/${dupItemReject.id}/my-request-status`, 'GET', undefined, borrowerToken);
+    if (
+      statusRejected.status !== 200 ||
+      statusRejected.data.data.state !== 'REJECTED_COOLDOWN' ||
+      !statusRejected.data.data.canRequestAt ||
+      typeof statusRejected.data.data.retryAfterSeconds !== 'number'
+    ) {
+      throw new Error(`Expected state REJECTED_COOLDOWN with canRequestAt, got: ${JSON.stringify(statusRejected.data)}`);
+    }
+    console.log('✓ my-request-status returned REJECTED_COOLDOWN with canRequestAt and retryAfterSeconds');
+
+    const reqReject2 = await req('/rentals', 'POST', {
+      itemId: dupItemReject.id,
+      startDate: startStr,
+      endDate: endStr,
+    }, borrowerToken);
+    if (
+      reqReject2.status !== 429 ||
+      reqReject2.data.code !== 'REQUEST_COOLDOWN' ||
+      !reqReject2.data.canRequestAt ||
+      typeof reqReject2.data.retryAfterSeconds !== 'number'
+    ) {
+      throw new Error(`Expected 429 REQUEST_COOLDOWN with canRequestAt and retryAfterSeconds, got: ${JSON.stringify(reqReject2.data)}`);
+    }
+    console.log('✓ New request after rejection returned 429 with canRequestAt and retryAfterSeconds');
+
+    // 23.7 A new request after cooldown is allowed (use a short env value in the test)
+    console.log('\n[23.7] Testing request allowed after cooldown expires (short env value)...');
+    const origCooldown = (env as any).REJECTED_COOLDOWN_HOURS;
+    try {
+      (env as any).REJECTED_COOLDOWN_HOURS = 0.00005; // ~180ms
+      await new Promise((r) => setTimeout(r, 300));
+      const reqAfterCooldown = await req('/rentals', 'POST', {
+        itemId: dupItemReject.id,
+        startDate: startStr,
+        endDate: endStr,
+      }, borrowerToken);
+      if (reqAfterCooldown.status !== 201) {
+        throw new Error(`Expected new request after cooldown to succeed (201), got: ${JSON.stringify(reqAfterCooldown.data)}`);
+      }
+      console.log('✓ New request allowed after cooldown expired with short env value');
+
+      // 23.8 RETURNED allows a new request
+      console.log('\n[23.8] Testing RETURNED allows a new request...');
+      const secondRentalId = reqAfterCooldown.data.data.id;
+      // Approve
+      await req(`/rentals/${secondRentalId}/approve`, 'PATCH', {
+        pickupLatitude: 37.7749,
+        pickupLongitude: -122.4194,
+        pickupAddress: '742 Evergreen Terrace, Springfield',
+      }, ownerToken);
+      // Activate
+      await req(`/rentals/${secondRentalId}/activate`, 'PATCH', { confirmWithoutPin: true }, ownerToken);
+      // Return
+      const returnRes = await req(`/rentals/${secondRentalId}/return`, 'PATCH', undefined, ownerToken);
+      if (returnRes.status !== 200 || returnRes.data.data.status !== 'RETURNED') {
+        throw new Error(`Failed to return rental: ${JSON.stringify(returnRes.data)}`);
+      }
+
+      const statusAfterReturned = await req(`/items/${dupItemReject.id}/my-request-status`, 'GET', undefined, borrowerToken);
+      if (statusAfterReturned.data.data.state !== 'NONE') {
+        throw new Error(`Expected state NONE after rental returned, got: ${JSON.stringify(statusAfterReturned.data)}`);
+      }
+      console.log('✓ my-request-status is NONE after rental is RETURNED');
+
+      const reqAfterReturned = await req('/rentals', 'POST', {
+        itemId: dupItemReject.id,
+        startDate: startStr,
+        endDate: endStr,
+      }, borrowerToken);
+      if (reqAfterReturned.status !== 201) {
+        throw new Error(`Expected new request after RETURNED to succeed (201), got: ${JSON.stringify(reqAfterReturned.data)}`);
+      }
+      console.log('✓ RETURNED rental allowed a new request');
+    } finally {
+      (env as any).REJECTED_COOLDOWN_HOURS = origCooldown;
+    }
+
+    // 23.9 Two simultaneous requests create only one rental
+    console.log('\n[23.9] Testing race conditions: two simultaneous requests create only one rental...');
+    const dupItemSimul = await prisma.item.create({
+      data: {
+        ownerId: owner.id,
+        title: 'Simultaneous Requests Test Item',
+        description: 'Testing race conditions with simultaneous requests.',
+        category: 'Electronics',
+        pricePerDay: 50,
+        deposit: 50,
+        isAvailable: true,
+      },
+    });
+
+    const [simul1, simul2] = await Promise.all([
+      req('/rentals', 'POST', {
+        itemId: dupItemSimul.id,
+        startDate: startStr,
+        endDate: endStr,
+      }, borrowerToken),
+      req('/rentals', 'POST', {
+        itemId: dupItemSimul.id,
+        startDate: startStr,
+        endDate: endStr,
+      }, borrowerToken),
+    ]);
+
+    const statuses = [simul1.status, simul2.status].sort();
+    if (statuses[0] !== 201 || statuses[1] !== 409) {
+      throw new Error(`Expected one 201 and one 409 for simultaneous requests, got: ${statuses.join(', ')} (res1: ${JSON.stringify(simul1.data)}, res2: ${JSON.stringify(simul2.data)})`);
+    }
+    const duplicateRes = simul1.status === 409 ? simul1 : simul2;
+    if (duplicateRes.data.code !== 'DUPLICATE_REQUEST') {
+      throw new Error(`Expected code DUPLICATE_REQUEST on race condition, got: ${JSON.stringify(duplicateRes.data)}`);
+    }
+
+    const createdRentalsCount = await prisma.rental.count({
+      where: {
+        itemId: dupItemSimul.id,
+        borrowerId: borrower.id,
+        status: 'PENDING',
+      },
+    });
+    if (createdRentalsCount !== 1) {
+      throw new Error(`Expected exactly 1 rental in DB, found: ${createdRentalsCount}`);
+    }
+    console.log('✓ Exactly one rental created from simultaneous requests; second rejected with 409 DUPLICATE_REQUEST');
+
     console.log('\n======================================================');
     console.log('🎉 ALL BACKEND SMOKE TESTS PASSED 100%!');
     console.log('======================================================\n');
@@ -1259,7 +1568,11 @@ async function runSmokeTests() {
   }
 }
 
-runSmokeTests().catch((err) => {
-  console.error('\n❌ Smoke test failed:', err);
-  process.exit(1);
-});
+runSmokeTests()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error('\n❌ Smoke test failed:', err);
+    process.exit(1);
+  });

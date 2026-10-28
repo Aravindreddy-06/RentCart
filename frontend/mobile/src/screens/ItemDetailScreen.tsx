@@ -27,10 +27,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AppStackParamList } from '../navigation/types';
-import { itemsService, Item } from '../services/items.service';
+import { itemsService, Item, ItemRequestStatus } from '../services/items.service';
 import { reviewsService, Review } from '../services/reviews.service';
 import { StarRating } from '../components/StarRating';
 import { useAuth } from '../context/AuthContext';
@@ -94,6 +95,8 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
   const { isDark, themeColors } = useTheme();
 
   const [item, setItem] = useState<Item | null>(null);
+  const [requestStatus, setRequestStatus] = useState<ItemRequestStatus | null>(null);
+  const [countdownText, setCountdownText] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -127,6 +130,16 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
     }
   }, [itemId]);
 
+  const fetchRequestStatus = useCallback(async () => {
+    if (!user) return;
+    try {
+      const status = await itemsService.getMyRequestStatus(itemId);
+      setRequestStatus(status);
+    } catch {
+      // Non-blocking
+    }
+  }, [itemId, user]);
+
   const fetchItem = useCallback(async (isRefresh = false) => {
     if (!isRefresh) setLoading(true);
     setError('');
@@ -147,7 +160,50 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
   useEffect(() => {
     fetchItem();
     fetchReviews(1);
-  }, [fetchItem, fetchReviews]);
+    fetchRequestStatus();
+  }, [fetchItem, fetchReviews, fetchRequestStatus]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchRequestStatus();
+    }, [fetchRequestStatus])
+  );
+
+  // Live countdown timer for cooldown states
+  useEffect(() => {
+    if (
+      !requestStatus ||
+      (requestStatus.state !== 'REJECTED_COOLDOWN' && requestStatus.state !== 'CANCELLED_COOLDOWN') ||
+      !requestStatus.canRequestAt
+    ) {
+      setCountdownText('');
+      return;
+    }
+
+    const updateCountdown = () => {
+      const targetTime = new Date(requestStatus.canRequestAt!).getTime();
+      const diffSec = Math.max(0, Math.ceil((targetTime - Date.now()) / 1000));
+      if (diffSec <= 0) {
+        setCountdownText('');
+        void fetchRequestStatus();
+        return;
+      }
+      const h = Math.floor(diffSec / 3600);
+      const m = Math.floor((diffSec % 3600) / 60);
+      const s = diffSec % 60;
+      if (h > 0) {
+        setCountdownText(`${h}h ${m}m`);
+      } else if (m > 0) {
+        setCountdownText(`${m}m ${s}s`);
+      } else {
+        setCountdownText(`${s}s`);
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [requestStatus, fetchRequestStatus]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -577,6 +633,87 @@ export default function ItemDetailScreen({ route, navigation }: Props) {
               <Text style={styles.deleteButtonText}>Delete</Text>
             </TouchableOpacity>
           </View>
+        ) : requestStatus?.state === 'PENDING' ? (
+          <View style={styles.pendingContainer}>
+            <View
+              style={[
+                styles.pendingBadge,
+                {
+                  backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : '#fef3c7',
+                  borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#fde68a',
+                },
+              ]}
+            >
+              <Ionicons name="time-outline" size={16} color="#d97706" style={{ marginRight: 6 }} />
+              <Text style={styles.pendingBadgeText}>Request pending</Text>
+            </View>
+            {requestStatus.rentalId ? (
+              <TouchableOpacity
+                style={[
+                  styles.viewRequestBtn,
+                  {
+                    backgroundColor: themeColors.surface,
+                    borderColor: themeColors.border,
+                  },
+                ]}
+                onPress={() =>
+                  navigation.navigate('RentalDetail', { rentalId: requestStatus.rentalId! })
+                }
+              >
+                <Text style={[styles.viewRequestBtnText, { color: colors.primary[500] }]}>
+                  View request →
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        ) : requestStatus?.state === 'APPROVED' || requestStatus?.state === 'ACTIVE' ? (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => {
+              if (requestStatus.rentalId) {
+                navigation.navigate('RentalDetail', { rentalId: requestStatus.rentalId });
+              } else {
+                (navigation as any).navigate('Home', { screen: 'MyRentalsTab' });
+              }
+            }}
+          >
+            <LinearGradient
+              colors={gradients.brand as unknown as [string, string, ...string[]]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.borrowButtonGradient}
+            >
+              <Ionicons name="receipt-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.borrowButtonText}>View your rental</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        ) : requestStatus?.state === 'REJECTED_COOLDOWN' ||
+          requestStatus?.state === 'CANCELLED_COOLDOWN' ? (
+          <View
+            style={[
+              styles.borrowButtonGradient,
+              {
+                backgroundColor: isDark ? colors.dark.surfaceHover : colors.neutral[200],
+                borderColor: themeColors.border,
+                borderWidth: 1,
+              },
+            ]}
+          >
+            <Ionicons
+              name="hourglass-outline"
+              size={18}
+              color={isDark ? colors.dark.textMuted : colors.neutral[500]}
+              style={{ marginRight: 6 }}
+            />
+            <Text
+              style={[
+                styles.borrowButtonText,
+                { color: isDark ? colors.dark.textMuted : colors.neutral[600] },
+              ]}
+            >
+              Request again in {countdownText || 'a moment'}
+            </Text>
+          </View>
         ) : (
           <TouchableOpacity
             disabled={!item.isAvailable}
@@ -935,6 +1072,37 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '800',
+  },
+  pendingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  pendingBadge: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  pendingBadgeText: {
+    color: '#d97706',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  viewRequestBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewRequestBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 
   // ── States ────────────────────────────────────────────────────────────────────

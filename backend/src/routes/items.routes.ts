@@ -20,6 +20,9 @@ router.get('/mine', authenticate, itemsController.getMyItems);
 // Booked dates for an item (APPROVED/ACTIVE) — must be before /:id
 router.get('/:id/booked-dates', authenticate, itemsController.getBookedDates);
 
+// My request status for an item (state, rentalId, canRequestAt, retryAfterSeconds) — must be before /:id
+router.get('/:id/my-request-status', authenticate, itemsController.getMyRequestStatus);
+
 // Reviews for an item (pagination)
 router.get('/:id/reviews', authenticate, reviewsController.getItemReviews);
 

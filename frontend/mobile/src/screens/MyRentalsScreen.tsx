@@ -21,7 +21,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { AppStackParamList } from '../navigation/types';
@@ -78,6 +78,12 @@ export default function MyRentalsScreen() {
   useEffect(() => {
     fetchRentals();
   }, [fetchRentals]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchRentals(true);
+    }, [fetchRentals])
+  );
 
   const handleCancel = (rental: Rental) => {
     Alert.alert(

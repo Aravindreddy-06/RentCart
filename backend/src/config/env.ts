@@ -57,4 +57,10 @@ export const env = {
     '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
   REQUIRE_RETURN_PIN: process.env.REQUIRE_RETURN_PIN === 'true',
   requireReturnPin: process.env.REQUIRE_RETURN_PIN === 'true',
+  REJECTED_COOLDOWN_HOURS: process.env.REJECTED_COOLDOWN_HOURS
+    ? parseFloat(process.env.REJECTED_COOLDOWN_HOURS)
+    : 24,
+  CANCELLED_COOLDOWN_MINUTES: process.env.CANCELLED_COOLDOWN_MINUTES
+    ? parseFloat(process.env.CANCELLED_COOLDOWN_MINUTES)
+    : 10,
 } as const;

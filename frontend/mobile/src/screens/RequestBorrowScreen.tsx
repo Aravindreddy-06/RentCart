@@ -103,18 +103,24 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
 
   const handleViewMyRentals = () => {
     setShowSuccessModal(false);
-    // Reset back stack to MainTabs with MyRentalsTab active
-    navigation.reset({
-      index: 0,
-      routes: [
-        {
-          name: 'MainTabs',
-          params: {
-            screen: 'MyRentalsTab',
+    // Reset back stack to Home stack screen with MyRentalsTab active
+    try {
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'Home',
+            params: {
+              screen: 'MyRentalsTab',
+            },
           },
-        },
-      ],
-    });
+        ],
+      });
+    } catch {
+      (navigation as any).navigate('Home', {
+        screen: 'MyRentalsTab',
+      });
+    }
   };
 
   const handleDismiss = () => {
@@ -124,6 +130,8 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return; // Prevent double taps immediately
+
     setError('');
     const todayStr = formatDateStr(today);
     if (startDateStr < todayStr) {
@@ -150,15 +158,29 @@ export default function RequestBorrowScreen({ route, navigation }: Props) {
         borrowerNote: note.trim() || undefined,
       });
 
-      // Close the form & reset loading state
+      // Reset loading state and show success modal
       setIsSubmitting(false);
       setShowSuccessModal(true);
     } catch (err: any) {
       setIsSubmitting(false);
-      const msg =
-        err?.response?.data?.message ??
-        'Failed to submit request. Please check your dates and try again.';
-      setError(msg);
+      const res = err?.response?.data;
+      if (err?.response?.status === 409 || res?.code === 'DUPLICATE_REQUEST') {
+        setError(res?.message || 'You already have an active request for this item.');
+      } else if (err?.response?.status === 429 || res?.code === 'REQUEST_COOLDOWN') {
+        const canRequestAtStr = res?.canRequestAt
+          ? new Date(res.canRequestAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : '';
+        const retryAfter = res?.retryAfterSeconds;
+        const waitMsg = retryAfter
+          ? ` Please retry in ${Math.ceil(retryAfter / 60)} minutes${canRequestAtStr ? ` (around ${canRequestAtStr})` : ''}.`
+          : '';
+        setError((res?.message || 'Rental request is currently in cooldown.') + waitMsg);
+      } else {
+        const msg =
+          res?.message ??
+          'Failed to submit request. Please check your dates and try again.';
+        setError(msg);
+      }
     }
   };
 

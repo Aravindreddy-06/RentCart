@@ -79,6 +79,10 @@ RentCart/
    HANDOVER_PIN_ENC_KEY="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
    REQUIRE_RETURN_PIN=false
 
+   # Duplicate Rental Request Cooldowns
+   REJECTED_COOLDOWN_HOURS=24
+   CANCELLED_COOLDOWN_MINUTES=10
+
    # Cloudinary Media Storage
    CLOUDINARY_CLOUD_NAME=your_cloud_name
    CLOUDINARY_API_KEY=your_api_key
@@ -178,6 +182,7 @@ All endpoints are protected by JWT authentication and validate payloads with Zod
 - `GET /api/items/mine` *(Protected)* — Fetch items owned by the authenticated user
 - `GET /api/items/:id` *(Protected)* — Get full details of an item (including owner info)
 - `GET /api/items/:id/booked-dates` *(Protected)* — List date ranges of `APPROVED` or `ACTIVE` rentals to block on calendars
+- `GET /api/items/:id/my-request-status` *(Protected)* — Get borrower's rental request state for this item (`{ state, rentalId, canRequestAt, retryAfterSeconds }`), where `state` is one of `NONE`, `PENDING`, `APPROVED`, `ACTIVE`, `REJECTED_COOLDOWN`, `CANCELLED_COOLDOWN`. Strictly scoped to the authenticated borrower; never reveals other users' requests.
 - `POST /api/items` *(Protected)* — Create a new item (`title`, `description`, `category`, `images[]`, `pricePerDay`, `deposit`, `latitude`, `longitude`)
 - `PATCH /api/items/:id` *(Protected, Owner only)* — Update item details
 - `DELETE /api/items/:id` *(Protected, Owner only)* — Delete an item
@@ -186,7 +191,12 @@ All endpoints are protected by JWT authentication and validate payloads with Zod
 ### Rentals & Requests (`/api/rentals`)
 All endpoints require authentication, validate with Zod, and return consistent JSON (`{ success, data }` or `{ success, message }`).
 
-- `POST /api/rentals` *(Protected)* — Create a rental request (`itemId`, `startDate`, `endDate`, optional `borrowerNote`). Item must be available, user cannot rent their own item, dates cannot be in past, `endDate >= startDate`. Calculates `totalPrice = days * pricePerDay`. Status starts at `PENDING`.
+- `POST /api/rentals` *(Protected)* — Create a rental request (`itemId`, `startDate`, `endDate`, optional `borrowerNote`). Item must be available, user cannot rent their own item, dates cannot be in past, `endDate >= startDate`. Calculates `totalPrice = days * pricePerDay`. Status starts at `PENDING`. Protected by duplicate request prevention:
+  - **Duplicate Active Request:** If the borrower already has a request for this item with status `PENDING`, `APPROVED`, or `ACTIVE`, rejects with HTTP 409 and code `DUPLICATE_REQUEST`, returning `existingRentalId` and `existingStatus`.
+  - **Rejection Cooldown:** If the borrower's latest request for this item was `REJECTED`, blocks until `REJECTED_COOLDOWN_HOURS` (default 24) have elapsed. Returns HTTP 429 with code `REQUEST_COOLDOWN`, `canRequestAt` (ISO date), `retryAfterSeconds`, and `Retry-After` header.
+  - **Cancellation Cooldown:** If the borrower's latest request for this item was `CANCELLED`, blocks for `CANCELLED_COOLDOWN_MINUTES` (default 10). Returns HTTP 429 with code `REQUEST_COOLDOWN`, `canRequestAt`, and `retryAfterSeconds`.
+  - **Returned Allowed:** `RETURNED` rentals do not block a new request.
+  - **Race Condition Prevention:** Check and insert are performed in a single database transaction, backed by a PostgreSQL partial unique index on `(itemId, borrowerId) WHERE status IN ('PENDING', 'APPROVED', 'ACTIVE')`. Unique constraint violations are mapped to HTTP 409 `DUPLICATE_REQUEST`.
 - `GET /api/rentals/mine` *(Protected)* — Rentals where the authenticated user is the borrower (`?status=` filter, `page`, `limit`).
 - `GET /api/rentals/incoming` *(Protected)* — Rental requests on items owned by the authenticated user (`?status=` filter, `page`, `limit`).
 - `GET /api/rentals/:id` *(Protected)* — Rental details (accessible only by borrower or owner).
@@ -336,6 +346,23 @@ Each notification includes `{ rentalId, itemId }` in `data` so clients navigate 
 - The owner's phone number is visible to the borrower **ONLY** when the rental status is `APPROVED` or `ACTIVE`.
 - The borrower's phone number is visible to the owner **ONLY** when the rental status is `APPROVED` or `ACTIVE`.
 - In `PENDING`, `REJECTED`, or `CANCELLED` states, phone numbers are stripped from API responses (`null`).
+
+### 🛡️ Duplicate Rental Request Protection & Cooldown Rules
+To prevent spam, accidental duplicate requests, and race conditions across multiple taps or devices:
+1. **Active Rental Protection:** If the borrower already has a request for an item with status `PENDING`, `APPROVED`, or `ACTIVE`, any new request is rejected with HTTP **409 Conflict** and code `DUPLICATE_REQUEST`. The response includes `existingRentalId` and `existingStatus`.
+2. **Rejection Cooldown:** If the borrower's latest rental for the item was `REJECTED`, new requests are blocked until `REJECTED_COOLDOWN_HOURS` (default 24) have passed since rejection. Returns HTTP **429 Too Many Requests** with code `REQUEST_COOLDOWN`, `canRequestAt` (ISO date), `retryAfterSeconds`, and `Retry-After` header.
+3. **Cancellation Cooldown:** If the borrower's latest rental for the item was `CANCELLED`, new requests are blocked for `CANCELLED_COOLDOWN_MINUTES` (default 10). Returns HTTP **429 Too Many Requests** with code `REQUEST_COOLDOWN`, `canRequestAt`, and `retryAfterSeconds`.
+4. **Returned Rentals Allowed:** `RETURNED` rentals do not block new requests.
+5. **Atomic Transactions & Partial Unique Index:**
+   - Active checks, cooldown checks, and insertion run atomically within a single database transaction.
+   - Enforced at the database level by a PostgreSQL partial unique index:
+     ```sql
+     CREATE UNIQUE INDEX unique_active_rental_per_borrower_per_item
+       ON "Rental" ("itemId", "borrowerId")
+       WHERE "status" IN ('PENDING', 'APPROVED', 'ACTIVE');
+     ```
+   - Concurrent race conditions that trigger unique constraint violations (`P2002` / `23505`) are safely caught and mapped to HTTP **409 Conflict** with code `DUPLICATE_REQUEST`.
+6. **Request Status Polling Endpoint:** `GET /api/items/:id/my-request-status` allows Web and Mobile Item Details screens to immediately reflect the user's status (`NONE`, `PENDING`, `APPROVED`, `ACTIVE`, `REJECTED_COOLDOWN`, `CANCELLED_COOLDOWN`) with live countdown timers during cooldowns.
 
 ---
 

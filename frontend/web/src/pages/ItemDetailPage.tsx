@@ -13,7 +13,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { itemsService, type Item } from '../services/items.service';
+import { itemsService, type Item, type ItemRequestStatus } from '../services/items.service';
 import { reviewsService, type Review } from '../services/reviews.service';
 import { StarRating } from '../components/StarRating';
 import { RequestBorrowModal } from '../components/RequestBorrowModal';
@@ -39,6 +39,8 @@ export function ItemDetailPage() {
   const { user } = useAuth();
 
   const [item, setItem] = useState<Item | null>(null);
+  const [requestStatus, setRequestStatus] = useState<ItemRequestStatus | null>(null);
+  const [countdownText, setCountdownText] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeImage, setActiveImage] = useState(0);
@@ -81,6 +83,16 @@ export function ItemDetailPage() {
     fetchReviews(id, reviewsPage + 1);
   };
 
+  const fetchRequestStatus = useCallback(async () => {
+    if (!id || !user) return;
+    try {
+      const status = await itemsService.getMyRequestStatus(id);
+      setRequestStatus(status);
+    } catch {
+      // Non-blocking
+    }
+  }, [id, user]);
+
   const fetchItem = useCallback(async () => {
     if (!id) return;
     setIsLoading(true);
@@ -105,7 +117,44 @@ export function ItemDetailPage() {
 
   useEffect(() => {
     fetchItem();
-  }, [fetchItem]);
+    fetchRequestStatus();
+  }, [fetchItem, fetchRequestStatus]);
+
+  // Live countdown timer for cooldown states
+  useEffect(() => {
+    if (
+      !requestStatus ||
+      (requestStatus.state !== 'REJECTED_COOLDOWN' && requestStatus.state !== 'CANCELLED_COOLDOWN') ||
+      !requestStatus.canRequestAt
+    ) {
+      setCountdownText('');
+      return;
+    }
+
+    const updateCountdown = () => {
+      const targetTime = new Date(requestStatus.canRequestAt!).getTime();
+      const diffSec = Math.max(0, Math.ceil((targetTime - Date.now()) / 1000));
+      if (diffSec <= 0) {
+        setCountdownText('');
+        void fetchRequestStatus();
+        return;
+      }
+      const h = Math.floor(diffSec / 3600);
+      const m = Math.floor((diffSec % 3600) / 60);
+      const s = diffSec % 60;
+      if (h > 0) {
+        setCountdownText(`${h}h ${m}m`);
+      } else if (m > 0) {
+        setCountdownText(`${m}m ${s}s`);
+      } else {
+        setCountdownText(`${s}s`);
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [requestStatus, fetchRequestStatus]);
 
   const handleDelete = async () => {
     if (!item) return;
@@ -493,7 +542,7 @@ export function ItemDetailPage() {
         )}
       </main>
 
-      {/* ── Sticky Bottom Action Bar with Gradient "Request to Borrow" Button ── */}
+      {/* ── Sticky Bottom Action Bar reflecting request state ── */}
       {!isOwner && (
         <div className="fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-dark-surface/95 border-t border-neutral-200 dark:border-dark-border p-4 shadow-lg backdrop-blur-md">
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
@@ -505,7 +554,43 @@ export function ItemDetailPage() {
               </div>
             </div>
 
-            {item.isAvailable ? (
+            {requestStatus?.state === 'PENDING' ? (
+              <div className="flex items-center gap-3 flex-1 sm:flex-initial">
+                <button
+                  disabled
+                  id="request-pending-btn"
+                  className="flex-1 sm:flex-initial px-6 py-3.5 rounded-xl font-bold text-sm sm:text-base bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-500/30 cursor-not-allowed opacity-90"
+                >
+                  Request pending
+                </button>
+                {requestStatus.rentalId && (
+                  <button
+                    onClick={() => navigate(`/rentals/${requestStatus.rentalId}`)}
+                    className="btn-outline px-5 py-3.5 text-sm sm:text-base font-bold shadow-sm hover:bg-neutral-100 dark:hover:bg-dark-card"
+                  >
+                    View request
+                  </button>
+                )}
+              </div>
+            ) : requestStatus?.state === 'APPROVED' || requestStatus?.state === 'ACTIVE' ? (
+              <button
+                id="view-rental-btn"
+                onClick={() =>
+                  navigate(requestStatus.rentalId ? `/rentals/${requestStatus.rentalId}` : '/rentals')
+                }
+                className="btn-primary flex-1 sm:flex-initial sm:px-8 py-3.5 text-sm sm:text-base font-bold shadow-md hover:shadow-glow active:scale-95"
+              >
+                <span>View your rental</span>
+              </button>
+            ) : requestStatus?.state === 'REJECTED_COOLDOWN' || requestStatus?.state === 'CANCELLED_COOLDOWN' ? (
+              <button
+                disabled
+                id="cooldown-btn"
+                className="flex-1 sm:flex-initial sm:px-8 py-3.5 rounded-xl font-bold text-sm sm:text-base bg-neutral-100 dark:bg-dark-card text-neutral-500 dark:text-dark-muted border border-neutral-300 dark:border-dark-border cursor-not-allowed"
+              >
+                <span>Request again in {countdownText || 'a moment'}</span>
+              </button>
+            ) : item.isAvailable ? (
               <button
                 id="request-borrow-btn"
                 onClick={() => setIsBorrowModalOpen(true)}
@@ -527,7 +612,11 @@ export function ItemDetailPage() {
         <RequestBorrowModal
           item={item}
           isOpen={isBorrowModalOpen}
-          onClose={() => setIsBorrowModalOpen(false)}
+          onClose={() => {
+            setIsBorrowModalOpen(false);
+            void fetchRequestStatus();
+          }}
+          onSuccess={fetchRequestStatus}
         />
       )}
 

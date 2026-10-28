@@ -9,6 +9,7 @@ import { Prisma, RentalStatus, NotificationType } from '@prisma/client';
 import { createNotification } from './notifications.service';
 import { stopTrackingOnStatusChange } from './tracking.service';
 import { CURRENCY } from '../config/constants';
+import { env } from '../config/env';
 import {
   generateHandoverPin,
   hashHandoverPin,
@@ -16,6 +17,42 @@ import {
   decryptHandoverPin,
   verifyPinConstantTime,
 } from '../utils/handoverPin';
+
+export class DuplicateRentalError extends Error {
+  statusCode = 409;
+  code = 'DUPLICATE_REQUEST';
+  existingRentalId: string;
+  existingStatus: RentalStatus;
+
+  constructor(
+    existingRentalId: string,
+    existingStatus: RentalStatus,
+    message = 'You already have an active request for this item',
+  ) {
+    super(message);
+    this.name = 'DuplicateRentalError';
+    this.existingRentalId = existingRentalId;
+    this.existingStatus = existingStatus;
+  }
+}
+
+export class RequestCooldownError extends Error {
+  statusCode = 429;
+  code = 'REQUEST_COOLDOWN';
+  canRequestAt: string;
+  retryAfterSeconds: number;
+
+  constructor(
+    canRequestAt: string,
+    retryAfterSeconds: number,
+    message = 'Rental request is in cooldown period',
+  ) {
+    super(message);
+    this.name = 'RequestCooldownError';
+    this.canRequestAt = canRequestAt;
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
 
 export class ValidationError extends Error {
   statusCode = 400;
@@ -239,34 +276,116 @@ export async function createRental(input: CreateRentalInput) {
   const totalPrice = Number((days * item.pricePerDay).toFixed(2));
   const depositAmount = item.deposit;
 
-  const rental = await prisma.rental.create({
-    data: {
-      itemId: input.itemId,
-      borrowerId: input.borrowerId,
-      startDate: start,
-      endDate: end,
-      totalPrice,
-      depositAmount,
-      borrowerNote: input.borrowerNote?.trim() || null,
-      status: RentalStatus.PENDING,
-    },
-    include: rentalInclude,
-  });
-
   try {
-    await createNotification(
-      item.ownerId,
-      NotificationType.RENTAL_REQUESTED,
-      'Rental Requested',
-      `${rental.borrower.name} requested to rent "${item.title}".`,
-      { rentalId: rental.id, itemId: item.id },
-      input.borrowerId,
-    );
-  } catch (notifErr) {
-    console.error('Failed to create rental requested notification:', notifErr);
-  }
+    const rental = await prisma.$transaction(async (tx) => {
+      // 1. Check if borrower already has an active request for this item
+      const existingActive = await tx.rental.findFirst({
+        where: {
+          itemId: input.itemId,
+          borrowerId: input.borrowerId,
+          status: { in: [RentalStatus.PENDING, RentalStatus.APPROVED, RentalStatus.ACTIVE] },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
 
-  return sanitizeRentalForUser(rental, input.borrowerId);
+      if (existingActive) {
+        throw new DuplicateRentalError(
+          existingActive.id,
+          existingActive.status,
+          'You already have an active request for this item',
+        );
+      }
+
+      // 2. Check cooldown from latest rental for this item
+      const latestRental = await tx.rental.findFirst({
+        where: {
+          itemId: input.itemId,
+          borrowerId: input.borrowerId,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (latestRental) {
+        const currentTime = new Date();
+        if (latestRental.status === RentalStatus.REJECTED) {
+          const cooldownMs = env.REJECTED_COOLDOWN_HOURS * 60 * 60 * 1000;
+          const canRequestAt = new Date(latestRental.updatedAt.getTime() + cooldownMs);
+          if (currentTime.getTime() < canRequestAt.getTime()) {
+            const retryAfterSeconds = Math.max(
+              1,
+              Math.ceil((canRequestAt.getTime() - currentTime.getTime()) / 1000),
+            );
+            throw new RequestCooldownError(canRequestAt.toISOString(), retryAfterSeconds);
+          }
+        } else if (latestRental.status === RentalStatus.CANCELLED) {
+          const cooldownMs = env.CANCELLED_COOLDOWN_MINUTES * 60 * 1000;
+          const canRequestAt = new Date(latestRental.updatedAt.getTime() + cooldownMs);
+          if (currentTime.getTime() < canRequestAt.getTime()) {
+            const retryAfterSeconds = Math.max(
+              1,
+              Math.ceil((canRequestAt.getTime() - currentTime.getTime()) / 1000),
+            );
+            throw new RequestCooldownError(canRequestAt.toISOString(), retryAfterSeconds);
+          }
+        }
+      }
+
+      // 3. Create the rental
+      return tx.rental.create({
+        data: {
+          itemId: input.itemId,
+          borrowerId: input.borrowerId,
+          startDate: start,
+          endDate: end,
+          totalPrice,
+          depositAmount,
+          borrowerNote: input.borrowerNote?.trim() || null,
+          status: RentalStatus.PENDING,
+        },
+        include: rentalInclude,
+      });
+    });
+
+    try {
+      await createNotification(
+        item.ownerId,
+        NotificationType.RENTAL_REQUESTED,
+        'Rental Requested',
+        `${rental.borrower.name} requested to rent "${item.title}".`,
+        { rentalId: rental.id, itemId: item.id },
+        input.borrowerId,
+      );
+    } catch (notifErr) {
+      console.error('Failed to create rental requested notification:', notifErr);
+    }
+
+    return sanitizeRentalForUser(rental, input.borrowerId);
+  } catch (err: any) {
+    if (err instanceof DuplicateRentalError || err instanceof RequestCooldownError) {
+      throw err;
+    }
+    // Handle database unique constraint / index violation
+    if (
+      err.code === 'P2002' ||
+      err.message?.includes('unique_active_rental_per_borrower_per_item') ||
+      err.message?.includes('23505')
+    ) {
+      const existing = await prisma.rental.findFirst({
+        where: {
+          itemId: input.itemId,
+          borrowerId: input.borrowerId,
+          status: { in: [RentalStatus.PENDING, RentalStatus.APPROVED, RentalStatus.ACTIVE] },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      throw new DuplicateRentalError(
+        existing?.id ?? '',
+        existing?.status ?? RentalStatus.PENDING,
+        'You already have an active request for this item',
+      );
+    }
+    throw err;
+  }
 }
 
 export interface RentalsQuery {
@@ -1002,4 +1121,97 @@ export async function getBookedDates(itemId: string) {
     startDate: formatDateOnly(r.startDate),
     endDate: formatDateOnly(r.endDate),
   }));
+}
+
+export type RequestStatusState =
+  | 'NONE'
+  | 'PENDING'
+  | 'APPROVED'
+  | 'ACTIVE'
+  | 'REJECTED_COOLDOWN'
+  | 'CANCELLED_COOLDOWN';
+
+export interface MyRequestStatusResult {
+  state: RequestStatusState;
+  rentalId: string | null;
+  canRequestAt: string | null;
+  retryAfterSeconds: number | null;
+}
+
+export async function getMyRequestStatus(
+  itemId: string,
+  borrowerId: string,
+): Promise<MyRequestStatusResult> {
+  const item = await prisma.item.findUnique({ where: { id: itemId } });
+  if (!item) throw new NotFoundError('Item not found');
+
+  // Check for any currently active rental (PENDING, APPROVED, or ACTIVE)
+  const activeRental = await prisma.rental.findFirst({
+    where: {
+      itemId,
+      borrowerId,
+      status: { in: [RentalStatus.PENDING, RentalStatus.APPROVED, RentalStatus.ACTIVE] },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (activeRental) {
+    return {
+      state: activeRental.status as 'PENDING' | 'APPROVED' | 'ACTIVE',
+      rentalId: activeRental.id,
+      canRequestAt: null,
+      retryAfterSeconds: null,
+    };
+  }
+
+  // Check latest rental for this item and borrower
+  const latestRental = await prisma.rental.findFirst({
+    where: {
+      itemId,
+      borrowerId,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (latestRental) {
+    const currentTime = new Date();
+    if (latestRental.status === RentalStatus.REJECTED) {
+      const cooldownMs = env.REJECTED_COOLDOWN_HOURS * 60 * 60 * 1000;
+      const canRequestAt = new Date(latestRental.updatedAt.getTime() + cooldownMs);
+      if (currentTime.getTime() < canRequestAt.getTime()) {
+        const retryAfterSeconds = Math.max(
+          1,
+          Math.ceil((canRequestAt.getTime() - currentTime.getTime()) / 1000),
+        );
+        return {
+          state: 'REJECTED_COOLDOWN',
+          rentalId: latestRental.id,
+          canRequestAt: canRequestAt.toISOString(),
+          retryAfterSeconds,
+        };
+      }
+    } else if (latestRental.status === RentalStatus.CANCELLED) {
+      const cooldownMs = env.CANCELLED_COOLDOWN_MINUTES * 60 * 1000;
+      const canRequestAt = new Date(latestRental.updatedAt.getTime() + cooldownMs);
+      if (currentTime.getTime() < canRequestAt.getTime()) {
+        const retryAfterSeconds = Math.max(
+          1,
+          Math.ceil((canRequestAt.getTime() - currentTime.getTime()) / 1000),
+        );
+        return {
+          state: 'CANCELLED_COOLDOWN',
+          rentalId: latestRental.id,
+          canRequestAt: canRequestAt.toISOString(),
+          retryAfterSeconds,
+        };
+      }
+    }
+  }
+
+  return {
+    state: 'NONE',
+    rentalId: null,
+    canRequestAt: null,
+    retryAfterSeconds: null,
+  };
 }

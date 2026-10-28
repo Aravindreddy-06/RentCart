@@ -195,3 +195,17 @@ export async function getBookedDates(req: Request, res: Response, next: NextFunc
   }
 }
 
+export async function getMyRequestStatus(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = getParamId(req);
+    const status = await itemsService.getMyRequestStatus(id, req.user!.userId);
+    return success(res, status);
+  } catch (err: any) {
+    if (err?.name === 'NotFoundError' || err?.statusCode === 404) {
+      return failure(res, 'Item not found', 404);
+    }
+    next(err);
+  }
+}
+
+

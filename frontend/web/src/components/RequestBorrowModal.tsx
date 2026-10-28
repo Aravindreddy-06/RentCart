@@ -19,9 +19,10 @@ interface RequestBorrowModalProps {
   item: Item;
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModalProps) {
+export function RequestBorrowModal({ item, isOpen, onClose, onSuccess }: RequestBorrowModalProps) {
   const navigate = useNavigate();
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
@@ -76,6 +77,8 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return; // Prevent double taps immediately
+
     setError('');
 
     if (days <= 0) {
@@ -98,15 +101,32 @@ export function RequestBorrowModal({ item, isOpen, onClose }: RequestBorrowModal
       });
 
       setSuccess(true);
+      if (onSuccess) {
+        onSuccess();
+      }
       setTimeout(() => {
         onClose();
         navigate('/rentals');
       }, 1500);
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Failed to submit rental request. Please try again.';
-      setError(msg);
+    } catch (err: any) {
+      const res = err?.response?.data;
+      if (err?.response?.status === 409 || res?.code === 'DUPLICATE_REQUEST') {
+        setError(res?.message || 'You already have an active request for this item.');
+      } else if (err?.response?.status === 429 || res?.code === 'REQUEST_COOLDOWN') {
+        const canRequestAtStr = res?.canRequestAt
+          ? new Date(res.canRequestAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : '';
+        const retryAfter = res?.retryAfterSeconds;
+        const waitMsg = retryAfter
+          ? ` Please retry in ${Math.ceil(retryAfter / 60)} minutes${canRequestAtStr ? ` (around ${canRequestAtStr})` : ''}.`
+          : '';
+        setError((res?.message || 'Rental request is currently in cooldown.') + waitMsg);
+      } else {
+        const msg =
+          res?.message ??
+          'Failed to submit rental request. Please try again.';
+        setError(msg);
+      }
     } finally {
       setIsSubmitting(false);
     }

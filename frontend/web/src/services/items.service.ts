@@ -32,6 +32,21 @@ export interface Item {
   owner: ItemOwner;
 }
 
+export type ItemRequestState =
+  | 'NONE'
+  | 'PENDING'
+  | 'APPROVED'
+  | 'ACTIVE'
+  | 'REJECTED_COOLDOWN'
+  | 'CANCELLED_COOLDOWN';
+
+export interface ItemRequestStatus {
+  state: ItemRequestState;
+  rentalId: string | null;
+  canRequestAt: string | null;
+  retryAfterSeconds: number | null;
+}
+
 export interface ItemsResponse {
   items: Item[];
   pagination: {
@@ -91,6 +106,11 @@ export const itemsService = {
 
   async getById(id: string): Promise<Item> {
     const res = await api.get(`/api/items/${id}`);
+    return res.data.data;
+  },
+
+  async getMyRequestStatus(id: string): Promise<ItemRequestStatus> {
+    const res = await api.get(`/api/items/${id}/my-request-status`);
     return res.data.data;
   },
 

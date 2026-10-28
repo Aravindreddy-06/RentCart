@@ -18,7 +18,7 @@ export type MainTabParamList = {
 
 export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
-  Home: undefined;
+  Home: NavigatorScreenParams<MainTabParamList> | undefined;
   ItemDetail: { itemId: string };
   AddItem: undefined;
   RentalDetail: { rentalId: string };

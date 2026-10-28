@@ -61,6 +61,21 @@ function getParamId(req: Request): string {
 }
 
 function handleServiceError(err: unknown, res: Response, next: NextFunction) {
+  if (err instanceof rentalsService.DuplicateRentalError) {
+    return failure(res, err.message, 409, undefined, {
+      code: err.code,
+      existingRentalId: err.existingRentalId,
+      existingStatus: err.existingStatus,
+    });
+  }
+  if (err instanceof rentalsService.RequestCooldownError) {
+    res.set('Retry-After', String(err.retryAfterSeconds));
+    return failure(res, err.message, 429, undefined, {
+      code: err.code,
+      canRequestAt: err.canRequestAt,
+      retryAfterSeconds: err.retryAfterSeconds,
+    });
+  }
   if (err instanceof rentalsService.LockedError) {
     return failure(res, err.message, 429, undefined, { retryAfterSeconds: err.retryAfterSeconds });
   }

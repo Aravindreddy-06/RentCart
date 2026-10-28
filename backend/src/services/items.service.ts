@@ -420,4 +420,9 @@ export async function toggleAvailability(id: string, isAvailable: boolean) {
   return { ...item, currency: CURRENCY };
 }
 
-export { getBookedDates } from './rentals.service';
+export {
+  getBookedDates,
+  getMyRequestStatus,
+  RequestStatusState,
+  MyRequestStatusResult,
+} from './rentals.service';
