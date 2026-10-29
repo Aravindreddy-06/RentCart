@@ -1,0 +1,22 @@
+{
+  "name": "rentcart-appium-tests",
+  "version": "1.0.0",
+  "description": "Appium 2 + UiAutomator2 Mobile Automated Test Suite for RentCart Android App",
+  "main": "tests/test-runner.js",
+  "scripts": {
+    "test": "node tests/test-runner.js",
+    "test:wdio": "wdio run wdio.conf.js",
+    "report": "node scripts/generate-report.js"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0"
+  },
+  "devDependencies": {
+    "@wdio/cli": "^8.36.1",
+    "@wdio/local-runner": "^8.36.1",
+    "@wdio/mocha-framework": "^8.36.1",
+    "@wdio/spec-reporter": "^8.36.1",
+    "webdriverio": "^8.36.1"
+  }
+}
+

@@ -1,0 +1,15 @@
+{
+  "name": "rentcart-selenium-tests",
+  "version": "1.0.0",
+  "description": "Selenium WebDriver End-to-End Automated Test Suite for RentCart Web App",
+  "scripts": {
+    "test": "node tests/test-runner.js",
+    "report": "node scripts/generate-report.js"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "mocha": "^10.8.2",
+    "selenium-webdriver": "^4.27.0"
+  }
+}
+

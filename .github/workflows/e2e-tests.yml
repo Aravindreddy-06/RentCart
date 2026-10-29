@@ -1,0 +1,527 @@
+name: RentCart E2E Automated Test Suites
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Automated test suite to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - api
+          - selenium
+          - appium
+          - load
+      web_base_url:
+        description: 'Optional override for Web Base URL (default: http://localhost:5173)'
+        required: false
+        default: ''
+        type: string
+      api_base_url:
+        description: 'Optional override for API Base URL (default: http://localhost:4000)'
+        required: false
+        default: ''
+        type: string
+
+env:
+  NODE_ENV: test
+  PORT: 4000
+  DATABASE_URL: postgresql://postgres:postgre@localhost:5432/rentcart
+  JWT_SECRET: dummy-test-jwt-secret-rentcart-ci-automation-2026
+  JWT_REFRESH_SECRET: dummy-test-refresh-secret-rentcart-ci-automation-2026
+  EMAIL_DISABLED: 'true'
+  WEB_BASE_URL: ${{ github.event.inputs.web_base_url != '' && github.event.inputs.web_base_url || 'http://localhost:5173' }}
+  API_BASE_URL: ${{ github.event.inputs.api_base_url != '' && github.event.inputs.api_base_url || 'http://localhost:4000' }}
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 1: API Automated Tests (300+ Test Cases)
+  # ─────────────────────────────────────────────────────────────────────────────
+  api:
+    name: API Test Suite
+    if: github.event.inputs.suite == 'all' || github.event.inputs.suite == 'api'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgre
+          POSTGRES_DB: rentcart
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Deploy Prisma Migrations & Seed Database
+        run: |
+          cd backend
+          npx prisma migrate deploy
+          npm run seed
+
+      - name: Build & Start Backend Server
+        run: |
+          cd backend
+          npm run build
+          node dist/server.js &
+          echo "Waiting for API server to become ready on http://localhost:4000..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4000/api/health | grep -q "ok"; then
+              echo "✅ API server is healthy!"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Install API test suite dependencies
+        run: |
+          cd api-tests
+          npm install
+
+      - name: Execute API Automated Tests
+        run: |
+          cd api-tests
+          npm test
+
+      - name: Generate API Excel Report
+        if: always()
+        run: |
+          cd api-tests
+          npm run report
+
+      - name: Upload API Test Report Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-report
+          path: |
+            api-tests/reports/api-test-report.xlsx
+            api-tests/results/results.json
+          retention-days: 30
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 2: Selenium WebDriver Tests (300+ Test Cases)
+  # ─────────────────────────────────────────────────────────────────────────────
+  selenium:
+    name: Selenium Web Test Suite
+    needs: [api]
+    if: always() && (github.event.inputs.suite == 'all' || github.event.inputs.suite == 'selenium')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgre
+          POSTGRES_DB: rentcart
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/web/package-lock.json
+
+      - name: Install backend dependencies & Seed Database
+        run: |
+          cd backend
+          npm ci
+          npx prisma migrate deploy
+          npm run seed
+          npm run build
+          node dist/server.js &
+          echo "Waiting for API server to become ready on http://localhost:4000..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4000/api/health | grep -q "ok"; then
+              echo "✅ Backend API server is ready!"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Build & Serve Web Application (Vite Preview)
+        run: |
+          cd frontend/web
+          npm ci
+          npm run build
+          npx vite preview --port 5173 --host &
+          echo "Waiting for Web preview server on http://localhost:5173..."
+          for i in {1..30}; do
+            if curl -s http://localhost:5173 | grep -q "<html"; then
+              echo "✅ Web application is serving!"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Install Selenium test suite dependencies
+        run: |
+          cd selenium-tests
+          npm install
+
+      - name: Execute Selenium E2E Tests
+        run: |
+          cd selenium-tests
+          npm test
+
+      - name: Generate Selenium Excel Report
+        if: always()
+        run: |
+          cd selenium-tests
+          npm run report
+
+      - name: Upload Selenium Test Report Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selenium-test-report
+          path: |
+            selenium-tests/reports/selenium-test-report.xlsx
+            selenium-tests/results/results.json
+            selenium-tests/screenshots/
+          retention-days: 30
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 3: Appium Android Mobile Tests (300+ Test Cases)
+  # ─────────────────────────────────────────────────────────────────────────────
+  appium:
+    name: Appium Android Test Suite
+    needs: [selenium]
+    if: always() && (github.event.inputs.suite == 'all' || github.event.inputs.suite == 'appium')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgre
+          POSTGRES_DB: rentcart
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Enable KVM Hardware Virtualization
+        run: |
+          echo '=== Checking KVM permissions ==='
+          sudo apt-get update -y
+          sudo apt-get install -y cpu-checker
+          kvm-ok || echo "KVM status noted"
+          sudo adduser $USER kvm || true
+          sudo chown $USER /dev/kvm || true
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Start Backend API Server for Android Emulator
+        run: |
+          cd backend
+          npm ci
+          npx prisma migrate deploy
+          npm run seed
+          npm run build
+          node dist/server.js &
+          echo "Waiting for API server..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4000/api/health | grep -q "ok"; then
+              echo "✅ API server ready on http://localhost:4000 (accessible as http://10.0.2.2:4000 from emulator)"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Validate APK_URL and Download RentCart Android APK
+        env:
+          APK_URL: ${{ vars.APK_URL }}
+        run: |
+          mkdir -p appium-tests/apk
+          if [ -z "$APK_URL" ]; then
+            echo "::warning::Repository variable APK_URL is not set."
+            echo "To run live on real emulator, configure repository variable 'APK_URL' in Settings -> Secrets and variables -> Actions -> Variables."
+            echo "Falling back to contract & specification verification mode."
+          else
+            echo "Downloading APK from $APK_URL..."
+            curl -L "$APK_URL" -o appium-tests/apk/app-release.apk
+            echo "✅ Downloaded APK: $(ls -lh appium-tests/apk/app-release.apk)"
+          fi
+
+      - name: Install Appium 2 & UiAutomator2 Driver
+        run: |
+          npm install -g appium
+          appium driver install uiautomator2
+
+      - name: Install Appium test suite dependencies
+        run: |
+          cd appium-tests
+          npm install --legacy-peer-deps
+
+      - name: Run Appium Tests with Android Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            echo "Android emulator booted successfully."
+            cd appium-tests
+            if [ -f apk/app-release.apk ]; then
+              appium --port 4723 --log-level warn &
+              sleep 5
+              APP_PATH="$(pwd)/apk/app-release.apk" npm test
+            else
+              npm test
+            fi
+
+      - name: Generate Appium Excel Report
+        if: always()
+        run: |
+          cd appium-tests
+          npm run report
+
+      - name: Upload Appium Test Report Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appium-test-report
+          path: |
+            appium-tests/reports/appium-test-report.xlsx
+            appium-tests/results/results.json
+            appium-tests/screenshots/
+          retention-days: 30
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 4: k6 Load Tests (100 VUs, 1 min + 10s ramp)
+  # ─────────────────────────────────────────────────────────────────────────────
+  load:
+    name: k6 Load Test Suite
+    needs: [appium]
+    if: always() && (github.event.inputs.suite == 'all' || github.event.inputs.suite == 'load')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgre
+          POSTGRES_DB: rentcart
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Start Backend API Server
+        run: |
+          cd backend
+          npm ci
+          npx prisma migrate deploy
+          npm run seed
+          npm run build
+          node dist/server.js &
+          echo "Waiting for API server..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4000/api/health | grep -q "ok"; then
+              echo "✅ API server ready for load testing!"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Install k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Install load test suite dependencies
+        run: |
+          cd load-tests
+          npm install
+
+      - name: Execute k6 Load Test (100 VUs, 1 min + 10s ramp)
+        run: |
+          cd load-tests
+          npm test
+
+      - name: Generate Load Test Excel Report
+        if: always()
+        run: |
+          cd load-tests
+          npm run report
+
+      - name: Upload Load Test Report Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-report
+          path: |
+            load-tests/reports/load-test-report.xlsx
+            load-tests/reports/summary.json
+          retention-days: 30
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 5: Collect Reports & Write GitHub Step Summary
+  # ─────────────────────────────────────────────────────────────────────────────
+  collect-reports:
+    name: Collect Reports & Summary
+    needs: [api, selenium, appium, load]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Download all test report artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Bundle & Re-upload all test reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-test-reports
+          path: artifacts/
+          retention-days: 30
+
+      - name: Generate Markdown Summary Table in GITHUB_STEP_SUMMARY
+        run: |
+          node -e '
+          const fs = require("fs");
+          const path = require("path");
+
+          let summaryMd = "# 🚀 RentCart End-to-End Automated Test Results\n\n";
+          summaryMd += "Execution Date: " + new Date().toUTCString() + "\n\n";
+
+          // Table of Functional Suites
+          summaryMd += "### 📋 Automated Test Suites Summary\n\n";
+          summaryMd += "| Test Suite | Total Tests | Passed | Failed | Skipped | Pass Rate | Duration |\n";
+          summaryMd += "|------------|-------------|--------|--------|---------|-----------|----------|\n";
+
+          const suites = [
+            { name: "REST API Suite", file: "artifacts/api-test-report/results.json" },
+            { name: "Selenium Web E2E", file: "artifacts/selenium-test-report/results.json" },
+            { name: "Appium Android E2E", file: "artifacts/appium-test-report/results.json" },
+          ];
+
+          for (const s of suites) {
+            if (fs.existsSync(s.file)) {
+              try {
+                const data = JSON.parse(fs.readFileSync(s.file, "utf8"));
+                const dur = (data.totalDurationMs / 1000).toFixed(1) + "s";
+                summaryMd += `| ${s.name} | ${data.total} | ${data.passed} | ${data.failed} | ${data.skipped} | **${data.passRate}** | ${dur} |\n`;
+              } catch (e) {
+                summaryMd += `| ${s.name} | Error reading report | - | - | - | - | - |\n`;
+              }
+            } else {
+              summaryMd += `| ${s.name} | *Not executed / Skipped* | - | - | - | - | - |\n`;
+            }
+          }
+
+          // Load Test Summary
+          summaryMd += "\n### ⚡ k6 Load Test Summary (100 VUs - Read Traffic)\n\n";
+          const k6File = "artifacts/load-test-report/summary.json";
+          if (fs.existsSync(k6File)) {
+            try {
+              const data = JSON.parse(fs.readFileSync(k6File, "utf8"));
+              const m = data.metrics || {};
+              const reqs = m.http_reqs ? (m.http_reqs.count || m.http_reqs.values?.count || 0) : 0;
+              const rps = m.http_reqs ? (m.http_reqs.rate || m.http_reqs.values?.rate || 0).toFixed(2) : "0";
+              const dur = m.http_req_duration || {};
+              const getVal = (k) => (dur[k] !== undefined ? dur[k] : dur.values?.[k] || 0).toFixed(2);
+              const failed = m.http_req_failed ? ((m.http_req_failed.rate || m.http_req_failed.values?.rate || 0) * 100).toFixed(2) : "0.00";
+
+              summaryMd += "| Metric | Result | Threshold | Status |\n";
+              summaryMd += "|--------|--------|-----------|--------|\n";
+              summaryMd += `| **Total Requests** | ${Number(reqs).toLocaleString()} | - | ✅ |\n`;
+              summaryMd += `| **Requests Per Second (RPS)** | ${rps} req/s | - | ✅ |\n`;
+              summaryMd += `| **Failed Request Rate** | ${failed}% | < 1.00% | ${parseFloat(failed) < 1 ? "✅ PASS" : "❌ FAIL"} |\n`;
+              summaryMd += `| **Average Response Time** | ${getVal("avg")} ms | < 400 ms | ${parseFloat(getVal("avg")) < 400 ? "✅ PASS" : "❌ FAIL"} |\n`;
+              summaryMd += `| **P95 Response Time** | ${getVal("p(95)")} ms | < 800 ms | ${parseFloat(getVal("p(95)")) < 800 ? "✅ PASS" : "❌ FAIL"} |\n`;
+              summaryMd += `| **Median Response Time** | ${getVal("med")} ms | - | ℹ️ |\n`;
+              summaryMd += `| **Min Response Time** | ${getVal("min")} ms | - | ℹ️ |\n`;
+              summaryMd += `| **Max Response Time** | ${getVal("max")} ms | - | ℹ️ |\n`;
+            } catch (e) {
+              summaryMd += "Error reading k6 summary metrics.\n";
+            }
+          } else {
+            summaryMd += "*k6 load test not executed or artifacts unavailable.*\n";
+          }
+
+          summaryMd += "\n---\n*Generated by RentCart Automated Quality Assurance Pipeline*\n";
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summaryMd);
+          '
+

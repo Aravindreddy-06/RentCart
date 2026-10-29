@@ -1,0 +1,18 @@
+{
+  "name": "rentcart-api-tests",
+  "version": "1.0.0",
+  "description": "RentCart Automated API Test Suite (300+ Test Cases) with Excel & JSON reporting",
+  "main": "tests/test-runner.js",
+  "scripts": {
+    "test": "node tests/test-runner.js && node scripts/generate-report.js",
+    "test:mocha": "mocha --timeout 30000 tests/*.test.js",
+    "report": "node scripts/generate-report.js"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0"
+  },
+  "devDependencies": {
+    "mocha": "^11.1.0"
+  }
+}
+

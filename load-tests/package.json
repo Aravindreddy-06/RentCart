@@ -1,0 +1,13 @@
+{
+  "name": "rentcart-load-tests",
+  "version": "1.0.0",
+  "description": "k6 Read-Traffic Load Test Suite for RentCart API",
+  "scripts": {
+    "test": "node scripts/run-load-test.js",
+    "report": "node scripts/generate-report.js"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0"
+  }
+}
+
