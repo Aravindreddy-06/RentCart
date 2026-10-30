@@ -138,7 +138,6 @@ class SeleniumTestCollector {
       tests: this.tests,
     };
 
-    const outPath = path.join(resultsDir, 'results.json');
     fs.writeFileSync(outPath, JSON.stringify(resultPayload, null, 2), 'utf8');
     console.log(`\n📄 Selenium results saved to: ${outPath} (${total} tests, ${passed} passed, ${failed} failed, ${skipped} skipped)`);
     return resultPayload;
