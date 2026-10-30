@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const ExcelJS = require('exceljs');
 
 async function generateReport() {
@@ -13,12 +14,26 @@ async function generateReport() {
   const outputPath = path.join(reportDir, 'selenium-test-report.xlsx');
 
   if (!fs.existsSync(resultsPath)) {
-    console.error(`Results file not found at: ${resultsPath}`);
+    console.error(`❌ Error: Results file not found at: ${resultsPath}`);
     process.exit(1);
   }
 
-  const rawData = fs.readFileSync(resultsPath, 'utf8');
-  const data = JSON.parse(rawData);
+  let data;
+  try {
+    const rawData = fs.readFileSync(resultsPath, 'utf8');
+    data = JSON.parse(rawData);
+  } catch (err) {
+    console.error(`❌ Error: Failed to parse ${resultsPath}: ${err.message}`);
+    process.exit(1);
+  }
+
+  // Fail loudly if results.json contains 0 tests or is missing test records
+  if (!data || !Array.isArray(data.tests) || data.tests.length === 0 || !data.total || data.total === 0) {
+    const testCount = data && Array.isArray(data.tests) ? data.tests.length : 0;
+    const totalField = data ? data.total : 0;
+    console.error(`❌ Error: ${resultsPath} contains 0 tests (total: ${totalField}, tests array: ${testCount}). Refusing to generate empty Excel workbook.`);
+    process.exit(1);
+  }
 
   if (!fs.existsSync(reportDir)) {
     fs.mkdirSync(reportDir, { recursive: true });
@@ -27,6 +42,15 @@ async function generateReport() {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'RentCart Selenium WebDriver Test Automation';
   workbook.created = new Date();
+
+  // Dynamic environment resolution
+  const osType = os.type();
+  const osRelease = os.release();
+  const osArch = os.arch();
+  let platformDesc = osType === 'Windows_NT' ? `Windows ${osRelease}` : osType === 'Linux' ? `Linux ${osRelease}` : `${osType} ${osRelease}`;
+  const browserPlatform = `Google Chrome (Headless) / ${platformDesc} (${osArch})`;
+  const webBaseUrl = process.env.WEB_BASE_URL || data.webBaseUrl || 'http://localhost:5173';
+  const apiBaseUrl = process.env.API_BASE_URL || data.apiBaseUrl || 'http://localhost:4000';
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 1. SHEET: Summary
@@ -48,13 +72,13 @@ async function generateReport() {
   titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
   summarySheet.getRow(2).height = 38;
 
-  // Metadata Table
+  // Metadata Table (Dynamic Platform & URLs)
   const metaRows = [
     ['Suite Name', data.suite || 'Selenium WebDriver Web E2E Suite'],
     ['Run Date', data.runDate || new Date().toISOString()],
-    ['Web Base URL', process.env.WEB_BASE_URL || 'http://localhost:5173'],
-    ['API Base URL', process.env.API_BASE_URL || 'http://localhost:4000'],
-    ['Browser / Platform', 'Google Chrome (Headless) / Windows'],
+    ['Web Base URL', webBaseUrl],
+    ['API Base URL', apiBaseUrl],
+    ['Browser / Platform', browserPlatform],
     ['Total Tests', data.total || 0],
     ['Passed', data.passed || 0],
     ['Failed', data.failed || 0],

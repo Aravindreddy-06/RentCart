@@ -10,6 +10,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const ExcelJS = require('exceljs');
 
 async function generateReport() {
@@ -18,12 +19,34 @@ async function generateReport() {
   const outputPath = path.join(reportDir, 'load-test-report.xlsx');
 
   if (!fs.existsSync(summaryJsonPath)) {
-    console.error(`k6 summary file not found at: ${summaryJsonPath}`);
+    console.error(`❌ Error: k6 summary file not found at: ${summaryJsonPath}`);
     process.exit(1);
   }
 
-  const rawData = fs.readFileSync(summaryJsonPath, 'utf8');
-  const summary = JSON.parse(rawData);
+  let summary;
+  try {
+    const rawData = fs.readFileSync(summaryJsonPath, 'utf8');
+    summary = JSON.parse(rawData);
+  } catch (err) {
+    console.error(`❌ Error: Failed to parse ${summaryJsonPath}: ${err.message}`);
+    process.exit(1);
+  }
+
+  const metrics = summary ? summary.metrics : null;
+  const getMetricVal = (m, key, defaultVal = 0) => {
+    if (!m) return defaultVal;
+    if (m[key] !== undefined) return m[key];
+    if (m.values && m.values[key] !== undefined) return m.values[key];
+    return defaultVal;
+  };
+
+  const totalRequests = getMetricVal(metrics ? metrics.http_reqs : null, 'count', 0);
+
+  // Fail loudly if summary contains 0 requests or missing metrics
+  if (!metrics || totalRequests === 0) {
+    console.error(`❌ Error: ${summaryJsonPath} contains 0 requests or invalid metrics. Refusing to generate empty load test report.`);
+    process.exit(1);
+  }
 
   if (!fs.existsSync(reportDir)) {
     fs.mkdirSync(reportDir, { recursive: true });
@@ -33,16 +56,14 @@ async function generateReport() {
   workbook.creator = 'RentCart Performance Test Engine (k6)';
   workbook.created = new Date();
 
-  const metrics = summary.metrics || {};
+  // Dynamic platform & host environment resolution
+  const osType = os.type();
+  const osRelease = os.release();
+  const osArch = os.arch();
+  let hostDesc = osType === 'Windows_NT' ? `Windows ${osRelease}` : osType === 'Linux' ? `Linux ${osRelease}` : `${osType} ${osRelease}`;
+  const execPlatform = `k6 v0.54.0 on ${hostDesc} (${osArch})`;
+  const targetEnv = process.env.API_BASE_URL || 'http://localhost:4000';
 
-  const getMetricVal = (m, key, defaultVal = 0) => {
-    if (!m) return defaultVal;
-    if (m[key] !== undefined) return m[key];
-    if (m.values && m.values[key] !== undefined) return m.values[key];
-    return defaultVal;
-  };
-
-  const totalRequests = getMetricVal(metrics.http_reqs, 'count', 0);
   const rps = Number(getMetricVal(metrics.http_reqs, 'rate', 0)).toFixed(2);
   const failedRate = (Number(getMetricVal(metrics.http_req_failed, 'value', getMetricVal(metrics.http_req_failed, 'rate', 0))) * 100).toFixed(2);
   const avgDuration = Number(getMetricVal(metrics.http_req_duration, 'avg', 0)).toFixed(2);
@@ -76,7 +97,8 @@ async function generateReport() {
   const overviewRows = [
     ['Test Suite', 'k6 Read-Traffic Load Test'],
     ['Run Date', new Date().toISOString()],
-    ['Target Environment', process.env.API_BASE_URL || 'http://localhost:4000'],
+    ['Target Environment', targetEnv],
+    ['Execution Platform', execPlatform],
     ['Virtual Users (VUs)', '100 Concurrent Virtual Users'],
     ['Duration', '75 seconds total (10s ramp-up + 60s steady load + 5s ramp-down)'],
     ['Total Requests', totalRequests],

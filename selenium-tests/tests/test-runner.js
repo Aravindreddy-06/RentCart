@@ -72,8 +72,12 @@ async function main() {
 
   } catch (error) {
     console.error('❌ Fatal error in test runner:', error);
-    collector.saveResults();
-    await generateReport().catch(() => {});
+    if (collector.tests.length > 0) {
+      collector.saveResults();
+      await generateReport().catch(() => {});
+    } else {
+      console.error('❌ No tests were completed before fatal error. Results will not be overwritten with empty data.');
+    }
     process.exit(1);
   }
 }

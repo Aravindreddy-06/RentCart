@@ -38,6 +38,15 @@ class SeleniumTestCollector {
     duration = 0,
     error = null,
   }) {
+    const errText = error ? (error.message || String(error)) : null;
+    let actual = actualResult;
+    if (!actual) {
+      if (status === 'PASS') {
+        actual = 'Matches expected UI behavior';
+      } else {
+        actual = errText ? `Assertion failed: ${errText}` : 'UI assertion failed';
+      }
+    }
     this.tests.push({
       id,
       module,
@@ -45,10 +54,10 @@ class SeleniumTestCollector {
       preconditions,
       steps,
       expectedResult,
-      actualResult: actualResult || (status === 'PASS' ? 'Matches expected UI behavior' : 'UI assertion failed'),
+      actualResult: actual,
       status,
       duration: Math.round(duration),
-      error: error ? (error.message || String(error)) : null,
+      error: status === 'FAIL' ? (errText || 'UI assertion failed') : null,
       timestamp: new Date().toISOString(),
     });
   }
@@ -57,6 +66,21 @@ class SeleniumTestCollector {
     const resultsDir = path.resolve(__dirname, '../results');
     if (!fs.existsSync(resultsDir)) {
       fs.mkdirSync(resultsDir, { recursive: true });
+    }
+    const outPath = path.join(resultsDir, 'results.json');
+
+    // CRITICAL: Protect against empty collector runs overwriting existing valid reports
+    if (this.tests.length === 0) {
+      console.warn('⚠️ Warning: No tests were recorded in collector. Preserving existing results.json if present.');
+      if (fs.existsSync(outPath)) {
+        try {
+          const existing = JSON.parse(fs.readFileSync(outPath, 'utf8'));
+          if (existing && Array.isArray(existing.tests) && existing.tests.length > 0) {
+            console.log(`ℹ️ Preserved existing results.json with ${existing.tests.length} tests.`);
+            return existing;
+          }
+        } catch (_) {}
+      }
     }
 
     const total = this.tests.length;
@@ -90,10 +114,20 @@ class SeleniumTestCollector {
       });
     }
 
+    const os = require('os');
+    const osType = os.type();
+    const osRelease = os.release();
+    const osArch = os.arch();
+    let platformDesc = osType === 'Windows_NT' ? `Windows ${osRelease}` : osType === 'Linux' ? `Linux ${osRelease}` : `${osType} ${osRelease}`;
+
     const resultPayload = {
       suite: this.suiteName,
       runDate: new Date().toISOString(),
-      environment: `Headless Chrome / ${WEB_BASE_URL}`,
+      browser: 'Google Chrome (Headless)',
+      platform: `${platformDesc} (${osArch})`,
+      webBaseUrl: WEB_BASE_URL,
+      apiBaseUrl: API_BASE_URL,
+      environment: `Google Chrome (Headless) / ${platformDesc} (${osArch}) / ${WEB_BASE_URL}`,
       total,
       passed,
       failed,

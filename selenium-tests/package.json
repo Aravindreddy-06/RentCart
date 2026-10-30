@@ -4,6 +4,8 @@
   "description": "Selenium WebDriver End-to-End Automated Test Suite for RentCart Web App",
   "scripts": {
     "test": "node tests/test-runner.js",
+    "test:mocha": "mocha tests/all-modules.test.js",
+    "test:login": "node tests/login-tests.js",
     "report": "node scripts/generate-report.js"
   },
   "dependencies": {

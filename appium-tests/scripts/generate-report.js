@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const ExcelJS = require('exceljs');
 
 async function generateReport() {
@@ -13,12 +14,26 @@ async function generateReport() {
   const outputPath = path.join(reportDir, 'appium-test-report.xlsx');
 
   if (!fs.existsSync(resultsPath)) {
-    console.error(`Results file not found at: ${resultsPath}`);
+    console.error(`❌ Error: Results file not found at: ${resultsPath}`);
     process.exit(1);
   }
 
-  const rawData = fs.readFileSync(resultsPath, 'utf8');
-  const data = JSON.parse(rawData);
+  let data;
+  try {
+    const rawData = fs.readFileSync(resultsPath, 'utf8');
+    data = JSON.parse(rawData);
+  } catch (err) {
+    console.error(`❌ Error: Failed to parse ${resultsPath}: ${err.message}`);
+    process.exit(1);
+  }
+
+  // Fail loudly if results.json contains 0 tests or is missing test records
+  if (!data || !Array.isArray(data.tests) || data.tests.length === 0 || !data.total || data.total === 0) {
+    const testCount = data && Array.isArray(data.tests) ? data.tests.length : 0;
+    const totalField = data ? data.total : 0;
+    console.error(`❌ Error: ${resultsPath} contains 0 tests (total: ${totalField}, tests array: ${testCount}). Refusing to generate empty Excel workbook.`);
+    process.exit(1);
+  }
 
   if (!fs.existsSync(reportDir)) {
     fs.mkdirSync(reportDir, { recursive: true });
@@ -27,6 +42,15 @@ async function generateReport() {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'RentCart Appium Mobile Test Automation';
   workbook.created = new Date();
+
+  // Dynamic platform & host environment resolution
+  const osType = os.type();
+  const osRelease = os.release();
+  const osArch = os.arch();
+  let hostDesc = osType === 'Windows_NT' ? `Windows ${osRelease}` : osType === 'Linux' ? `Linux ${osRelease}` : `${osType} ${osRelease}`;
+  const platformDriver = `Android (UiAutomator2) on ${hostDesc} (${osArch})`;
+  const apiBaseUrl = process.env.API_BASE_URL || data.apiBaseUrl || 'http://10.0.2.2:4000';
+  const packageName = process.env.APP_PACKAGE || 'com.rentcart.app';
 
   // ─────────────────────────────────────────────────────────────────────────────
   // 1. SHEET: Summary
@@ -48,13 +72,13 @@ async function generateReport() {
   titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
   summarySheet.getRow(2).height = 38;
 
-  // Metadata Table
+  // Metadata Table (Dynamic Environment & Platform)
   const metaRows = [
     ['Suite Name', data.suite || 'RentCart Mobile Appium Suite'],
     ['Run Date', data.runDate || new Date().toISOString()],
-    ['Package Name', 'com.rentcart.app'],
-    ['Platform & Driver', 'Android / UiAutomator2 (Appium 2)'],
-    ['API Base URL', process.env.API_BASE_URL || 'http://10.0.2.2:4000'],
+    ['Package Name', packageName],
+    ['Platform & Driver', platformDriver],
+    ['API Base URL', apiBaseUrl],
     ['Total Tests', data.total || 0],
     ['Passed', data.passed || 0],
     ['Failed', data.failed || 0],
