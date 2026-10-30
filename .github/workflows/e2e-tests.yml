@@ -324,14 +324,16 @@ jobs:
         run: |
           mkdir -p appium-tests/apk
           if [ -z "$APK_URL" ]; then
-            echo "::warning::Repository variable APK_URL is not set."
-            echo "To run live on real emulator, configure repository variable 'APK_URL' in Settings -> Secrets and variables -> Actions -> Variables."
-            echo "Falling back to contract & specification verification mode."
-          else
-            echo "Downloading APK from $APK_URL..."
-            curl -L "$APK_URL" -o appium-tests/apk/app-release.apk
-            echo "✅ Downloaded APK: $(ls -lh appium-tests/apk/app-release.apk)"
+            echo "::error::Repository variable APK_URL is not set. Please configure 'APK_URL' in Settings -> Secrets and variables -> Actions -> Variables."
+            exit 1
           fi
+          echo "Downloading APK from $APK_URL..."
+          curl -L "$APK_URL" -o appium-tests/apk/app-release.apk
+          if [ ! -s appium-tests/apk/app-release.apk ]; then
+            echo "::error::Downloaded APK is empty or failed to download from $APK_URL"
+            exit 1
+          fi
+          echo "✅ Downloaded APK: $(ls -lh appium-tests/apk/app-release.apk)"
 
       - name: Install Appium 2 & UiAutomator2 Driver
         run: |
@@ -350,16 +352,7 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
-          script: |
-            echo "Android emulator booted successfully."
-            cd appium-tests
-            if [ -f apk/app-release.apk ]; then
-              appium --port 4723 --log-level warn &
-              sleep 5
-              APP_PATH="$(pwd)/apk/app-release.apk" npm test
-            else
-              npm test
-            fi
+          script: bash appium-tests/scripts/run-in-emulator.sh
 
       - name: Generate Appium Excel Report
         if: always()
