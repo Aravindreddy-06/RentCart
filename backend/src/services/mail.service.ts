@@ -280,11 +280,18 @@ export async function sendMail(options: SendMailOptions): Promise<void> {
     setDevOtp(to, purposeForDev, otpForDev);
   }
 
-  // Development fallback when no provider is configured
+  if (env.EMAIL_DISABLED) {
+    if (env.NODE_ENV !== 'test') {
+      throw new Error('EMAIL_DISABLED is only permitted when NODE_ENV=test');
+    }
+    return;
+  }
+
+  // Development / Test fallback when no provider is configured
   if (!activeProvider.isConfigured()) {
-    if (env.NODE_ENV === 'development') {
+    if (env.NODE_ENV === 'development' || env.NODE_ENV === 'test') {
       console.log(`\n======================================================`);
-      console.log(`[RentCart DEV MAIL]`);
+      console.log(`[RentCart DEV/TEST MAIL]`);
       console.log(`To: ${to}`);
       console.log(`Subject: ${subject}`);
       if (otpForDev) {

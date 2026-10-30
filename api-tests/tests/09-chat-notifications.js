@@ -112,10 +112,11 @@ async function runChatNotificationsTests() {
   {
     const start = Date.now();
     const res = await request(`/rentals/${rentalId}/messages`, 'POST', {
+      body: 'Hi Alice! Can I pick up the item around 10 AM?',
       content: 'Hi Alice! Can I pick up the item around 10 AM?',
     }, bobToken);
 
-    const passed = res.status === 201 && (res.data?.data?.content === 'Hi Alice! Can I pick up the item around 10 AM?' || !!res.data?.data?.id);
+    const passed = res.status === 201 && (res.data?.data?.body === 'Hi Alice! Can I pick up the item around 10 AM?' || res.data?.data?.content === 'Hi Alice! Can I pick up the item around 10 AM?' || !!res.data?.data?.id);
 
     collector.record({
       id: 'API-CHAT-004',
@@ -124,7 +125,7 @@ async function runChatNotificationsTests() {
       preconditions: 'Rental exists; Bob is borrower',
       steps: `POST /api/rentals/${rentalId}/messages with message content`,
       expectedResult: 'HTTP 201 with message created',
-      actualResult: `HTTP ${res.status}: content="${res.data?.data?.content}"`,
+      actualResult: `HTTP ${res.status}: body="${res.data?.data?.body || res.data?.data?.content}"`,
       status: passed ? 'PASS' : 'FAIL',
       duration: Date.now() - start,
       error: passed ? null : new Error(`Send message failed: ${JSON.stringify(res.data)}`),
@@ -135,10 +136,11 @@ async function runChatNotificationsTests() {
   {
     const start = Date.now();
     const res = await request(`/rentals/${rentalId}/messages`, 'POST', {
+      body: 'Sure Bob, 10 AM works great for me!',
       content: 'Sure Bob, 10 AM works great for me!',
     }, aliceToken);
 
-    const passed = res.status === 201 && (res.data?.data?.content === 'Sure Bob, 10 AM works great for me!' || !!res.data?.data?.id);
+    const passed = res.status === 201 && (res.data?.data?.body === 'Sure Bob, 10 AM works great for me!' || res.data?.data?.content === 'Sure Bob, 10 AM works great for me!' || !!res.data?.data?.id);
 
     collector.record({
       id: 'API-CHAT-005',
@@ -147,7 +149,7 @@ async function runChatNotificationsTests() {
       preconditions: 'Alice is owner',
       steps: `POST /api/rentals/${rentalId}/messages with owner reply`,
       expectedResult: 'HTTP 201 with reply created',
-      actualResult: `HTTP ${res.status}: content="${res.data?.data?.content}"`,
+      actualResult: `HTTP ${res.status}: body="${res.data?.data?.body || res.data?.data?.content}"`,
       status: passed ? 'PASS' : 'FAIL',
       duration: Date.now() - start,
       error: passed ? null : new Error(`Owner reply failed: ${JSON.stringify(res.data)}`),
@@ -179,6 +181,7 @@ async function runChatNotificationsTests() {
   {
     const start = Date.now();
     const res = await request(`/rentals/${rentalId}/messages`, 'POST', {
+      body: 'Hacked message from stranger',
       content: 'Hacked message from stranger',
     }, carolToken);
 
@@ -222,6 +225,7 @@ async function runChatNotificationsTests() {
   {
     const start = Date.now();
     const res = await request(`/rentals/${rentalId}/messages`, 'POST', {
+      body: '',
       content: '',
     }, bobToken);
 
@@ -266,7 +270,8 @@ async function runChatNotificationsTests() {
   {
     const start = Date.now();
     const res = await request('/chats/unread-count', 'GET', undefined, aliceToken);
-    const passed = res.status === 200 && typeof (res.data?.data?.count ?? res.data?.data) === 'number';
+    const unread = res.data?.data?.unreadCount ?? res.data?.data?.count ?? res.data?.data;
+    const passed = res.status === 200 && typeof unread === 'number';
 
     collector.record({
       id: 'API-CHAT-011',
@@ -275,7 +280,7 @@ async function runChatNotificationsTests() {
       preconditions: 'Authenticated Alice token',
       steps: 'GET /api/chats/unread-count',
       expectedResult: 'HTTP 200 with unread message count',
-      actualResult: `HTTP ${res.status}: count=${res.data?.data?.count ?? res.data?.data}`,
+      actualResult: `HTTP ${res.status}: count=${unread}`,
       status: passed ? 'PASS' : 'FAIL',
       duration: Date.now() - start,
       error: passed ? null : new Error(`Unread count failed: ${JSON.stringify(res.data)}`),
@@ -288,8 +293,8 @@ async function runChatNotificationsTests() {
     const start = Date.now();
     const testContent = `Data-driven automated message check #${i}`;
     try {
-      const res = await request(`/rentals/${rentalId}/messages`, 'POST', { content: testContent }, bobToken);
-      const passed = res.status === 201 && !!(res.data?.data?.content || res.data?.data?.id);
+      const res = await request(`/rentals/${rentalId}/messages`, 'POST', { body: testContent, content: testContent }, bobToken);
+      const passed = res.status === 201 && !!(res.data?.data?.body || res.data?.data?.content || res.data?.data?.id);
 
       collector.record({
         id: tcId,

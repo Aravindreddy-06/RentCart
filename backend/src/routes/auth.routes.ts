@@ -13,7 +13,7 @@ const router = Router();
 // Rate limit for login/register
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: process.env.NODE_ENV === 'test' ? 10000 : 100,
   message: { success: false, message: 'Too many attempts, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -22,7 +22,7 @@ const authLimiter = rateLimit({
 // Stricter rate limit for OTP verification and password reset per IP
 const otpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 30,
+  max: process.env.NODE_ENV === 'test' ? 10000 : 30,
   message: { success: false, message: 'Too many verification attempts, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,

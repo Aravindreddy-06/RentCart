@@ -50,6 +50,9 @@ export class TooManyRequestsError extends Error {
 const userMessageTimestamps = new Map<string, number[]>();
 
 export function checkMessageRateLimit(userId: string): boolean {
+  if (process.env.NODE_ENV === 'test') {
+    return true;
+  }
   const now = Date.now();
   const windowMs = 60 * 1000;
   const timestamps = userMessageTimestamps.get(userId) || [];

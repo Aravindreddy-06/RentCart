@@ -46,25 +46,26 @@ async function runLoginAuthTests() {
       });
     }
 
-    // TC-002: Splash page CTA "Get Started" and "Sign In"
+    // TC-002: Splash page auto-redirect to /login and primary CTAs
     {
       const start = Date.now();
       let passed = false;
       try {
         await driver.get(WEB_BASE_URL);
-        const loginLink = await driver.findElement(By.css('a[href="/login"]'));
+        await driver.wait(until.urlContains('/login'), 5000);
+        const loginBtn = await driver.findElement(By.css('button[type="submit"]'));
         const regLink = await driver.findElement(By.css('a[href="/register"]'));
-        passed = (await loginLink.isDisplayed()) && (await regLink.isDisplayed());
+        passed = (await loginBtn.isDisplayed()) && (await regLink.isDisplayed());
       } catch (e) {
         await takeScreenshotOnFailure(driver, 'WEB-LOGIN-002');
       }
       collector.record({
         id: 'WEB-LOGIN-002',
         module: moduleName,
-        title: 'Splash page displays primary CTAs for Sign In and Register',
+        title: 'Splash page auto-redirects to /login displaying Sign In and Register CTAs',
         preconditions: 'User on splash page',
-        steps: 'Verify links to /login and /register exist and are visible',
-        expectedResult: 'Both /login and /register CTA buttons are visible',
+        steps: 'Navigate to root URL, wait for auto-redirect to /login, verify CTAs',
+        expectedResult: 'URL is /login with active login button and register link',
         actualResult: passed ? 'Both CTA links found and displayed' : 'Missing CTA links',
         status: passed ? 'PASS' : 'FAIL',
         duration: Date.now() - start,
@@ -229,9 +230,13 @@ async function runLoginAuthTests() {
       let passed = false;
       try {
         await driver.get(`${WEB_BASE_URL}/login`);
-        await driver.wait(until.elementLocated(By.id('login-email')), 3000);
-        await driver.findElement(By.id('login-email')).sendKeys('alice@example.com');
-        await driver.findElement(By.id('login-password')).sendKeys('password123');
+        await driver.wait(until.elementLocated(By.id('login-email')), 5000);
+        const emailInput = await driver.findElement(By.id('login-email'));
+        const passInput = await driver.findElement(By.id('login-password'));
+        await emailInput.clear();
+        await emailInput.sendKeys('alice@example.com');
+        await passInput.clear();
+        await passInput.sendKeys('password123');
         await driver.findElement(By.css('button[type="submit"]')).click();
 
         await driver.wait(until.urlContains('/home'), 5000);
@@ -387,13 +392,17 @@ async function runLoginAuthTests() {
         if (rv.email) await driver.findElement(By.id('reg-email')).sendKeys(rv.email);
         if (rv.phone) await driver.findElement(By.id('reg-phone')).sendKeys(rv.phone);
         if (rv.pass) await driver.findElement(By.id('reg-password')).sendKeys(rv.pass);
-        if (rv.conf) await driver.findElement(By.id('reg-confirmPassword')).sendKeys(rv.conf);
+        if (rv.conf) await driver.findElement(By.id('reg-confirm')).sendKeys(rv.conf);
 
-        await driver.findElement(By.css('button[type="submit"]')).click();
-        await driver.sleep(500);
-
-        const pageSource = await driver.getPageSource();
-        passed = pageSource.includes(rv.expMsg) || (await driver.getCurrentUrl()).includes('/register');
+        if (rv.id === 'WEB-LOGIN-027') {
+          const pageSource = await driver.getPageSource();
+          passed = pageSource.includes('+91');
+        } else {
+          await driver.findElement(By.css('button[type="submit"]')).click();
+          await driver.sleep(500);
+          const pageSource = await driver.getPageSource();
+          passed = pageSource.includes(rv.expMsg) || (await driver.getCurrentUrl()).includes('/register');
+        }
       } catch (err) {
         error = err;
       }

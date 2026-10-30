@@ -78,6 +78,17 @@ export function uploadImageStream(
   buffer: Buffer,
   folder: 'rentcart/items' | 'rentcart/avatars',
 ): Promise<UploadResult> {
+  if (env.CLOUDINARY_MOCK) {
+    if (env.NODE_ENV !== 'test') {
+      throw new Error('CLOUDINARY_MOCK is only permitted when NODE_ENV=test');
+    }
+    const publicId = `${folder}/${uuidv4()}`;
+    return Promise.resolve({
+      secureUrl: `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/v1234567890/${publicId}.jpg`,
+      publicId,
+    });
+  }
+
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
@@ -149,6 +160,7 @@ export function extractCloudinaryPublicId(
  * A cleanup failure must NEVER throw or fail the main request.
  */
 export async function deleteCloudinaryAsset(url: string | null | undefined): Promise<void> {
+  if (env.CLOUDINARY_MOCK) return;
   const publicId = extractCloudinaryPublicId(url);
   if (!publicId) return;
 

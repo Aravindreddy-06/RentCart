@@ -6,6 +6,7 @@
 import crypto from 'crypto';
 import prisma from '../prisma/client';
 import { OtpPurpose } from '@prisma/client';
+import { env } from '../config/env';
 
 export interface OtpVerificationResult {
   valid: boolean;
@@ -64,6 +65,13 @@ export function constantTimeCompare(candidateOtp: string, storedHash: string): b
  * Check resend cooldown (60 seconds) and hourly limits (max 5 OTP emails per hour).
  */
 export async function assertOtpRateLimits(userId: string, purpose: OtpPurpose): Promise<void> {
+  if (env.DISABLE_OTP_COOLDOWN) {
+    if (env.NODE_ENV !== 'test') {
+      throw new Error('DISABLE_OTP_COOLDOWN is only permitted when NODE_ENV=test');
+    }
+    return;
+  }
+
   const now = Date.now();
   const oneMinuteAgo = new Date(now - 60 * 1000);
   const oneHourAgo = new Date(now - 60 * 60 * 1000);

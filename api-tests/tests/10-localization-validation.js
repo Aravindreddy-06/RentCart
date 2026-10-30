@@ -134,7 +134,7 @@ async function runLocalizationTests() {
   // Check item listing currency
   {
     const start = Date.now();
-    const res = await request('/items?limit=1', 'GET');
+    const res = await request('/items?limit=1', 'GET', undefined, aliceToken);
     const itm = res.data?.data?.items?.[0] || res.data?.data?.[0];
     const passed = res.status === 200 && itm?.currency === 'INR';
 
@@ -209,11 +209,11 @@ async function runLocalizationTests() {
 
   // Data-driven coordinate validations (TC-LOC-024 to TC-LOC-028)
   const coordValidations = [
-    { title: 'Latitude > 90 rejected', lat: 95.0, lng: 0.0, expStatus: 400 },
-    { title: 'Latitude < -90 rejected', lat: -95.0, lng: 0.0, expStatus: 400 },
-    { title: 'Longitude > 180 rejected', lat: 0.0, lng: 185.0, expStatus: 400 },
-    { title: 'Longitude < -180 rejected', lat: 0.0, lng: -185.0, expStatus: 400 },
-    { title: 'Valid equator/prime meridian coordinates', lat: 0.0, lng: 0.0, expStatus: 200 },
+    { title: 'Latitude > 90 rejected', lat: 95.0, lng: 0.0, expStatus: [400, 422] },
+    { title: 'Latitude < -90 rejected', lat: -95.0, lng: 0.0, expStatus: [400, 422] },
+    { title: 'Longitude > 180 rejected', lat: 0.0, lng: 185.0, expStatus: [400, 422] },
+    { title: 'Longitude < -180 rejected', lat: 0.0, lng: -185.0, expStatus: [400, 422] },
+    { title: 'Valid equator/prime meridian coordinates', lat: 0.0, lng: 0.0, expStatus: [200] },
   ];
 
   for (let i = 0; i < coordValidations.length; i++) {
@@ -222,7 +222,7 @@ async function runLocalizationTests() {
     const start = Date.now();
     try {
       const res = await request('/users/me', 'PATCH', { latitude: cv.lat, longitude: cv.lng }, aliceToken);
-      const passed = res.status === cv.expStatus;
+      const passed = Array.isArray(cv.expStatus) ? cv.expStatus.includes(res.status) : res.status === cv.expStatus;
 
       collector.record({
         id: tcId,
@@ -271,7 +271,7 @@ async function runLocalizationTests() {
     const tcId = `API-LOC-${String(i + 29).padStart(3, '0')}`;
     const start = Date.now();
     try {
-      const res = await request(`/items?q=${encodeURIComponent(ic.q)}`, 'GET');
+      const res = await request(`/items?search=${encodeURIComponent(ic.q)}`, 'GET', undefined, aliceToken);
       const passed = res.status === 200 && Array.isArray(res.data?.data?.items || res.data?.data);
 
       collector.record({

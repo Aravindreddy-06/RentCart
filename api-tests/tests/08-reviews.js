@@ -122,7 +122,7 @@ async function runReviewsTests() {
       comment: 'Trying to review again',
     }, bobToken);
 
-    const passed = res.status === 400;
+    const passed = res.status === 400 || res.status === 409;
 
     collector.record({
       id: 'API-REV-004',

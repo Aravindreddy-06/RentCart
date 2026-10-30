@@ -215,7 +215,7 @@ async function runDuplicatesTests() {
   const rejectItemRes = await request('/items', 'POST', {
     title: 'Rejection Cooldown Lawn Mower',
     description: 'Electric lawn mower for rejection cooldown testing.',
-    category: 'Lawn & Garden',
+    category: 'Tools',
     pricePerDay: 50,
     deposit: 100,
   }, aliceToken);

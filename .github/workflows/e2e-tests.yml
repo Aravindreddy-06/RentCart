@@ -31,7 +31,21 @@ env:
   DATABASE_URL: postgresql://postgres:postgre@localhost:5432/rentcart
   JWT_SECRET: dummy-test-jwt-secret-rentcart-ci-automation-2026
   JWT_REFRESH_SECRET: dummy-test-refresh-secret-rentcart-ci-automation-2026
+  HANDOVER_PIN_SECRET: rentcart-super-secret-handover-pin-secret-key-32b
+  HANDOVER_PIN_ENC_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+  CLIENT_ORIGINS: http://localhost:5173,http://localhost:4000,http://10.0.2.2:4000
+  PUBLIC_BASE_URL: http://localhost:4000
+  CLOUDINARY_CLOUD_NAME: dummy-cloud-name
+  CLOUDINARY_API_KEY: dummy-api-key
+  CLOUDINARY_API_SECRET: dummy-api-secret
+  CLOUDINARY_MOCK: 'true'
+  MAIL_PROVIDER: smtp
+  MAIL_FROM_EMAIL: noreply@rentcart.app
+  MAIL_FROM_NAME: RentCart
+  MAIL_FROM: RentCart <noreply@rentcart.app>
   EMAIL_DISABLED: 'true'
+  DISABLE_OTP_COOLDOWN: 'true'
+  VITE_API_URL: http://localhost:4000
   WEB_BASE_URL: ${{ github.event.inputs.web_base_url != '' && github.event.inputs.web_base_url || 'http://localhost:5173' }}
   API_BASE_URL: ${{ github.event.inputs.api_base_url != '' && github.event.inputs.api_base_url || 'http://localhost:4000' }}
 
@@ -86,12 +100,17 @@ jobs:
         run: |
           cd backend
           npm run build
-          node dist/server.js &
+          node dist/server.js > backend.log 2>&1 &
           echo "Waiting for API server to become ready on http://localhost:4000..."
           for i in {1..30}; do
             if curl -s http://localhost:4000/api/health | grep -q "ok"; then
               echo "✅ API server is healthy!"
               break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Backend health check timed out. Dumping backend.log:"
+              cat backend.log
+              exit 1
             fi
             sleep 1
           done
@@ -167,17 +186,24 @@ jobs:
           npx prisma migrate deploy
           npm run seed
           npm run build
-          node dist/server.js &
+          node dist/server.js > backend.log 2>&1 &
           echo "Waiting for API server to become ready on http://localhost:4000..."
           for i in {1..30}; do
             if curl -s http://localhost:4000/api/health | grep -q "ok"; then
               echo "✅ Backend API server is ready!"
               break
             fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Backend health check timed out. Dumping backend.log:"
+              cat backend.log
+              exit 1
+            fi
             sleep 1
           done
 
       - name: Build & Serve Web Application (Vite Preview)
+        env:
+          VITE_API_URL: http://localhost:4000
         run: |
           cd frontend/web
           npm ci
@@ -277,12 +303,17 @@ jobs:
           npx prisma migrate deploy
           npm run seed
           npm run build
-          node dist/server.js &
+          node dist/server.js > backend.log 2>&1 &
           echo "Waiting for API server..."
           for i in {1..30}; do
             if curl -s http://localhost:4000/api/health | grep -q "ok"; then
               echo "✅ API server ready on http://localhost:4000 (accessible as http://10.0.2.2:4000 from emulator)"
               break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Backend health check timed out. Dumping backend.log:"
+              cat backend.log
+              exit 1
             fi
             sleep 1
           done
@@ -390,12 +421,17 @@ jobs:
           npx prisma migrate deploy
           npm run seed
           npm run build
-          node dist/server.js &
+          node dist/server.js > backend.log 2>&1 &
           echo "Waiting for API server..."
           for i in {1..30}; do
             if curl -s http://localhost:4000/api/health | grep -q "ok"; then
               echo "✅ API server ready for load testing!"
               break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Backend health check timed out. Dumping backend.log:"
+              cat backend.log
+              exit 1
             fi
             sleep 1
           done
@@ -477,14 +513,17 @@ jobs:
             { name: "Appium Android E2E", file: "artifacts/appium-test-report/results.json" },
           ];
 
+          let anyFailed = false;
           for (const s of suites) {
             if (fs.existsSync(s.file)) {
               try {
                 const data = JSON.parse(fs.readFileSync(s.file, "utf8"));
                 const dur = (data.totalDurationMs / 1000).toFixed(1) + "s";
                 summaryMd += `| ${s.name} | ${data.total} | ${data.passed} | ${data.failed} | ${data.skipped} | **${data.passRate}** | ${dur} |\n`;
+                if (data.failed > 0) anyFailed = true;
               } catch (e) {
                 summaryMd += `| ${s.name} | Error reading report | - | - | - | - | - |\n`;
+                anyFailed = true;
               }
             } else {
               summaryMd += `| ${s.name} | *Not executed / Skipped* | - | - | - | - | - |\n`;
@@ -503,6 +542,10 @@ jobs:
               const dur = m.http_req_duration || {};
               const getVal = (k) => (dur[k] !== undefined ? dur[k] : dur.values?.[k] || 0).toFixed(2);
               const failed = m.http_req_failed ? ((m.http_req_failed.rate || m.http_req_failed.values?.rate || 0) * 100).toFixed(2) : "0.00";
+
+              if (parseFloat(failed) >= 1.00 || parseFloat(getVal("avg")) >= 400 || parseFloat(getVal("p(95)")) >= 800) {
+                anyFailed = true;
+              }
 
               summaryMd += "| Metric | Result | Threshold | Status |\n";
               summaryMd += "|--------|--------|-----------|--------|\n";
@@ -523,5 +566,12 @@ jobs:
 
           summaryMd += "\n---\n*Generated by RentCart Automated Quality Assurance Pipeline*\n";
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summaryMd);
+
+          if (anyFailed) {
+            console.error("❌ Quality gate check failed: One or more test suites reported failures.");
+            process.exit(1);
+          } else {
+            console.log("✅ Quality gate check passed: All executed test suites passed with 0 failures.");
+          }
           '
 

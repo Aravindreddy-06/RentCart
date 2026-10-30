@@ -21,8 +21,8 @@ async function runRentalsTests() {
   let driver = await createDriver();
 
   try {
-    // Authenticate as Alice
-    await loginAndSetToken(driver, 'alice@example.com', 'password123');
+    // Authenticate as Bob (borrower with pending/active/returned rentals in seed)
+    await loginAndSetToken(driver, 'bob@example.com', 'password123');
 
     // TC-001: My Rentals page loads successfully
     {
@@ -184,6 +184,7 @@ async function runRentalsTests() {
       const start = Date.now();
       let passed = false;
       try {
+        await loginAndSetToken(driver, 'alice@example.com', 'password123');
         await driver.get(`${WEB_BASE_URL}/requests`);
         await driver.wait(until.elementLocated(By.css('h1, h2, nav')), 5000);
         passed = (await driver.getCurrentUrl()).includes('/requests');
@@ -408,16 +409,17 @@ async function runRentalsTests() {
       const start = Date.now();
       let passed = false;
       try {
+        await loginAndSetToken(driver, 'bob@example.com', 'password123');
         await driver.get(`${WEB_BASE_URL}/rentals`);
-        await driver.sleep(500);
-        const cancelButtons = await driver.findElements(By.xpath('//button[contains(text(), "Cancel")]'));
+        await driver.sleep(1500);
+        const cancelButtons = await driver.findElements(By.xpath("//button[contains(@class, 'text-red') and .//span[text()='Cancel']]"));
         if (cancelButtons.length > 0) {
           await cancelButtons[0].click();
-          await driver.sleep(300);
-          const modal = await driver.findElements(By.css('div[role="dialog"], .modal, div[class*="fixed"]'));
+          await driver.sleep(500);
+          const modal = await driver.findElements(By.xpath("//h3[contains(text(), 'Cancel Rental Request?')]"));
           passed = modal.length > 0;
           // Dismiss modal if open
-          const dismissBtn = await driver.findElements(By.xpath('//button[contains(text(), "Keep")] | //button[contains(text(), "Close")] | //button[contains(text(), "Dismiss")]'));
+          const dismissBtn = await driver.findElements(By.xpath("//button[contains(text(), 'Keep Request')]"));
           if (dismissBtn.length > 0) await dismissBtn[0].click();
         } else {
           // If no active cancel button, cancel dialog logic verified by code presence

@@ -343,7 +343,7 @@ async function runItemsTests() {
     const tcId = `API-ITEM-${String(i + 31).padStart(3, '0')}`;
     const start = Date.now();
     try {
-      const res = await request(`/items?q=${encodeURIComponent(sc.query)}`, 'GET', undefined, bobToken);
+      const res = await request(`/items?search=${encodeURIComponent(sc.query)}`, 'GET', undefined, bobToken);
       const items = res.data?.data?.items || res.data?.data || [];
       const passed = res.status === 200 && Array.isArray(items) && (sc.minResults === 0 ? items.length === 0 : items.length >= sc.minResults);
       collector.record({
@@ -351,7 +351,7 @@ async function runItemsTests() {
         module: moduleName,
         title: `Search items by keyword '${sc.query}'`,
         preconditions: 'Items indexed in DB',
-        steps: `GET /api/items?q=${encodeURIComponent(sc.query)} with auth`,
+        steps: `GET /api/items?search=${encodeURIComponent(sc.query)} with auth`,
         expectedResult: `HTTP 200 with ${sc.minResults === 0 ? 'empty list' : '>= ' + sc.minResults + ' results'}`,
         actualResult: `HTTP ${res.status}: returned ${items.length} items`,
         status: passed ? 'PASS' : 'FAIL',

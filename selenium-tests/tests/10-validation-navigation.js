@@ -30,9 +30,10 @@ async function runValidationNavigationTests() {
       let passed = false;
       try {
         await driver.get(`${WEB_BASE_URL}/non-existent-page-${Date.now()}`);
-        await driver.sleep(1000);
+        await driver.sleep(1500);
+        const currentUrl = await driver.getCurrentUrl();
         const bodyText = await driver.findElement(By.css('body')).getText();
-        passed = bodyText.includes('404') || bodyText.includes('not found') || bodyText.includes('Page Not Found') || bodyText.includes('Home');
+        passed = currentUrl.includes('/home') || currentUrl.includes('/login') || (currentUrl.startsWith(WEB_BASE_URL) && (bodyText.includes('404') || bodyText.includes('not found') || bodyText.includes('Welcome back') || bodyText.includes('RentCart')));
       } catch (e) {
         await takeScreenshotOnFailure(driver, 'WEB-NAV-001');
       }

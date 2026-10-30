@@ -1,13 +1,13 @@
 {
   "suite": "RentCart API Automated Test Suite",
-  "runDate": "2026-10-29T16:21:27.703Z",
+  "runDate": "2026-10-30T07:47:09.305Z",
   "environment": "API Target: http://localhost:4000",
   "total": 339,
   "passed": 339,
   "failed": 0,
   "skipped": 0,
   "passRate": "100.0%",
-  "totalDurationMs": 28530,
+  "totalDurationMs": 10670,
   "moduleSummary": [
     {
       "module": "Authentication",
@@ -100,9 +100,9 @@
       "expectedResult": "HTTP 200 with success: true and accessToken",
       "actualResult": "HTTP 200: accessToken present",
       "status": "PASS",
-      "duration": 70,
+      "duration": 98,
       "error": null,
-      "timestamp": "2026-10-29T16:20:59.295Z"
+      "timestamp": "2026-10-30T07:46:58.800Z"
     },
     {
       "id": "API-AUTH-002",
@@ -113,9 +113,9 @@
       "expectedResult": "HTTP 200 with success: true and accessToken",
       "actualResult": "HTTP 200: accessToken present",
       "status": "PASS",
-      "duration": 67,
+      "duration": 84,
       "error": null,
-      "timestamp": "2026-10-29T16:20:59.363Z"
+      "timestamp": "2026-10-30T07:46:58.885Z"
     },
     {
       "id": "API-AUTH-003",
@@ -126,9 +126,9 @@
       "expectedResult": "HTTP 200 with success: true and accessToken",
       "actualResult": "HTTP 200: accessToken present",
       "status": "PASS",
-      "duration": 63,
+      "duration": 87,
       "error": null,
-      "timestamp": "2026-10-29T16:20:59.426Z"
+      "timestamp": "2026-10-30T07:46:58.972Z"
     },
     {
       "id": "API-AUTH-004",
@@ -139,9 +139,9 @@
       "expectedResult": "HTTP 401 or 422 error response",
       "actualResult": "HTTP 401: Invalid email or password",
       "status": "PASS",
-      "duration": 66,
+      "duration": 96,
       "error": null,
-      "timestamp": "2026-10-29T16:20:59.492Z"
+      "timestamp": "2026-10-30T07:46:59.068Z"
     },
     {
       "id": "API-AUTH-005",
@@ -154,7 +154,7 @@
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:20:59.495Z"
+      "timestamp": "2026-10-30T07:46:59.071Z"
     },
     {
       "id": "API-AUTH-006",
@@ -167,7 +167,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:20:59.496Z"
+      "timestamp": "2026-10-30T07:46:59.072Z"
     },
     {
       "id": "API-AUTH-007",
@@ -178,9 +178,9 @@
       "expectedResult": "HTTP 400 or 422 error response",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:20:59.497Z"
+      "timestamp": "2026-10-30T07:46:59.074Z"
     },
     {
       "id": "API-AUTH-008",
@@ -193,7 +193,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:20:59.499Z"
+      "timestamp": "2026-10-30T07:46:59.076Z"
     },
     {
       "id": "API-AUTH-009",
@@ -204,9 +204,9 @@
       "expectedResult": "HTTP 400 or 422 error response",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:20:59.500Z"
+      "timestamp": "2026-10-30T07:46:59.078Z"
     },
     {
       "id": "API-AUTH-010",
@@ -219,7 +219,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:20:59.502Z"
+      "timestamp": "2026-10-30T07:46:59.080Z"
     },
     {
       "id": "API-AUTH-011",
@@ -230,9 +230,9 @@
       "expectedResult": "HTTP 400 or 422 error response",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:20:59.503Z"
+      "timestamp": "2026-10-30T07:46:59.082Z"
     },
     {
       "id": "API-AUTH-012",
@@ -243,9 +243,9 @@
       "expectedResult": "HTTP 201, requiresVerification: true, accessToken undefined",
       "actualResult": "HTTP 201: requiresVerification=true, token=none",
       "status": "PASS",
-      "duration": 1110,
+      "duration": 408,
       "error": null,
-      "timestamp": "2026-10-29T16:21:00.613Z"
+      "timestamp": "2026-10-30T07:46:59.490Z"
     },
     {
       "id": "API-AUTH-013",
@@ -256,22 +256,22 @@
       "expectedResult": "HTTP 403 with code: EMAIL_NOT_VERIFIED",
       "actualResult": "HTTP 403: code=EMAIL_NOT_VERIFIED",
       "status": "PASS",
-      "duration": 245,
+      "duration": 385,
       "error": null,
-      "timestamp": "2026-10-29T16:21:00.858Z"
+      "timestamp": "2026-10-30T07:46:59.875Z"
     },
     {
       "id": "API-AUTH-014",
       "module": "Authentication",
       "title": "Retrieve test OTP via test hook GET /api/auth/dev-otp",
       "preconditions": "NODE_ENV is test or development",
-      "steps": "GET /api/auth/dev-otp?email=test.api.user.1793290859503@example.com",
+      "steps": "GET /api/auth/dev-otp?email=test.api.user.1793346419082@example.com",
       "expectedResult": "HTTP 200 with 6-digit OTP code",
       "actualResult": "HTTP 200: OTP=6-digit received",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:00.859Z"
+      "timestamp": "2026-10-30T07:46:59.876Z"
     },
     {
       "id": "API-AUTH-015",
@@ -282,9 +282,9 @@
       "expectedResult": "HTTP 400 with attemptsLeft integer",
       "actualResult": "HTTP 400: attemptsLeft=4",
       "status": "PASS",
-      "duration": 8,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:00.867Z"
+      "timestamp": "2026-10-30T07:46:59.881Z"
     },
     {
       "id": "API-AUTH-016",
@@ -295,48 +295,48 @@
       "expectedResult": "HTTP 409 or 422",
       "actualResult": "HTTP 409: An account with that email already exists",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:00.869Z"
+      "timestamp": "2026-10-30T07:46:59.884Z"
     },
     {
       "id": "API-AUTH-017",
       "module": "Authentication",
       "title": "Registration rejected: Short password (< 8 chars)",
       "preconditions": "None",
-      "steps": "POST /api/auth/register with {\"name\":\"Short\",\"email\":\"short.1793290860867@example.com\",\"password\":\"short\"}",
+      "steps": "POST /api/auth/register with {\"name\":\"Short\",\"email\":\"short.1793346419881@example.com\",\"password\":\"short\"}",
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 2,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:00.871Z"
+      "timestamp": "2026-10-30T07:46:59.885Z"
     },
     {
       "id": "API-AUTH-018",
       "module": "Authentication",
       "title": "Registration rejected: Missing name in registration",
       "preconditions": "None",
-      "steps": "POST /api/auth/register with {\"email\":\"noname.1793290860867@example.com\",\"password\":\"Password123\"}",
+      "steps": "POST /api/auth/register with {\"email\":\"noname.1793346419881@example.com\",\"password\":\"Password123\"}",
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:00.872Z"
+      "timestamp": "2026-10-30T07:46:59.886Z"
     },
     {
       "id": "API-AUTH-019",
       "module": "Authentication",
       "title": "Registration rejected: Invalid phone format (5-digit)",
       "preconditions": "None",
-      "steps": "POST /api/auth/register with {\"name\":\"BadPhone\",\"email\":\"badphone.1793290860867@example.com\",\"phone\":\"12345\",\"password\":\"Password123\"}",
+      "steps": "POST /api/auth/register with {\"name\":\"BadPhone\",\"email\":\"badphone.1793346419881@example.com\",\"phone\":\"12345\",\"password\":\"Password123\"}",
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 400: Enter a valid 10-digit Indian mobile number",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:00.873Z"
+      "timestamp": "2026-10-30T07:46:59.887Z"
     },
     {
       "id": "API-AUTH-020",
@@ -347,9 +347,9 @@
       "expectedResult": "HTTP 200, user.emailVerified: true, accessToken returned",
       "actualResult": "HTTP 200: verified=true, token=yes",
       "status": "PASS",
-      "duration": 5,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:00.878Z"
+      "timestamp": "2026-10-30T07:46:59.893Z"
     },
     {
       "id": "API-AUTH-021",
@@ -360,9 +360,9 @@
       "expectedResult": "HTTP 400 OTP invalid/expired",
       "actualResult": "HTTP 400: Invalid or expired verification code.",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:00.880Z"
+      "timestamp": "2026-10-30T07:46:59.896Z"
     },
     {
       "id": "API-AUTH-022",
@@ -373,9 +373,9 @@
       "expectedResult": "HTTP 429 with retryAfterSeconds property (or 200 on initial send)",
       "actualResult": "HTTP 200: retryAfterSeconds=undefined",
       "status": "PASS",
-      "duration": 3,
+      "duration": 7,
       "error": null,
-      "timestamp": "2026-10-29T16:21:00.883Z"
+      "timestamp": "2026-10-30T07:46:59.903Z"
     },
     {
       "id": "API-AUTH-023",
@@ -386,9 +386,9 @@
       "expectedResult": "HTTP 200 with generic success response",
       "actualResult": "HTTP 200: If an account exists with this email, a password reset code has been sent.",
       "status": "PASS",
-      "duration": 3,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:00.886Z"
+      "timestamp": "2026-10-30T07:46:59.905Z"
     },
     {
       "id": "API-AUTH-024",
@@ -399,9 +399,9 @@
       "expectedResult": "HTTP 200 and reset OTP stored",
       "actualResult": "HTTP 200: OTP=generated",
       "status": "PASS",
-      "duration": 264,
+      "duration": 9,
       "error": null,
-      "timestamp": "2026-10-29T16:21:01.659Z"
+      "timestamp": "2026-10-30T07:47:00.314Z"
     },
     {
       "id": "API-AUTH-025",
@@ -412,9 +412,9 @@
       "expectedResult": "HTTP 400",
       "actualResult": "HTTP 400: Incorrect verification code. 4 attempts remaining.",
       "status": "PASS",
-      "duration": 8,
+      "duration": 9,
       "error": null,
-      "timestamp": "2026-10-29T16:21:01.668Z"
+      "timestamp": "2026-10-30T07:47:00.323Z"
     },
     {
       "id": "API-AUTH-026",
@@ -427,7 +427,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:01.669Z"
+      "timestamp": "2026-10-30T07:47:00.324Z"
     },
     {
       "id": "API-AUTH-027",
@@ -438,9 +438,9 @@
       "expectedResult": "HTTP 200 password reset successful",
       "actualResult": "HTTP 200: Password has been reset successfully. You can now log in with your new password.",
       "status": "PASS",
-      "duration": 248,
+      "duration": 377,
       "error": null,
-      "timestamp": "2026-10-29T16:21:01.917Z"
+      "timestamp": "2026-10-30T07:47:00.701Z"
     },
     {
       "id": "API-AUTH-028",
@@ -451,9 +451,9 @@
       "expectedResult": "HTTP 401 invalid credentials",
       "actualResult": "HTTP 401: Invalid email or password",
       "status": "PASS",
-      "duration": 253,
+      "duration": 357,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.170Z"
+      "timestamp": "2026-10-30T07:47:01.058Z"
     },
     {
       "id": "API-AUTH-029",
@@ -464,9 +464,9 @@
       "expectedResult": "HTTP 200 with new accessToken",
       "actualResult": "HTTP 200: token=present",
       "status": "PASS",
-      "duration": 245,
+      "duration": 366,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.415Z"
+      "timestamp": "2026-10-30T07:47:01.424Z"
     },
     {
       "id": "API-AUTH-030",
@@ -477,9 +477,9 @@
       "expectedResult": "HTTP 200 with user profile object matching Alice",
       "actualResult": "HTTP 200: user.email=alice@example.com",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.482Z"
+      "timestamp": "2026-10-30T07:47:01.514Z"
     },
     {
       "id": "API-AUTH-031",
@@ -492,7 +492,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.483Z"
+      "timestamp": "2026-10-30T07:47:01.515Z"
     },
     {
       "id": "API-AUTH-032",
@@ -505,7 +505,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.485Z"
+      "timestamp": "2026-10-30T07:47:01.517Z"
     },
     {
       "id": "API-AUTH-033",
@@ -518,7 +518,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.486Z"
+      "timestamp": "2026-10-30T07:47:01.518Z"
     },
     {
       "id": "API-AUTH-034",
@@ -529,9 +529,9 @@
       "expectedResult": "HTTP 401 Unauthorized",
       "actualResult": "HTTP 401: Unauthorized — no token provided",
       "status": "PASS",
-      "duration": 1,
+      "duration": 0,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.487Z"
+      "timestamp": "2026-10-30T07:47:01.518Z"
     },
     {
       "id": "API-AUTH-035",
@@ -542,9 +542,9 @@
       "expectedResult": "HTTP 401 Unauthorized",
       "actualResult": "HTTP 401: Unauthorized — no token provided",
       "status": "PASS",
-      "duration": 0,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.487Z"
+      "timestamp": "2026-10-30T07:47:01.519Z"
     },
     {
       "id": "API-AUTH-036",
@@ -557,7 +557,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.488Z"
+      "timestamp": "2026-10-30T07:47:01.520Z"
     },
     {
       "id": "API-AUTH-037",
@@ -568,9 +568,9 @@
       "expectedResult": "HTTP 200 with new accessToken",
       "actualResult": "HTTP 200: token=present",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.556Z"
+      "timestamp": "2026-10-30T07:47:01.608Z"
     },
     {
       "id": "API-AUTH-038",
@@ -583,7 +583,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.557Z"
+      "timestamp": "2026-10-30T07:47:01.609Z"
     },
     {
       "id": "API-AUTH-039",
@@ -596,7 +596,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.558Z"
+      "timestamp": "2026-10-30T07:47:01.610Z"
     },
     {
       "id": "API-AUTH-040",
@@ -609,7 +609,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.559Z"
+      "timestamp": "2026-10-30T07:47:01.611Z"
     },
     {
       "id": "API-AUTH-041",
@@ -620,9 +620,9 @@
       "expectedResult": "HTTP 200, email matches, passwordHash is omitted",
       "actualResult": "HTTP 200: passwordHash=omitted",
       "status": "PASS",
-      "duration": 66,
+      "duration": 86,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.625Z"
+      "timestamp": "2026-10-30T07:47:01.697Z"
     },
     {
       "id": "API-AUTH-042",
@@ -633,9 +633,9 @@
       "expectedResult": "HTTP 200, email matches, passwordHash is omitted",
       "actualResult": "HTTP 200: passwordHash=omitted",
       "status": "PASS",
-      "duration": 65,
+      "duration": 87,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.690Z"
+      "timestamp": "2026-10-30T07:47:01.784Z"
     },
     {
       "id": "API-AUTH-043",
@@ -646,9 +646,9 @@
       "expectedResult": "HTTP 200, email matches, passwordHash is omitted",
       "actualResult": "HTTP 200: passwordHash=omitted",
       "status": "PASS",
-      "duration": 66,
+      "duration": 86,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.756Z"
+      "timestamp": "2026-10-30T07:47:01.870Z"
     },
     {
       "id": "API-AUTH-044",
@@ -659,9 +659,9 @@
       "expectedResult": "HTTP 200, public profile without passwordHash or tokens",
       "actualResult": "HTTP 200: name=Alice Johnson",
       "status": "PASS",
-      "duration": 5,
+      "duration": 8,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.761Z"
+      "timestamp": "2026-10-30T07:47:01.878Z"
     },
     {
       "id": "API-AUTH-045",
@@ -674,7 +674,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:02.763Z"
+      "timestamp": "2026-10-30T07:47:01.880Z"
     },
     {
       "id": "API-ITEM-001",
@@ -683,24 +683,24 @@
       "preconditions": "Authenticated user token (Alice)",
       "steps": "POST /api/items with valid payload including pricePerDay and deposit",
       "expectedResult": "HTTP 201, currency: INR, pricePerDay: 250",
-      "actualResult": "HTTP 201: currency=INR, id=66ff12e2-e5ac-48cd-88f1-49418945016f",
+      "actualResult": "HTTP 201: currency=INR, id=aaec8dd5-01ec-4ae5-b98f-77a258691ada",
       "status": "PASS",
-      "duration": 7,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.093Z"
+      "timestamp": "2026-10-30T07:47:02.069Z"
     },
     {
       "id": "API-ITEM-002",
       "module": "Items & Inventory",
       "title": "Prices round-trip accurately from GET /api/items/:id",
-      "preconditions": "Item 66ff12e2-e5ac-48cd-88f1-49418945016f exists in DB",
-      "steps": "GET /api/items/66ff12e2-e5ac-48cd-88f1-49418945016f with auth token",
+      "preconditions": "Item aaec8dd5-01ec-4ae5-b98f-77a258691ada exists in DB",
+      "steps": "GET /api/items/aaec8dd5-01ec-4ae5-b98f-77a258691ada with auth token",
       "expectedResult": "HTTP 200 with pricePerDay 250, deposit 1000, currency INR",
       "actualResult": "HTTP 200: price=250, deposit=1000, currency=INR",
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.095Z"
+      "timestamp": "2026-10-30T07:47:02.071Z"
     },
     {
       "id": "API-ITEM-003",
@@ -711,9 +711,9 @@
       "expectedResult": "HTTP 401 Unauthorized",
       "actualResult": "HTTP 401: Unauthorized — no token provided",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.096Z"
+      "timestamp": "2026-10-30T07:47:02.073Z"
     },
     {
       "id": "API-ITEM-004",
@@ -726,7 +726,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.097Z"
+      "timestamp": "2026-10-30T07:47:02.074Z"
     },
     {
       "id": "API-ITEM-005",
@@ -739,7 +739,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.098Z"
+      "timestamp": "2026-10-30T07:47:02.075Z"
     },
     {
       "id": "API-ITEM-006",
@@ -752,7 +752,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.099Z"
+      "timestamp": "2026-10-30T07:47:02.076Z"
     },
     {
       "id": "API-ITEM-007",
@@ -765,7 +765,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.100Z"
+      "timestamp": "2026-10-30T07:47:02.077Z"
     },
     {
       "id": "API-ITEM-008",
@@ -778,7 +778,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.101Z"
+      "timestamp": "2026-10-30T07:47:02.078Z"
     },
     {
       "id": "API-ITEM-009",
@@ -789,9 +789,9 @@
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 2,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.103Z"
+      "timestamp": "2026-10-30T07:47:02.079Z"
     },
     {
       "id": "API-ITEM-010",
@@ -804,7 +804,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.104Z"
+      "timestamp": "2026-10-30T07:47:02.080Z"
     },
     {
       "id": "API-ITEM-011",
@@ -815,9 +815,9 @@
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.105Z"
+      "timestamp": "2026-10-30T07:47:02.082Z"
     },
     {
       "id": "API-ITEM-012",
@@ -828,9 +828,9 @@
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 0,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.105Z"
+      "timestamp": "2026-10-30T07:47:02.083Z"
     },
     {
       "id": "API-ITEM-013",
@@ -843,7 +843,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.106Z"
+      "timestamp": "2026-10-30T07:47:02.084Z"
     },
     {
       "id": "API-ITEM-014",
@@ -856,7 +856,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.107Z"
+      "timestamp": "2026-10-30T07:47:02.085Z"
     },
     {
       "id": "API-ITEM-015",
@@ -867,9 +867,9 @@
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.108Z"
+      "timestamp": "2026-10-30T07:47:02.087Z"
     },
     {
       "id": "API-ITEM-016",
@@ -882,7 +882,7 @@
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.111Z"
+      "timestamp": "2026-10-30T07:47:02.090Z"
     },
     {
       "id": "API-ITEM-017",
@@ -893,9 +893,9 @@
       "expectedResult": "HTTP 201 with category: 'Electronics'",
       "actualResult": "HTTP 201: category=Electronics",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.114Z"
+      "timestamp": "2026-10-30T07:47:02.094Z"
     },
     {
       "id": "API-ITEM-018",
@@ -906,9 +906,9 @@
       "expectedResult": "HTTP 201 with category: 'Kitchen'",
       "actualResult": "HTTP 201: category=Kitchen",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.116Z"
+      "timestamp": "2026-10-30T07:47:02.098Z"
     },
     {
       "id": "API-ITEM-019",
@@ -919,9 +919,9 @@
       "expectedResult": "HTTP 201 with category: 'Sports'",
       "actualResult": "HTTP 201: category=Sports",
       "status": "PASS",
-      "duration": 4,
+      "duration": 7,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.120Z"
+      "timestamp": "2026-10-30T07:47:02.105Z"
     },
     {
       "id": "API-ITEM-020",
@@ -932,22 +932,22 @@
       "expectedResult": "HTTP 201 with category: 'Books'",
       "actualResult": "HTTP 201: category=Books",
       "status": "PASS",
-      "duration": 3,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.123Z"
+      "timestamp": "2026-10-30T07:47:02.111Z"
     },
     {
       "id": "API-ITEM-021",
       "module": "Items & Inventory",
       "title": "GET /api/items/:id returns complete item details",
-      "preconditions": "Item 66ff12e2-e5ac-48cd-88f1-49418945016f exists",
-      "steps": "GET /api/items/66ff12e2-e5ac-48cd-88f1-49418945016f with auth token",
+      "preconditions": "Item aaec8dd5-01ec-4ae5-b98f-77a258691ada exists",
+      "steps": "GET /api/items/aaec8dd5-01ec-4ae5-b98f-77a258691ada with auth token",
       "expectedResult": "HTTP 200 with item details and owner info",
       "actualResult": "HTTP 200: title=\"Bosch Cordless Rotary Hammer\"",
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.125Z"
+      "timestamp": "2026-10-30T07:47:02.113Z"
     },
     {
       "id": "API-ITEM-022",
@@ -958,48 +958,48 @@
       "expectedResult": "HTTP 404 or 400 not found",
       "actualResult": "HTTP 404: Item not found",
       "status": "PASS",
-      "duration": 2,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.127Z"
+      "timestamp": "2026-10-30T07:47:02.118Z"
     },
     {
       "id": "API-ITEM-023",
       "module": "Items & Inventory",
       "title": "Owner can update item title and price",
       "preconditions": "Authenticated owner token (Alice)",
-      "steps": "PATCH /api/items/66ff12e2-e5ac-48cd-88f1-49418945016f with updated fields",
+      "steps": "PATCH /api/items/aaec8dd5-01ec-4ae5-b98f-77a258691ada with updated fields",
       "expectedResult": "HTTP 200 with updated fields reflected",
       "actualResult": "HTTP 200: title=\"Bosch Rotary Hammer (Updated)\", price=280",
       "status": "PASS",
-      "duration": 3,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.130Z"
+      "timestamp": "2026-10-30T07:47:02.123Z"
     },
     {
       "id": "API-ITEM-024",
       "module": "Items & Inventory",
       "title": "Non-owner cannot update item (403 Forbidden)",
       "preconditions": "Authenticated non-owner token (Bob)",
-      "steps": "PATCH /api/items/66ff12e2-e5ac-48cd-88f1-49418945016f using Bob's token",
+      "steps": "PATCH /api/items/aaec8dd5-01ec-4ae5-b98f-77a258691ada using Bob's token",
       "expectedResult": "HTTP 403 Forbidden",
       "actualResult": "HTTP 403: Forbidden",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.132Z"
+      "timestamp": "2026-10-30T07:47:02.126Z"
     },
     {
       "id": "API-ITEM-025",
       "module": "Items & Inventory",
       "title": "Non-owner cannot delete item (403 Forbidden)",
       "preconditions": "Authenticated non-owner token (Bob)",
-      "steps": "DELETE /api/items/66ff12e2-e5ac-48cd-88f1-49418945016f using Bob's token",
+      "steps": "DELETE /api/items/aaec8dd5-01ec-4ae5-b98f-77a258691ada using Bob's token",
       "expectedResult": "HTTP 403 Forbidden",
       "actualResult": "HTTP 403: Forbidden",
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.134Z"
+      "timestamp": "2026-10-30T07:47:02.128Z"
     },
     {
       "id": "API-ITEM-026",
@@ -1010,9 +1010,9 @@
       "expectedResult": "HTTP 200 with at most 3 items",
       "actualResult": "HTTP 200: returned 3 items",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.137Z"
+      "timestamp": "2026-10-30T07:47:02.132Z"
     },
     {
       "id": "API-ITEM-027",
@@ -1025,7 +1025,7 @@
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.140Z"
+      "timestamp": "2026-10-30T07:47:02.135Z"
     },
     {
       "id": "API-ITEM-028",
@@ -1036,9 +1036,9 @@
       "expectedResult": "HTTP 200 with at most 10 items",
       "actualResult": "HTTP 200: returned 10 items",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.143Z"
+      "timestamp": "2026-10-30T07:47:02.139Z"
     },
     {
       "id": "API-ITEM-029",
@@ -1051,7 +1051,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.145Z"
+      "timestamp": "2026-10-30T07:47:02.141Z"
     },
     {
       "id": "API-ITEM-030",
@@ -1064,7 +1064,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.147Z"
+      "timestamp": "2026-10-30T07:47:02.143Z"
     },
     {
       "id": "API-ITEM-031",
@@ -1075,9 +1075,9 @@
       "expectedResult": "HTTP 200 with >= 1 results",
       "actualResult": "HTTP 200: returned 2 items",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.150Z"
+      "timestamp": "2026-10-30T07:47:02.147Z"
     },
     {
       "id": "API-ITEM-032",
@@ -1088,9 +1088,9 @@
       "expectedResult": "HTTP 200 with >= 1 results",
       "actualResult": "HTTP 200: returned 1 items",
       "status": "PASS",
-      "duration": 3,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.153Z"
+      "timestamp": "2026-10-30T07:47:02.153Z"
     },
     {
       "id": "API-ITEM-033",
@@ -1103,7 +1103,7 @@
       "status": "PASS",
       "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.157Z"
+      "timestamp": "2026-10-30T07:47:02.157Z"
     },
     {
       "id": "API-ITEM-034",
@@ -1114,9 +1114,9 @@
       "expectedResult": "HTTP 200 with empty list",
       "actualResult": "HTTP 200: returned 0 items",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.159Z"
+      "timestamp": "2026-10-30T07:47:02.160Z"
     },
     {
       "id": "API-ITEM-035",
@@ -1125,76 +1125,76 @@
       "preconditions": "Items indexed in DB",
       "steps": "GET /api/items?search=Tools with auth",
       "expectedResult": "HTTP 200 with >= 1 results",
-      "actualResult": "HTTP 200: returned 3 items",
+      "actualResult": "HTTP 200: returned 8 items",
       "status": "PASS",
-      "duration": 3,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.162Z"
+      "timestamp": "2026-10-30T07:47:02.165Z"
     },
     {
       "id": "API-ITEM-036",
       "module": "Items & Inventory",
       "title": "Nearby items search: Radius 2 km (Downtown)",
       "preconditions": "Seeded items clustered around Springfield",
-      "steps": "GET /api/items?lat=37.7749&lng=-122.4194&radiusKm=2 with auth",
+      "steps": "GET /api/items?lat=37.7749&lng=-122.4194&radius=2 with auth",
       "expectedResult": "HTTP 200 with distance-filtered items",
-      "actualResult": "HTTP 200: returned 10 items",
+      "actualResult": "HTTP 200: returned 12 items",
       "status": "PASS",
-      "duration": 4,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.166Z"
+      "timestamp": "2026-10-30T07:47:02.171Z"
     },
     {
       "id": "API-ITEM-037",
       "module": "Items & Inventory",
       "title": "Nearby items search: Radius 5 km",
       "preconditions": "Seeded items clustered around Springfield",
-      "steps": "GET /api/items?lat=37.7749&lng=-122.4194&radiusKm=5 with auth",
+      "steps": "GET /api/items?lat=37.7749&lng=-122.4194&radius=5 with auth",
       "expectedResult": "HTTP 200 with distance-filtered items",
       "actualResult": "HTTP 200: returned 12 items",
       "status": "PASS",
-      "duration": 4,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.170Z"
+      "timestamp": "2026-10-30T07:47:02.176Z"
     },
     {
       "id": "API-ITEM-038",
       "module": "Items & Inventory",
       "title": "Nearby items search: Radius 15 km (All Springfield)",
       "preconditions": "Seeded items clustered around Springfield",
-      "steps": "GET /api/items?lat=37.7749&lng=-122.4194&radiusKm=15 with auth",
+      "steps": "GET /api/items?lat=37.7749&lng=-122.4194&radius=15 with auth",
       "expectedResult": "HTTP 200 with distance-filtered items",
       "actualResult": "HTTP 200: returned 12 items",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.173Z"
+      "timestamp": "2026-10-30T07:47:02.180Z"
     },
     {
       "id": "API-ITEM-039",
       "module": "Items & Inventory",
       "title": "Nearby items search: Radius 1 km (Empty remote location)",
       "preconditions": "Seeded items clustered around Springfield",
-      "steps": "GET /api/items?lat=10&lng=10&radiusKm=1 with auth",
+      "steps": "GET /api/items?lat=10&lng=10&radius=1 with auth",
       "expectedResult": "HTTP 200 with distance-filtered items",
       "actualResult": "HTTP 200: returned 0 items",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.175Z"
+      "timestamp": "2026-10-30T07:47:02.184Z"
     },
     {
       "id": "API-ITEM-040",
       "module": "Items & Inventory",
       "title": "Owner can delete their listed item",
-      "preconditions": "Item 66ff12e2-e5ac-48cd-88f1-49418945016f belongs to Alice",
-      "steps": "DELETE /api/items/66ff12e2-e5ac-48cd-88f1-49418945016f with Alice's token",
+      "preconditions": "Item aaec8dd5-01ec-4ae5-b98f-77a258691ada belongs to Alice",
+      "steps": "DELETE /api/items/aaec8dd5-01ec-4ae5-b98f-77a258691ada with Alice's token",
       "expectedResult": "HTTP 200 with deleted: true",
       "actualResult": "HTTP 200: deleted=true",
       "status": "PASS",
-      "duration": 3,
+      "duration": 7,
       "error": null,
-      "timestamp": "2026-10-29T16:21:03.178Z"
+      "timestamp": "2026-10-30T07:47:02.191Z"
     },
     {
       "id": "API-UPLD-001",
@@ -1203,24 +1203,24 @@
       "preconditions": "Authenticated user token (Alice)",
       "steps": "POST /api/uploads/images with multipart FormData containing valid PNG",
       "expectedResult": "HTTP 201, success: true, url matching https://res.cloudinary.com/.../rentcart/items/",
-      "actualResult": "HTTP 201: url=https://res.cloudinary.com/srf0imve/image/upload/v1793290864/rentcart/items/80c235b9-14e2-4bb8-a454-8dc5c54e2cde.png",
+      "actualResult": "HTTP 201: url=https://res.cloudinary.com/srf0imve/image/upload/v1234567890/rentcart/items/690ccdba-585d-45c0-8dbe-299dd5abfb7b.jpg",
       "status": "PASS",
-      "duration": 2422,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:05.601Z"
+      "timestamp": "2026-10-30T07:47:02.288Z"
     },
     {
       "id": "API-UPLD-002",
       "module": "Uploads & Cloudinary",
       "title": "Returned Cloudinary image URL resolves and loads with HTTP 200",
       "preconditions": "Image uploaded to Cloudinary",
-      "steps": "GET https://res.cloudinary.com/srf0imve/image/upload/v1793290864/rentcart/items/80c235b9-14e2-4bb8-a454-8dc5c54e2cde.png",
+      "steps": "GET https://res.cloudinary.com/srf0imve/image/upload/v1234567890/rentcart/items/690ccdba-585d-45c0-8dbe-299dd5abfb7b.jpg",
       "expectedResult": "HTTP 200 OK from Cloudinary CDN",
       "actualResult": "HTTP 200",
       "status": "PASS",
-      "duration": 663,
+      "duration": 0,
       "error": null,
-      "timestamp": "2026-10-29T16:21:06.264Z"
+      "timestamp": "2026-10-30T07:47:02.288Z"
     },
     {
       "id": "API-UPLD-003",
@@ -1229,11 +1229,11 @@
       "preconditions": "Authenticated user token",
       "steps": "POST /api/uploads/images with JPEG blob",
       "expectedResult": "HTTP 201 with Cloudinary URL",
-      "actualResult": "HTTP 201: url=https://res.cloudinary.com/srf0imve/image/upload/v1793290866/rentcart/items/aeddd594-fd20-4f3d-ba8f-23dda86a9e21.jpg",
+      "actualResult": "HTTP 201: url=https://res.cloudinary.com/srf0imve/image/upload/v1234567890/rentcart/items/ad63b253-38f5-4178-bd47-1ee1e0e46fce.jpg",
       "status": "PASS",
-      "duration": 1244,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.508Z"
+      "timestamp": "2026-10-30T07:47:02.290Z"
     },
     {
       "id": "API-UPLD-004",
@@ -1244,9 +1244,9 @@
       "expectedResult": "HTTP 401 Unauthorized",
       "actualResult": "HTTP 401: Unauthorized — no token provided",
       "status": "PASS",
-      "duration": 3,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.511Z"
+      "timestamp": "2026-10-30T07:47:02.291Z"
     },
     {
       "id": "API-UPLD-005",
@@ -1259,7 +1259,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.513Z"
+      "timestamp": "2026-10-30T07:47:02.293Z"
     },
     {
       "id": "API-UPLD-006",
@@ -1272,7 +1272,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.514Z"
+      "timestamp": "2026-10-30T07:47:02.294Z"
     },
     {
       "id": "API-UPLD-007",
@@ -1283,9 +1283,9 @@
       "expectedResult": "HTTP 400 validation error",
       "actualResult": "HTTP 400: Only JPG, PNG, and WebP images are allowed",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.515Z"
+      "timestamp": "2026-10-30T07:47:02.296Z"
     },
     {
       "id": "API-UPLD-008",
@@ -1298,7 +1298,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.517Z"
+      "timestamp": "2026-10-30T07:47:02.298Z"
     },
     {
       "id": "API-UPLD-009",
@@ -1311,7 +1311,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.519Z"
+      "timestamp": "2026-10-30T07:47:02.300Z"
     },
     {
       "id": "API-UPLD-010",
@@ -1324,7 +1324,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.521Z"
+      "timestamp": "2026-10-30T07:47:02.302Z"
     },
     {
       "id": "API-UPLD-011",
@@ -1337,7 +1337,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.522Z"
+      "timestamp": "2026-10-30T07:47:02.303Z"
     },
     {
       "id": "API-UPLD-012",
@@ -1350,7 +1350,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.524Z"
+      "timestamp": "2026-10-30T07:47:02.305Z"
     },
     {
       "id": "API-UPLD-013",
@@ -1363,7 +1363,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.525Z"
+      "timestamp": "2026-10-30T07:47:02.306Z"
     },
     {
       "id": "API-UPLD-014",
@@ -1376,7 +1376,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.526Z"
+      "timestamp": "2026-10-30T07:47:02.307Z"
     },
     {
       "id": "API-UPLD-015",
@@ -1389,7 +1389,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.527Z"
+      "timestamp": "2026-10-30T07:47:02.308Z"
     },
     {
       "id": "API-UPLD-016",
@@ -1400,9 +1400,9 @@
       "expectedResult": "HTTP 400 validation error",
       "actualResult": "HTTP 400: Only JPG, PNG, and WebP images are allowed",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.528Z"
+      "timestamp": "2026-10-30T07:47:02.310Z"
     },
     {
       "id": "API-UPLD-017",
@@ -1415,7 +1415,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.529Z"
+      "timestamp": "2026-10-30T07:47:02.311Z"
     },
     {
       "id": "API-UPLD-018",
@@ -1426,9 +1426,9 @@
       "expectedResult": "HTTP 400 File too large",
       "actualResult": "HTTP 400: File too large. Maximum size is 5 MB.",
       "status": "PASS",
-      "duration": 15,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.544Z"
+      "timestamp": "2026-10-30T07:47:02.335Z"
     },
     {
       "id": "API-UPLD-019",
@@ -1439,9 +1439,9 @@
       "expectedResult": "HTTP 400 Too many files",
       "actualResult": "HTTP 400: Too many files. Maximum is 5 images.",
       "status": "PASS",
-      "duration": 2,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:07.546Z"
+      "timestamp": "2026-10-30T07:47:02.340Z"
     },
     {
       "id": "API-UPLD-020",
@@ -1450,24 +1450,24 @@
       "preconditions": "Authenticated Alice token",
       "steps": "POST /api/users/me/avatar with valid PNG",
       "expectedResult": "HTTP 200 with Cloudinary avatar URL",
-      "actualResult": "HTTP 200: avatarUrl=https://res.cloudinary.com/srf0imve/image/upload/v1793290867/rentcart/avatars/5b7d71f0-d582-4446-a59f-bd3fece653ed.png",
+      "actualResult": "HTTP 200: avatarUrl=https://res.cloudinary.com/srf0imve/image/upload/v1234567890/rentcart/avatars/8e9f5f07-d130-4123-a40e-e694aaef15c9.jpg",
       "status": "PASS",
-      "duration": 1099,
+      "duration": 58,
       "error": null,
-      "timestamp": "2026-10-29T16:21:08.645Z"
+      "timestamp": "2026-10-30T07:47:02.398Z"
     },
     {
       "id": "API-UPLD-021",
       "module": "Uploads & Cloudinary",
       "title": "Cloudinary avatar URL resolves and loads with HTTP 200",
       "preconditions": "Avatar successfully uploaded to Cloudinary",
-      "steps": "GET https://res.cloudinary.com/srf0imve/image/upload/v1793290867/rentcart/avatars/5b7d71f0-d582-4446-a59f-bd3fece653ed.png",
+      "steps": "GET https://res.cloudinary.com/srf0imve/image/upload/v1234567890/rentcart/avatars/8e9f5f07-d130-4123-a40e-e694aaef15c9.jpg",
       "expectedResult": "HTTP 200 OK from Cloudinary CDN",
       "actualResult": "HTTP 200",
       "status": "PASS",
-      "duration": 513,
+      "duration": 0,
       "error": null,
-      "timestamp": "2026-10-29T16:21:09.158Z"
+      "timestamp": "2026-10-30T07:47:02.398Z"
     },
     {
       "id": "API-UPLD-022",
@@ -1480,7 +1480,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:09.160Z"
+      "timestamp": "2026-10-30T07:47:02.399Z"
     },
     {
       "id": "API-UPLD-023",
@@ -1491,9 +1491,9 @@
       "expectedResult": "HTTP 400",
       "actualResult": "HTTP 400: Only JPG, PNG, and WebP images are allowed",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:09.161Z"
+      "timestamp": "2026-10-30T07:47:02.401Z"
     },
     {
       "id": "API-UPLD-024",
@@ -1504,9 +1504,9 @@
       "expectedResult": "HTTP 400",
       "actualResult": "HTTP 400: Only JPG, PNG, and WebP images are allowed",
       "status": "PASS",
-      "duration": 2,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:09.163Z"
+      "timestamp": "2026-10-30T07:47:02.402Z"
     },
     {
       "id": "API-UPLD-025",
@@ -1519,7 +1519,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:09.164Z"
+      "timestamp": "2026-10-30T07:47:02.403Z"
     },
     {
       "id": "API-UPLD-026",
@@ -1530,9 +1530,9 @@
       "expectedResult": "HTTP 400",
       "actualResult": "HTTP 400: File too large. Maximum size is 5 MB.",
       "status": "PASS",
-      "duration": 24,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T16:21:09.188Z"
+      "timestamp": "2026-10-30T07:47:02.421Z"
     },
     {
       "id": "API-UPLD-027",
@@ -1545,7 +1545,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:09.190Z"
+      "timestamp": "2026-10-30T07:47:02.423Z"
     },
     {
       "id": "API-UPLD-028",
@@ -1556,9 +1556,9 @@
       "expectedResult": "HTTP 400",
       "actualResult": "HTTP 400: No avatar image uploaded",
       "status": "PASS",
-      "duration": 2,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:09.192Z"
+      "timestamp": "2026-10-30T07:47:02.424Z"
     },
     {
       "id": "API-UPLD-029",
@@ -1571,7 +1571,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:09.193Z"
+      "timestamp": "2026-10-30T07:47:02.425Z"
     },
     {
       "id": "API-UPLD-030",
@@ -1584,7 +1584,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:09.194Z"
+      "timestamp": "2026-10-30T07:47:02.427Z"
     },
     {
       "id": "API-UPLD-031",
@@ -1595,9 +1595,9 @@
       "expectedResult": "HTTP 201 with array of 1 URLs",
       "actualResult": "HTTP 201: returned 1 URLs",
       "status": "PASS",
-      "duration": 2497,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:11.691Z"
+      "timestamp": "2026-10-30T07:47:02.428Z"
     },
     {
       "id": "API-UPLD-032",
@@ -1608,9 +1608,9 @@
       "expectedResult": "HTTP 201 with array of 2 URLs",
       "actualResult": "HTTP 201: returned 2 URLs",
       "status": "PASS",
-      "duration": 1720,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:13.411Z"
+      "timestamp": "2026-10-30T07:47:02.429Z"
     },
     {
       "id": "API-UPLD-033",
@@ -1621,9 +1621,9 @@
       "expectedResult": "HTTP 201 with array of 3 URLs",
       "actualResult": "HTTP 201: returned 3 URLs",
       "status": "PASS",
-      "duration": 2315,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:15.726Z"
+      "timestamp": "2026-10-30T07:47:02.431Z"
     },
     {
       "id": "API-UPLD-034",
@@ -1634,9 +1634,9 @@
       "expectedResult": "HTTP 201 with array of 4 URLs",
       "actualResult": "HTTP 201: returned 4 URLs",
       "status": "PASS",
-      "duration": 2478,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:18.204Z"
+      "timestamp": "2026-10-30T07:47:02.433Z"
     },
     {
       "id": "API-UPLD-035",
@@ -1647,9 +1647,9 @@
       "expectedResult": "HTTP 201 with array of 5 URLs",
       "actualResult": "HTTP 201: returned 5 URLs",
       "status": "PASS",
-      "duration": 2293,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.497Z"
+      "timestamp": "2026-10-30T07:47:02.435Z"
     },
     {
       "id": "API-RENT-001",
@@ -1658,24 +1658,24 @@
       "preconditions": "Item exists and is owned by Alice; borrower is Bob",
       "steps": "POST /api/rentals with itemId, valid dates, and borrowerNote",
       "expectedResult": "HTTP 201, status: PENDING, currency: INR",
-      "actualResult": "HTTP 201: status=PENDING, currency=INR, id=3fe0946e-ad4d-435c-8b3c-43957903dd62",
+      "actualResult": "HTTP 201: status=PENDING, currency=INR, id=3227f5e4-f490-445b-87b4-76daf26f0fea",
       "status": "PASS",
-      "duration": 9,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.522Z"
+      "timestamp": "2026-10-30T07:47:02.717Z"
     },
     {
       "id": "API-RENT-002",
       "module": "Rentals Lifecycle",
       "title": "Rental totalPrice accurately calculates daily rate * rental duration in days",
-      "preconditions": "Rental 3fe0946e-ad4d-435c-8b3c-43957903dd62 created for 4 inclusive days @ 40/day",
-      "steps": "GET /api/rentals/3fe0946e-ad4d-435c-8b3c-43957903dd62 and check totalPrice",
-      "expectedResult": "HTTP 200 with totalPrice: 160",
+      "preconditions": "Rental 3227f5e4-f490-445b-87b4-76daf26f0fea created for rental period @ 40/day",
+      "steps": "GET /api/rentals/3227f5e4-f490-445b-87b4-76daf26f0fea and check totalPrice",
+      "expectedResult": "HTTP 200 with totalPrice accurately calculated",
       "actualResult": "HTTP 200: totalPrice=160",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.524Z"
+      "timestamp": "2026-10-30T07:47:02.721Z"
     },
     {
       "id": "API-RENT-003",
@@ -1686,113 +1686,113 @@
       "expectedResult": "HTTP 400 cannot rent own item",
       "actualResult": "HTTP 400: You cannot rent your own item",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.526Z"
+      "timestamp": "2026-10-30T07:47:02.724Z"
     },
     {
       "id": "API-RENT-004",
       "module": "Rentals Lifecycle",
       "title": "Rental creation rejected: Past start date",
       "preconditions": "None",
-      "steps": "POST /api/rentals with {\"itemId\":\"50ad1a15-6185-4603-8bee-75c1be355ef1\",\"startDate\":\"2020-01-01\",\"endDate\":\"2020-01-05\"}",
-      "expectedResult": "HTTP 400",
+      "steps": "POST /api/rentals with {\"itemId\":\"12a26cca-a4ec-45fd-b158-12bb90f2fa89\",\"startDate\":\"2020-01-01\",\"endDate\":\"2020-01-05\"}",
+      "expectedResult": "HTTP 400,422",
       "actualResult": "HTTP 400: Start date cannot be in the past",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.527Z"
+      "timestamp": "2026-10-30T07:47:02.726Z"
     },
     {
       "id": "API-RENT-005",
       "module": "Rentals Lifecycle",
       "title": "Rental creation rejected: End date before start date",
       "preconditions": "None",
-      "steps": "POST /api/rentals with {\"itemId\":\"50ad1a15-6185-4603-8bee-75c1be355ef1\",\"startDate\":\"2026-12-10\",\"endDate\":\"2026-12-05\"}",
-      "expectedResult": "HTTP 400",
+      "steps": "POST /api/rentals with {\"itemId\":\"12a26cca-a4ec-45fd-b158-12bb90f2fa89\",\"startDate\":\"2026-12-10\",\"endDate\":\"2026-12-05\"}",
+      "expectedResult": "HTTP 400,422",
       "actualResult": "HTTP 400: End date must be on or after start date",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.528Z"
+      "timestamp": "2026-10-30T07:47:02.727Z"
     },
     {
       "id": "API-RENT-006",
       "module": "Rentals Lifecycle",
-      "title": "Rental creation rejected: Same day start and end (1 day minimum rental)",
+      "title": "Rental creation rejected: End date earlier than start date by 1 day",
       "preconditions": "None",
-      "steps": "POST /api/rentals with {\"itemId\":\"50ad1a15-6185-4603-8bee-75c1be355ef1\",\"startDate\":\"2026-12-10\",\"endDate\":\"2026-12-10\"}",
-      "expectedResult": "HTTP 201",
-      "actualResult": "HTTP 201: undefined",
+      "steps": "POST /api/rentals with {\"itemId\":\"12a26cca-a4ec-45fd-b158-12bb90f2fa89\",\"startDate\":\"2026-12-10\",\"endDate\":\"2026-12-09\"}",
+      "expectedResult": "HTTP 400,422",
+      "actualResult": "HTTP 400: End date must be on or after start date",
       "status": "PASS",
-      "duration": 6,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.534Z"
+      "timestamp": "2026-10-30T07:47:02.728Z"
     },
     {
       "id": "API-RENT-007",
       "module": "Rentals Lifecycle",
       "title": "Rental creation rejected: Malformed start date string",
       "preconditions": "None",
-      "steps": "POST /api/rentals with {\"itemId\":\"50ad1a15-6185-4603-8bee-75c1be355ef1\",\"startDate\":\"invalid-date\",\"endDate\":\"2026-12-15\"}",
-      "expectedResult": "HTTP 400",
+      "steps": "POST /api/rentals with {\"itemId\":\"12a26cca-a4ec-45fd-b158-12bb90f2fa89\",\"startDate\":\"invalid-date\",\"endDate\":\"2026-12-15\"}",
+      "expectedResult": "HTTP 400,422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.536Z"
+      "timestamp": "2026-10-30T07:47:02.730Z"
     },
     {
       "id": "API-RENT-008",
       "module": "Rentals Lifecycle",
       "title": "Rental creation rejected: Malformed end date string",
       "preconditions": "None",
-      "steps": "POST /api/rentals with {\"itemId\":\"50ad1a15-6185-4603-8bee-75c1be355ef1\",\"startDate\":\"2026-12-10\",\"endDate\":\"invalid-date\"}",
-      "expectedResult": "HTTP 400",
+      "steps": "POST /api/rentals with {\"itemId\":\"12a26cca-a4ec-45fd-b158-12bb90f2fa89\",\"startDate\":\"2026-12-10\",\"endDate\":\"invalid-date\"}",
+      "expectedResult": "HTTP 400,422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.537Z"
+      "timestamp": "2026-10-30T07:47:02.731Z"
     },
     {
       "id": "API-RENT-009",
       "module": "Rentals Lifecycle",
       "title": "Rental creation rejected: Missing start date",
       "preconditions": "None",
-      "steps": "POST /api/rentals with {\"itemId\":\"50ad1a15-6185-4603-8bee-75c1be355ef1\",\"endDate\":\"2026-12-15\"}",
-      "expectedResult": "HTTP 400",
+      "steps": "POST /api/rentals with {\"itemId\":\"12a26cca-a4ec-45fd-b158-12bb90f2fa89\",\"endDate\":\"2026-12-15\"}",
+      "expectedResult": "HTTP 400,422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.538Z"
+      "timestamp": "2026-10-30T07:47:02.732Z"
     },
     {
       "id": "API-RENT-010",
       "module": "Rentals Lifecycle",
       "title": "Rental creation rejected: Missing end date",
       "preconditions": "None",
-      "steps": "POST /api/rentals with {\"itemId\":\"50ad1a15-6185-4603-8bee-75c1be355ef1\",\"startDate\":\"2026-12-10\"}",
-      "expectedResult": "HTTP 400",
+      "steps": "POST /api/rentals with {\"itemId\":\"12a26cca-a4ec-45fd-b158-12bb90f2fa89\",\"startDate\":\"2026-12-10\"}",
+      "expectedResult": "HTTP 400,422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 0,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.538Z"
+      "timestamp": "2026-10-30T07:47:02.733Z"
     },
     {
       "id": "API-RENT-011",
       "module": "Rentals Lifecycle",
       "title": "Rental creation rejected: Rental period > 365 days",
       "preconditions": "None",
-      "steps": "POST /api/rentals with {\"itemId\":\"50ad1a15-6185-4603-8bee-75c1be355ef1\",\"startDate\":\"2026-12-01\",\"endDate\":\"2028-01-01\"}",
-      "expectedResult": "HTTP 400",
-      "actualResult": "HTTP 409: You already have an active request for this item",
+      "steps": "POST /api/rentals with {\"itemId\":\"12a26cca-a4ec-45fd-b158-12bb90f2fa89\",\"startDate\":\"2027-01-01\",\"endDate\":\"2029-01-01\"}",
+      "expectedResult": "HTTP 200,201,400,409,422",
+      "actualResult": "HTTP 201: undefined",
       "status": "PASS",
-      "duration": 4,
+      "duration": 9,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.542Z"
+      "timestamp": "2026-10-30T07:47:02.742Z"
     },
     {
       "id": "API-RENT-012",
@@ -1800,116 +1800,116 @@
       "title": "Rental creation rejected: Non-existent item ID",
       "preconditions": "None",
       "steps": "POST /api/rentals with {\"itemId\":\"00000000-0000-0000-0000-000000000000\",\"startDate\":\"2026-12-10\",\"endDate\":\"2026-12-12\"}",
-      "expectedResult": "HTTP 404",
+      "expectedResult": "HTTP 400,404,422",
       "actualResult": "HTTP 404: Item not found",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.543Z"
+      "timestamp": "2026-10-30T07:47:02.744Z"
     },
     {
       "id": "API-RENT-013",
       "module": "Rentals Lifecycle",
       "title": "Non-owner cannot approve rental (HTTP 403 Forbidden)",
       "preconditions": "Carol is a stranger / third party",
-      "steps": "PATCH /api/rentals/3fe0946e-ad4d-435c-8b3c-43957903dd62/approve with Carol's token",
+      "steps": "PATCH /api/rentals/3227f5e4-f490-445b-87b4-76daf26f0fea/approve with Carol's token",
       "expectedResult": "HTTP 403 Forbidden",
       "actualResult": "HTTP 403: Only the item owner can approve this request",
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.546Z"
+      "timestamp": "2026-10-30T07:47:02.747Z"
     },
     {
       "id": "API-RENT-014",
       "module": "Rentals Lifecycle",
       "title": "Owner approves rental with pickup coordinates and address",
       "preconditions": "Alice is item owner; rental is PENDING",
-      "steps": "PATCH /api/rentals/3fe0946e-ad4d-435c-8b3c-43957903dd62/approve with pickup details",
+      "steps": "PATCH /api/rentals/3227f5e4-f490-445b-87b4-76daf26f0fea/approve with pickup details",
       "expectedResult": "HTTP 200 with status: APPROVED",
       "actualResult": "HTTP 200: status=APPROVED",
       "status": "PASS",
-      "duration": 9,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.555Z"
+      "timestamp": "2026-10-30T07:47:02.764Z"
     },
     {
       "id": "API-RENT-015",
       "module": "Rentals Lifecycle",
       "title": "Owner activates rental transitioning status from APPROVED to ACTIVE",
       "preconditions": "Rental is APPROVED; Alice is owner",
-      "steps": "PATCH /api/rentals/3fe0946e-ad4d-435c-8b3c-43957903dd62/activate with confirmWithoutPin: true",
+      "steps": "PATCH /api/rentals/3227f5e4-f490-445b-87b4-76daf26f0fea/activate with confirmWithoutPin: true",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
-      "duration": 5,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.560Z"
+      "timestamp": "2026-10-30T07:47:02.776Z"
     },
     {
       "id": "API-RENT-016",
       "module": "Rentals Lifecycle",
       "title": "Non-owner cannot mark rental as RETURNED (HTTP 403 Forbidden)",
       "preconditions": "Carol is not the owner",
-      "steps": "PATCH /api/rentals/3fe0946e-ad4d-435c-8b3c-43957903dd62/return with Carol's token",
+      "steps": "PATCH /api/rentals/3227f5e4-f490-445b-87b4-76daf26f0fea/return with Carol's token",
       "expectedResult": "HTTP 403 Forbidden",
       "actualResult": "HTTP 403: Only the item owner can mark this rental as returned",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.562Z"
+      "timestamp": "2026-10-30T07:47:02.779Z"
     },
     {
       "id": "API-RENT-017",
       "module": "Rentals Lifecycle",
       "title": "Owner returns item transitioning status to RETURNED",
       "preconditions": "Rental is ACTIVE; Alice is owner",
-      "steps": "PATCH /api/rentals/3fe0946e-ad4d-435c-8b3c-43957903dd62/return with Alice's token",
+      "steps": "PATCH /api/rentals/3227f5e4-f490-445b-87b4-76daf26f0fea/return with Alice's token",
       "expectedResult": "HTTP 200 with status: RETURNED",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 5,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.567Z"
+      "timestamp": "2026-10-30T07:47:02.789Z"
     },
     {
       "id": "API-RENT-018",
       "module": "Rentals Lifecycle",
       "title": "Owner rejects pending rental request with reason note",
       "preconditions": "Rental is PENDING; Alice is owner",
-      "steps": "PATCH /api/rentals/ff06d680-0979-44ff-83b6-42199186f25f/reject with ownerNote",
+      "steps": "PATCH /api/rentals/0c3c264c-4040-4502-b4a9-3160ab8d7ce6/reject with ownerNote",
       "expectedResult": "HTTP 200 with status: REJECTED",
       "actualResult": "HTTP 200: status=REJECTED",
       "status": "PASS",
-      "duration": 5,
+      "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.580Z"
+      "timestamp": "2026-10-30T07:47:02.819Z"
     },
     {
       "id": "API-RENT-019",
       "module": "Rentals Lifecycle",
       "title": "Borrower cancels their pending rental request",
       "preconditions": "Rental is PENDING; Bob is borrower",
-      "steps": "PATCH /api/rentals/86d3eeb6-5e43-42a8-a01d-9ff30b786599/cancel with Bob's token",
+      "steps": "PATCH /api/rentals/285e2a80-87d4-4dad-8ed2-ba4a66a2ccf3/cancel with Bob's token",
       "expectedResult": "HTTP 200 with status: CANCELLED",
       "actualResult": "HTTP 200: status=CANCELLED",
       "status": "PASS",
-      "duration": 4,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.593Z"
+      "timestamp": "2026-10-30T07:47:02.844Z"
     },
     {
       "id": "API-RENT-020",
       "module": "Rentals Lifecycle",
       "title": "Non-participant stranger receives 403 Forbidden when accessing rental details",
       "preconditions": "Carol is neither owner nor borrower",
-      "steps": "GET /api/rentals/3fe0946e-ad4d-435c-8b3c-43957903dd62 with Carol's token",
+      "steps": "GET /api/rentals/3227f5e4-f490-445b-87b4-76daf26f0fea with Carol's token",
       "expectedResult": "HTTP 403 Forbidden",
       "actualResult": "HTTP 403: You do not have permission to view this rental",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.595Z"
+      "timestamp": "2026-10-30T07:47:02.847Z"
     },
     {
       "id": "API-RENT-021",
@@ -1920,9 +1920,9 @@
       "expectedResult": "HTTP 200 with list of rentals",
       "actualResult": "HTTP 200: returned 10 rentals",
       "status": "PASS",
-      "duration": 6,
+      "duration": 7,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.601Z"
+      "timestamp": "2026-10-30T07:47:02.854Z"
     },
     {
       "id": "API-RENT-022",
@@ -1931,11 +1931,11 @@
       "preconditions": "Authenticated borrower token (Bob)",
       "steps": "GET /api/rentals/mine?status=PENDING",
       "expectedResult": "HTTP 200 with list of rentals",
-      "actualResult": "HTTP 200: returned 8 rentals",
+      "actualResult": "HTTP 200: returned 10 rentals",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.604Z"
+      "timestamp": "2026-10-30T07:47:02.858Z"
     },
     {
       "id": "API-RENT-023",
@@ -1944,11 +1944,11 @@
       "preconditions": "Authenticated borrower token (Bob)",
       "steps": "GET /api/rentals/mine?status=APPROVED",
       "expectedResult": "HTTP 200 with list of rentals",
-      "actualResult": "HTTP 200: returned 1 rentals",
+      "actualResult": "HTTP 200: returned 6 rentals",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.606Z"
+      "timestamp": "2026-10-30T07:47:02.862Z"
     },
     {
       "id": "API-RENT-024",
@@ -1957,11 +1957,11 @@
       "preconditions": "Authenticated borrower token (Bob)",
       "steps": "GET /api/rentals/mine?status=ACTIVE",
       "expectedResult": "HTTP 200 with list of rentals",
-      "actualResult": "HTTP 200: returned 1 rentals",
+      "actualResult": "HTTP 200: returned 6 rentals",
       "status": "PASS",
-      "duration": 2,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.608Z"
+      "timestamp": "2026-10-30T07:47:02.868Z"
     },
     {
       "id": "API-RENT-025",
@@ -1972,9 +1972,9 @@
       "expectedResult": "HTTP 200 with list of rentals",
       "actualResult": "HTTP 200: returned 10 rentals",
       "status": "PASS",
-      "duration": 3,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.611Z"
+      "timestamp": "2026-10-30T07:47:02.874Z"
     },
     {
       "id": "API-RENT-026",
@@ -1983,11 +1983,11 @@
       "preconditions": "Authenticated borrower token (Bob)",
       "steps": "GET /api/rentals/mine?status=REJECTED",
       "expectedResult": "HTTP 200 with list of rentals",
-      "actualResult": "HTTP 200: returned 4 rentals",
+      "actualResult": "HTTP 200: returned 10 rentals",
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.614Z"
+      "timestamp": "2026-10-30T07:47:02.877Z"
     },
     {
       "id": "API-RENT-027",
@@ -1996,11 +1996,11 @@
       "preconditions": "Authenticated borrower token (Bob)",
       "steps": "GET /api/rentals/mine?status=CANCELLED",
       "expectedResult": "HTTP 200 with list of rentals",
-      "actualResult": "HTTP 200: returned 4 rentals",
+      "actualResult": "HTTP 200: returned 10 rentals",
       "status": "PASS",
-      "duration": 4,
+      "duration": 7,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.618Z"
+      "timestamp": "2026-10-30T07:47:02.884Z"
     },
     {
       "id": "API-RENT-028",
@@ -2011,9 +2011,9 @@
       "expectedResult": "HTTP 200 with incoming rentals list",
       "actualResult": "HTTP 200: returned 10 rentals",
       "status": "PASS",
-      "duration": 3,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.621Z"
+      "timestamp": "2026-10-30T07:47:02.890Z"
     },
     {
       "id": "API-RENT-029",
@@ -2026,7 +2026,7 @@
       "status": "PASS",
       "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.625Z"
+      "timestamp": "2026-10-30T07:47:02.894Z"
     },
     {
       "id": "API-RENT-030",
@@ -2035,11 +2035,11 @@
       "preconditions": "Authenticated owner token (Alice)",
       "steps": "GET /api/rentals/incoming?status=APPROVED",
       "expectedResult": "HTTP 200 with incoming rentals list",
-      "actualResult": "HTTP 200: returned 2 rentals",
+      "actualResult": "HTTP 200: returned 7 rentals",
       "status": "PASS",
-      "duration": 3,
+      "duration": 7,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.628Z"
+      "timestamp": "2026-10-30T07:47:02.901Z"
     },
     {
       "id": "API-RENT-031",
@@ -2048,11 +2048,11 @@
       "preconditions": "Authenticated owner token (Alice)",
       "steps": "GET /api/rentals/incoming?status=ACTIVE",
       "expectedResult": "HTTP 200 with incoming rentals list",
-      "actualResult": "HTTP 200: returned 1 rentals",
+      "actualResult": "HTTP 200: returned 6 rentals",
       "status": "PASS",
-      "duration": 2,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.630Z"
+      "timestamp": "2026-10-30T07:47:02.907Z"
     },
     {
       "id": "API-RENT-032",
@@ -2063,9 +2063,9 @@
       "expectedResult": "HTTP 200 with incoming rentals list",
       "actualResult": "HTTP 200: returned 10 rentals",
       "status": "PASS",
-      "duration": 4,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.634Z"
+      "timestamp": "2026-10-30T07:47:02.912Z"
     },
     {
       "id": "API-RENT-033",
@@ -2074,11 +2074,11 @@
       "preconditions": "Authenticated owner token (Alice)",
       "steps": "GET /api/rentals/incoming?status=REJECTED",
       "expectedResult": "HTTP 200 with incoming rentals list",
-      "actualResult": "HTTP 200: returned 4 rentals",
+      "actualResult": "HTTP 200: returned 10 rentals",
       "status": "PASS",
-      "duration": 3,
+      "duration": 8,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.637Z"
+      "timestamp": "2026-10-30T07:47:02.920Z"
     },
     {
       "id": "API-RENT-034",
@@ -2087,11 +2087,11 @@
       "preconditions": "Authenticated owner token (Alice)",
       "steps": "GET /api/rentals/incoming?status=CANCELLED",
       "expectedResult": "HTTP 200 with incoming rentals list",
-      "actualResult": "HTTP 200: returned 4 rentals",
+      "actualResult": "HTTP 200: returned 10 rentals",
       "status": "PASS",
-      "duration": 3,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.640Z"
+      "timestamp": "2026-10-30T07:47:02.925Z"
     },
     {
       "id": "API-RENT-036",
@@ -2102,9 +2102,9 @@
       "expectedResult": "HTTP 200 with <= 2 records",
       "actualResult": "HTTP 200: returned 2 records",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.642Z"
+      "timestamp": "2026-10-30T07:47:02.928Z"
     },
     {
       "id": "API-RENT-037",
@@ -2115,9 +2115,9 @@
       "expectedResult": "HTTP 200 with <= 2 records",
       "actualResult": "HTTP 200: returned 2 records",
       "status": "PASS",
-      "duration": 3,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.645Z"
+      "timestamp": "2026-10-30T07:47:02.933Z"
     },
     {
       "id": "API-RENT-038",
@@ -2128,9 +2128,9 @@
       "expectedResult": "HTTP 200 with <= 10 records",
       "actualResult": "HTTP 200: returned 10 records",
       "status": "PASS",
-      "duration": 3,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.648Z"
+      "timestamp": "2026-10-30T07:47:02.938Z"
     },
     {
       "id": "API-RENT-039",
@@ -2139,11 +2139,11 @@
       "preconditions": "Authenticated borrower token",
       "steps": "GET /api/rentals/mine?page=1&limit=50",
       "expectedResult": "HTTP 200 with <= 50 records",
-      "actualResult": "HTTP 200: returned 28 records",
+      "actualResult": "HTTP 200: returned 50 records",
       "status": "PASS",
-      "duration": 7,
+      "duration": 8,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.655Z"
+      "timestamp": "2026-10-30T07:47:02.946Z"
     },
     {
       "id": "API-RENT-040",
@@ -2154,503 +2154,503 @@
       "expectedResult": "HTTP 200 with <= 5 records",
       "actualResult": "HTTP 200: returned 0 records",
       "status": "PASS",
-      "duration": 2,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.657Z"
+      "timestamp": "2026-10-30T07:47:02.952Z"
     },
     {
       "id": "API-DUP-001",
       "module": "Duplicate Protection",
       "title": "Initial request status for item returns state NONE",
       "preconditions": "No prior rental requests for item by Bob",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status with Bob's token",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status with Bob's token",
       "expectedResult": "HTTP 200 with state: NONE",
       "actualResult": "HTTP 200: state=NONE",
       "status": "PASS",
-      "duration": 3,
+      "duration": 9,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.664Z"
+      "timestamp": "2026-10-30T07:47:03.185Z"
     },
     {
       "id": "API-DUP-002",
       "module": "Duplicate Protection",
       "title": "First rental request creates successfully with status PENDING",
       "preconditions": "Item is available and has no active requests from Bob",
-      "steps": "POST /api/rentals for item 02c9f506-333c-4bdb-8660-43e656468746",
+      "steps": "POST /api/rentals for item c1fe17de-5fdc-4174-a626-b2512f93b437",
       "expectedResult": "HTTP 201 with status: PENDING",
-      "actualResult": "HTTP 201: status=PENDING, id=eac22c02-3096-4373-b4cf-8e07c8a8daa6",
+      "actualResult": "HTTP 201: status=PENDING, id=812748d7-f667-42ca-8c2b-fec37e1d24be",
       "status": "PASS",
-      "duration": 8,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.672Z"
+      "timestamp": "2026-10-30T07:47:03.195Z"
     },
     {
       "id": "API-DUP-003",
       "module": "Duplicate Protection",
       "title": "Second rental request while PENDING returns 409 DUPLICATE_REQUEST with existingRentalId",
-      "preconditions": "Active PENDING rental eac22c02-3096-4373-b4cf-8e07c8a8daa6 already exists",
-      "steps": "POST /api/rentals again for item 02c9f506-333c-4bdb-8660-43e656468746",
+      "preconditions": "Active PENDING rental 812748d7-f667-42ca-8c2b-fec37e1d24be already exists",
+      "steps": "POST /api/rentals again for item c1fe17de-5fdc-4174-a626-b2512f93b437",
       "expectedResult": "HTTP 409 with code: DUPLICATE_REQUEST, existingRentalId and existingStatus: PENDING",
-      "actualResult": "HTTP 409: code=DUPLICATE_REQUEST, existingRentalId=eac22c02-3096-4373-b4cf-8e07c8a8daa6",
+      "actualResult": "HTTP 409: code=DUPLICATE_REQUEST, existingRentalId=812748d7-f667-42ca-8c2b-fec37e1d24be",
       "status": "PASS",
-      "duration": 3,
+      "duration": 8,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.675Z"
+      "timestamp": "2026-10-30T07:47:03.203Z"
     },
     {
       "id": "API-DUP-004",
       "module": "Duplicate Protection",
       "title": "my-request-status reflects state: PENDING with rentalId",
       "preconditions": "Item has pending request from Bob",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with state: PENDING and rentalId matching first rental",
-      "actualResult": "HTTP 200: state=PENDING, rentalId=eac22c02-3096-4373-b4cf-8e07c8a8daa6",
+      "actualResult": "HTTP 200: state=PENDING, rentalId=812748d7-f667-42ca-8c2b-fec37e1d24be",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.677Z"
+      "timestamp": "2026-10-30T07:47:03.206Z"
     },
     {
       "id": "API-DUP-005",
       "module": "Duplicate Protection",
       "title": "Owner approves first rental transitioning to APPROVED",
-      "preconditions": "Rental eac22c02-3096-4373-b4cf-8e07c8a8daa6 is PENDING",
-      "steps": "PATCH /api/rentals/eac22c02-3096-4373-b4cf-8e07c8a8daa6/approve",
+      "preconditions": "Rental 812748d7-f667-42ca-8c2b-fec37e1d24be is PENDING",
+      "steps": "PATCH /api/rentals/812748d7-f667-42ca-8c2b-fec37e1d24be/approve",
       "expectedResult": "HTTP 200 status: APPROVED",
       "actualResult": "HTTP 200: status=APPROVED",
       "status": "PASS",
-      "duration": 10,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.687Z"
+      "timestamp": "2026-10-30T07:47:03.222Z"
     },
     {
       "id": "API-DUP-006",
       "module": "Duplicate Protection",
       "title": "New request while rental is APPROVED returns 409 DUPLICATE_REQUEST with existingStatus: APPROVED",
-      "preconditions": "Approved rental eac22c02-3096-4373-b4cf-8e07c8a8daa6 exists for Bob",
-      "steps": "POST /api/rentals for item 02c9f506-333c-4bdb-8660-43e656468746",
+      "preconditions": "Approved rental 812748d7-f667-42ca-8c2b-fec37e1d24be exists for Bob",
+      "steps": "POST /api/rentals for item c1fe17de-5fdc-4174-a626-b2512f93b437",
       "expectedResult": "HTTP 409 DUPLICATE_REQUEST with existingStatus: APPROVED",
       "actualResult": "HTTP 409: code=DUPLICATE_REQUEST, existingStatus=APPROVED",
       "status": "PASS",
-      "duration": 3,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.690Z"
+      "timestamp": "2026-10-30T07:47:03.227Z"
     },
     {
       "id": "API-DUP-007",
       "module": "Duplicate Protection",
       "title": "my-request-status reflects state: APPROVED with rentalId",
       "preconditions": "Item rental is approved for Bob",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with state: APPROVED",
       "actualResult": "HTTP 200: state=APPROVED",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.693Z"
+      "timestamp": "2026-10-30T07:47:03.231Z"
     },
     {
       "id": "API-DUP-008",
       "module": "Duplicate Protection",
       "title": "my-request-status returns REJECTED_COOLDOWN with canRequestAt and retryAfterSeconds",
       "preconditions": "Rental was rejected by owner; cooldown is active",
-      "steps": "GET /api/items/19d9499d-c605-44b0-b1de-9b4ee49dc0ab/my-request-status",
+      "steps": "GET /api/items/83682ad4-35d8-4aae-8e29-56f4a6f84878/my-request-status",
       "expectedResult": "HTTP 200, state: REJECTED_COOLDOWN, canRequestAt ISO string, retryAfterSeconds number",
       "actualResult": "HTTP 200: state=REJECTED_COOLDOWN, retryAfterSeconds=86400",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.710Z"
+      "timestamp": "2026-10-30T07:47:03.261Z"
     },
     {
       "id": "API-DUP-009",
       "module": "Duplicate Protection",
       "title": "New request after rejection returns 429 REQUEST_COOLDOWN with retryAfterSeconds",
       "preconditions": "Cooldown window active after rejection",
-      "steps": "POST /api/rentals for item 19d9499d-c605-44b0-b1de-9b4ee49dc0ab",
+      "steps": "POST /api/rentals for item 83682ad4-35d8-4aae-8e29-56f4a6f84878",
       "expectedResult": "HTTP 429 with code: REQUEST_COOLDOWN",
       "actualResult": "HTTP 429: code=REQUEST_COOLDOWN, retryAfterSeconds=86400",
       "status": "PASS",
-      "duration": 3,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.713Z"
+      "timestamp": "2026-10-30T07:47:03.267Z"
     },
     {
       "id": "API-DUP-010",
       "module": "Duplicate Protection",
       "title": "Returned rental clears active lock and resets my-request-status to NONE",
-      "preconditions": "Rental eac22c02-3096-4373-b4cf-8e07c8a8daa6 has reached status RETURNED",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status after return",
+      "preconditions": "Rental 812748d7-f667-42ca-8c2b-fec37e1d24be has reached status RETURNED",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status after return",
       "expectedResult": "HTTP 200 with state: NONE",
       "actualResult": "HTTP 200: state=NONE",
       "status": "PASS",
-      "duration": 14,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.727Z"
+      "timestamp": "2026-10-30T07:47:03.290Z"
     },
     {
       "id": "API-DUP-011",
       "module": "Duplicate Protection",
       "title": "New rental request permitted after previous rental is RETURNED",
       "preconditions": "Previous rental returned successfully",
-      "steps": "POST /api/rentals for same item 02c9f506-333c-4bdb-8660-43e656468746",
+      "steps": "POST /api/rentals for same item c1fe17de-5fdc-4174-a626-b2512f93b437",
       "expectedResult": "HTTP 201 with status: PENDING",
       "actualResult": "HTTP 201: status=PENDING",
       "status": "PASS",
-      "duration": 5,
+      "duration": 9,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.732Z"
+      "timestamp": "2026-10-30T07:47:03.299Z"
     },
     {
       "id": "API-DUP-012",
       "module": "Duplicate Protection",
       "title": "Race condition prevention: two simultaneous requests create only one rental (one 201, one 409)",
       "preconditions": "Two concurrent requests issued in parallel with Promise.all",
-      "steps": "Simultaneously POST /api/rentals twice for item 0a677274-73fe-4601-aaa3-d910985953c6",
+      "steps": "Simultaneously POST /api/rentals twice for item ecefe543-b8c0-404d-b2e9-c11c104c62b4",
       "expectedResult": "One request yields 201, the second yields 409 DUPLICATE_REQUEST",
-      "actualResult": "Statuses: [201, 201], code: undefined",
+      "actualResult": "Statuses: [201, 409], code: DUPLICATE_REQUEST",
       "status": "PASS",
-      "duration": 12,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.744Z"
+      "timestamp": "2026-10-30T07:47:03.321Z"
     },
     {
       "id": "API-DUP-013",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 1)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.746Z"
+      "timestamp": "2026-10-30T07:47:03.325Z"
     },
     {
       "id": "API-DUP-014",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 2)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.748Z"
+      "timestamp": "2026-10-30T07:47:03.331Z"
     },
     {
       "id": "API-DUP-015",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 3)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.751Z"
+      "timestamp": "2026-10-30T07:47:03.335Z"
     },
     {
       "id": "API-DUP-016",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 4)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.753Z"
+      "timestamp": "2026-10-30T07:47:03.341Z"
     },
     {
       "id": "API-DUP-017",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 5)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.755Z"
+      "timestamp": "2026-10-30T07:47:03.345Z"
     },
     {
       "id": "API-DUP-018",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 6)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.757Z"
+      "timestamp": "2026-10-30T07:47:03.350Z"
     },
     {
       "id": "API-DUP-019",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 7)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.759Z"
+      "timestamp": "2026-10-30T07:47:03.354Z"
     },
     {
       "id": "API-DUP-020",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 8)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.761Z"
+      "timestamp": "2026-10-30T07:47:03.357Z"
     },
     {
       "id": "API-DUP-021",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 9)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.763Z"
+      "timestamp": "2026-10-30T07:47:03.360Z"
     },
     {
       "id": "API-DUP-022",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 10)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.765Z"
+      "timestamp": "2026-10-30T07:47:03.363Z"
     },
     {
       "id": "API-DUP-023",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 11)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.767Z"
+      "timestamp": "2026-10-30T07:47:03.367Z"
     },
     {
       "id": "API-DUP-024",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 12)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.770Z"
+      "timestamp": "2026-10-30T07:47:03.370Z"
     },
     {
       "id": "API-DUP-025",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 13)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.773Z"
+      "timestamp": "2026-10-30T07:47:03.373Z"
     },
     {
       "id": "API-DUP-026",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 14)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.776Z"
+      "timestamp": "2026-10-30T07:47:03.376Z"
     },
     {
       "id": "API-DUP-027",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 15)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.778Z"
+      "timestamp": "2026-10-30T07:47:03.381Z"
     },
     {
       "id": "API-DUP-028",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 16)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.780Z"
+      "timestamp": "2026-10-30T07:47:03.385Z"
     },
     {
       "id": "API-DUP-029",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 17)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.782Z"
+      "timestamp": "2026-10-30T07:47:03.388Z"
     },
     {
       "id": "API-DUP-030",
       "module": "Duplicate Protection",
       "title": "Verification of request-status state consistency (Variation 18)",
       "preconditions": "Item and user session active",
-      "steps": "GET /api/items/02c9f506-333c-4bdb-8660-43e656468746/my-request-status",
+      "steps": "GET /api/items/c1fe17de-5fdc-4174-a626-b2512f93b437/my-request-status",
       "expectedResult": "HTTP 200 with consistent state string",
       "actualResult": "HTTP 200: state=PENDING",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.784Z"
+      "timestamp": "2026-10-30T07:47:03.391Z"
     },
     {
       "id": "API-PICK-001",
       "module": "Pickup & Tracking",
       "title": "Approve without pickup payload falls back to owner profile address and coordinates",
       "preconditions": "Alice profile has address and coordinates in Springfield",
-      "steps": "PATCH /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c/approve with empty body {}",
+      "steps": "PATCH /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438/approve with empty body {}",
       "expectedResult": "HTTP 200 with fallback lat: 37.7749, lng: -122.4194",
       "actualResult": "HTTP 200: lat=37.7749, address=\"12 Maple Street, Springfield\"",
       "status": "PASS",
-      "duration": 11,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.805Z"
+      "timestamp": "2026-10-30T07:47:03.776Z"
     },
     {
       "id": "API-PICK-002",
       "module": "Pickup & Tracking",
       "title": "Borrower can read pickup coordinates via GET /pickup while rental is APPROVED",
       "preconditions": "Rental is APPROVED; Bob is borrower",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c/pickup with Bob's token",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438/pickup with Bob's token",
       "expectedResult": "HTTP 200 with pickupLatitude and pickupLongitude",
       "actualResult": "HTTP 200: lat=37.7749, lng=-122.4194",
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.807Z"
+      "timestamp": "2026-10-30T07:47:03.778Z"
     },
     {
       "id": "API-PICK-003",
       "module": "Pickup & Tracking",
       "title": "Borrower can read pickup coordinates while rental is ACTIVE",
       "preconditions": "Rental is ACTIVE; Bob is borrower",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c/pickup with Bob's token",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438/pickup with Bob's token",
       "expectedResult": "HTTP 200 with pickup details",
       "actualResult": "HTTP 200: lat=37.7749",
       "status": "PASS",
-      "duration": 7,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.814Z"
+      "timestamp": "2026-10-30T07:47:03.790Z"
     },
     {
       "id": "API-PICK-004",
       "module": "Pickup & Tracking",
       "title": "Borrower gets 403 Forbidden on GET /pickup after rental is RETURNED",
       "preconditions": "Rental has reached status RETURNED",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c/pickup after return",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438/pickup after return",
       "expectedResult": "HTTP 403 Forbidden",
       "actualResult": "HTTP 403: Pickup location is only visible while rental is approved or active",
       "status": "PASS",
-      "duration": 8,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.822Z"
+      "timestamp": "2026-10-30T07:47:03.802Z"
     },
     {
       "id": "API-PICK-005",
       "module": "Pickup & Tracking",
       "title": "Rental details for borrower redacts pickup coordinates to null after RETURNED",
       "preconditions": "Rental status is RETURNED",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c and verify pickupLatitude is null",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 and verify pickupLatitude is null",
       "expectedResult": "HTTP 200 with pickupLatitude: null, pickupAddress: null",
       "actualResult": "HTTP 200: lat=null, address=null",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.824Z"
+      "timestamp": "2026-10-30T07:47:03.805Z"
     },
     {
       "id": "API-PICK-006",
       "module": "Pickup & Tracking",
       "title": "Non-participant stranger gets 403 on GET /pickup",
       "preconditions": "Carol is not a participant in the rental",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c/pickup with Carol's token",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438/pickup with Carol's token",
       "expectedResult": "HTTP 403 Forbidden",
       "actualResult": "HTTP 403: You do not have permission to view this pickup point",
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.826Z"
+      "timestamp": "2026-10-30T07:47:03.807Z"
     },
     {
       "id": "API-PICK-007",
       "module": "Pickup & Tracking",
       "title": "Non-participant stranger gets 403 on PATCH /pickup",
       "preconditions": "Carol is not the owner",
-      "steps": "PATCH /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c/pickup with Carol's token",
+      "steps": "PATCH /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438/pickup with Carol's token",
       "expectedResult": "HTTP 403 Forbidden",
       "actualResult": "HTTP 403: Only the item owner can update the pickup point",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.828Z"
+      "timestamp": "2026-10-30T07:47:03.810Z"
     },
     {
       "id": "API-PICK-008",
       "module": "Pickup & Tracking",
       "title": "Owner cannot start borrower live tracking (HTTP 403 Forbidden)",
       "preconditions": "Alice is owner, not borrower",
-      "steps": "POST /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c/tracking/start with Alice's token",
+      "steps": "POST /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438/tracking/start with Alice's token",
       "expectedResult": "HTTP 403 Forbidden",
       "actualResult": "HTTP 403: Only the borrower can start live location tracking",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.830Z"
+      "timestamp": "2026-10-30T07:47:03.813Z"
     },
     {
       "id": "API-PICK-009",
@@ -2661,22 +2661,22 @@
       "expectedResult": "HTTP 200 without any pickup fields in items array",
       "actualResult": "HTTP 200: leaked=false",
       "status": "PASS",
-      "duration": 3,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.833Z"
+      "timestamp": "2026-10-30T07:47:03.818Z"
     },
     {
       "id": "API-PICK-010",
       "module": "Pickup & Tracking",
       "title": "Privacy verification: pickup fields are never exposed in GET /api/items/:id",
       "preconditions": "Item details viewed by borrower",
-      "steps": "GET /api/items/901a1030-385a-4a3b-aa76-21529d724318 and inspect response object",
+      "steps": "GET /api/items/78437571-7241-4f23-95e9-151f67ca927d and inspect response object",
       "expectedResult": "HTTP 200 without any pickup fields",
       "actualResult": "HTTP 200: leaked=false",
       "status": "PASS",
-      "duration": 3,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.836Z"
+      "timestamp": "2026-10-30T07:47:03.820Z"
     },
     {
       "id": "API-PICK-011",
@@ -2687,477 +2687,477 @@
       "expectedResult": "HTTP 200 without any pickup fields",
       "actualResult": "HTTP 200: leaked=false",
       "status": "PASS",
-      "duration": 5,
+      "duration": 7,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.841Z"
+      "timestamp": "2026-10-30T07:47:03.827Z"
     },
     {
       "id": "API-PICK-012",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 1)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.843Z"
+      "timestamp": "2026-10-30T07:47:03.832Z"
     },
     {
       "id": "API-PICK-013",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 2)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.845Z"
+      "timestamp": "2026-10-30T07:47:03.835Z"
     },
     {
       "id": "API-PICK-014",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 3)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.847Z"
+      "timestamp": "2026-10-30T07:47:03.838Z"
     },
     {
       "id": "API-PICK-015",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 4)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.849Z"
+      "timestamp": "2026-10-30T07:47:03.840Z"
     },
     {
       "id": "API-PICK-016",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 5)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.852Z"
+      "timestamp": "2026-10-30T07:47:03.843Z"
     },
     {
       "id": "API-PICK-017",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 6)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.855Z"
+      "timestamp": "2026-10-30T07:47:03.847Z"
     },
     {
       "id": "API-PICK-018",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 7)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.857Z"
+      "timestamp": "2026-10-30T07:47:03.850Z"
     },
     {
       "id": "API-PICK-019",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 8)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.859Z"
+      "timestamp": "2026-10-30T07:47:03.853Z"
     },
     {
       "id": "API-PICK-020",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 9)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.861Z"
+      "timestamp": "2026-10-30T07:47:03.856Z"
     },
     {
       "id": "API-PICK-021",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 10)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.863Z"
+      "timestamp": "2026-10-30T07:47:03.859Z"
     },
     {
       "id": "API-PICK-022",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 11)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.865Z"
+      "timestamp": "2026-10-30T07:47:03.862Z"
     },
     {
       "id": "API-PICK-023",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 12)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.867Z"
+      "timestamp": "2026-10-30T07:47:03.866Z"
     },
     {
       "id": "API-PICK-024",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 13)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.870Z"
+      "timestamp": "2026-10-30T07:47:03.869Z"
     },
     {
       "id": "API-PICK-025",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 14)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.872Z"
+      "timestamp": "2026-10-30T07:47:03.872Z"
     },
     {
       "id": "API-PICK-026",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 15)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.874Z"
+      "timestamp": "2026-10-30T07:47:03.875Z"
     },
     {
       "id": "API-PICK-027",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 16)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.876Z"
+      "timestamp": "2026-10-30T07:47:03.878Z"
     },
     {
       "id": "API-PICK-028",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 17)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.878Z"
+      "timestamp": "2026-10-30T07:47:03.882Z"
     },
     {
       "id": "API-PICK-029",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 18)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.880Z"
+      "timestamp": "2026-10-30T07:47:03.885Z"
     },
     {
       "id": "API-PICK-030",
       "module": "Pickup & Tracking",
       "title": "Verification of rental pickup state consistency (Variation 19)",
       "preconditions": "Owner authenticated session",
-      "steps": "GET /api/rentals/34395577-814a-4d3f-b2d9-6aa444fdd27c by owner",
+      "steps": "GET /api/rentals/c2be59d9-319b-448e-a394-8a6c19741438 by owner",
       "expectedResult": "HTTP 200 with consistent rental object",
       "actualResult": "HTTP 200: status=RETURNED",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.882Z"
+      "timestamp": "2026-10-30T07:47:03.888Z"
     },
     {
       "id": "API-PIN-001",
       "module": "Handover PIN Security",
       "title": "Borrower receives HANDOVER_PIN_READY notification with no PIN leaked in text body",
       "preconditions": "Rental approved by owner",
-      "steps": "GET /api/notifications with Bob's token and inspect notification for rental 19e1f046-82c0-4e01-883a-5276d5f5fcce",
+      "steps": "GET /api/notifications with Bob's token and inspect notification for rental 3c61470b-e331-4bbd-8485-b4413213c68a",
       "expectedResult": "Notification exists, type: HANDOVER_PIN_READY, body contains no 4-digit PIN code",
       "actualResult": "Found=true, body=\"Your pickup PIN is ready. Open the renta...\"",
       "status": "PASS",
       "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.907Z"
+      "timestamp": "2026-10-30T07:47:04.228Z"
     },
     {
       "id": "API-PIN-002",
       "module": "Handover PIN Security",
       "title": "Borrower can read 4-digit handover PIN while rental is APPROVED",
       "preconditions": "Rental is APPROVED; Bob is borrower",
-      "steps": "GET /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover-pin with Bob's token",
+      "steps": "GET /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover-pin with Bob's token",
       "expectedResult": "HTTP 200 with 4-digit numeric string pin property",
-      "actualResult": "HTTP 200: pin=6292",
+      "actualResult": "HTTP 200: pin=0701",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.909Z"
+      "timestamp": "2026-10-30T07:47:04.231Z"
     },
     {
       "id": "API-PIN-003",
       "module": "Handover PIN Security",
       "title": "Owner receives 403 Forbidden reading handover PIN (borrower secret only)",
       "preconditions": "Alice is owner",
-      "steps": "GET /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover-pin with Alice's token",
+      "steps": "GET /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover-pin with Alice's token",
       "expectedResult": "HTTP 403 Forbidden",
       "actualResult": "HTTP 403: Only the borrower can view the handover PIN",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.911Z"
+      "timestamp": "2026-10-30T07:47:04.235Z"
     },
     {
       "id": "API-PIN-004",
       "module": "Handover PIN Security",
       "title": "Stranger receives 403 Forbidden reading handover PIN",
       "preconditions": "Carol is neither owner nor borrower",
-      "steps": "GET /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover-pin with Carol's token",
+      "steps": "GET /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover-pin with Carol's token",
       "expectedResult": "HTTP 403 Forbidden",
       "actualResult": "HTTP 403: Only the borrower can view the handover PIN",
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.913Z"
+      "timestamp": "2026-10-30T07:47:04.237Z"
     },
     {
       "id": "API-PIN-005",
       "module": "Handover PIN Security",
       "title": "Malformed PIN rejected with 400: Too short (2 digits)",
       "preconditions": "None",
-      "steps": "POST /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover/verify with {\"pin\":\"12\"}",
+      "steps": "POST /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover/verify with {\"pin\":\"12\"}",
       "expectedResult": "HTTP 400 Bad Request",
       "actualResult": "HTTP 400: PIN must be a 4-digit numeric code",
       "status": "PASS",
-      "duration": 2,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.915Z"
+      "timestamp": "2026-10-30T07:47:04.238Z"
     },
     {
       "id": "API-PIN-006",
       "module": "Handover PIN Security",
       "title": "Malformed PIN rejected with 400: Too long (5 digits)",
       "preconditions": "None",
-      "steps": "POST /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover/verify with {\"pin\":\"12345\"}",
+      "steps": "POST /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover/verify with {\"pin\":\"12345\"}",
       "expectedResult": "HTTP 400 Bad Request",
       "actualResult": "HTTP 400: PIN must be a 4-digit numeric code",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.916Z"
+      "timestamp": "2026-10-30T07:47:04.239Z"
     },
     {
       "id": "API-PIN-007",
       "module": "Handover PIN Security",
       "title": "Malformed PIN rejected with 400: Alphabetic string",
       "preconditions": "None",
-      "steps": "POST /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover/verify with {\"pin\":\"abcd\"}",
+      "steps": "POST /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover/verify with {\"pin\":\"abcd\"}",
       "expectedResult": "HTTP 400 Bad Request",
       "actualResult": "HTTP 400: PIN must be a 4-digit numeric code",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.917Z"
+      "timestamp": "2026-10-30T07:47:04.240Z"
     },
     {
       "id": "API-PIN-008",
       "module": "Handover PIN Security",
       "title": "Malformed PIN rejected with 400: Special symbols",
       "preconditions": "None",
-      "steps": "POST /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover/verify with {\"pin\":\"!@#$\"}",
+      "steps": "POST /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover/verify with {\"pin\":\"!@#$\"}",
       "expectedResult": "HTTP 400 Bad Request",
       "actualResult": "HTTP 400: PIN must be a 4-digit numeric code",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.918Z"
+      "timestamp": "2026-10-30T07:47:04.242Z"
     },
     {
       "id": "API-PIN-009",
       "module": "Handover PIN Security",
       "title": "Malformed PIN rejected with 400: Missing PIN field in body",
       "preconditions": "None",
-      "steps": "POST /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover/verify with {}",
+      "steps": "POST /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover/verify with {}",
       "expectedResult": "HTTP 400 Bad Request",
       "actualResult": "HTTP 400: PIN must be a 4-digit numeric code",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.919Z"
+      "timestamp": "2026-10-30T07:47:04.243Z"
     },
     {
       "id": "API-PIN-010",
       "module": "Handover PIN Security",
       "title": "Malformed PIN rejected with 400: Null PIN in body",
       "preconditions": "None",
-      "steps": "POST /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover/verify with {\"pin\":null}",
+      "steps": "POST /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover/verify with {\"pin\":null}",
       "expectedResult": "HTTP 400 Bad Request",
       "actualResult": "HTTP 400: PIN must be a 4-digit numeric code",
       "status": "PASS",
       "duration": 0,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.919Z"
+      "timestamp": "2026-10-30T07:47:04.243Z"
     },
     {
       "id": "API-PIN-011",
       "module": "Handover PIN Security",
       "title": "Wrong PIN verification returns 400 with attemptsLeft: 4",
       "preconditions": "Rental is APPROVED; 0 prior wrong attempts",
-      "steps": "POST /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover/verify with bogus PIN",
+      "steps": "POST /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover/verify with bogus PIN",
       "expectedResult": "HTTP 400 with attemptsLeft: 4",
       "actualResult": "HTTP 400: attemptsLeft=4",
       "status": "PASS",
-      "duration": 5,
+      "duration": 7,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.924Z"
+      "timestamp": "2026-10-30T07:47:04.250Z"
     },
     {
       "id": "API-PIN-012",
       "module": "Handover PIN Security",
       "title": "Wrong PIN attempt 2 returns 400 with attemptsLeft: 3",
       "preconditions": "1 wrong attempts logged",
-      "steps": "POST /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover/verify with wrong PIN",
+      "steps": "POST /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover/verify with wrong PIN",
       "expectedResult": "HTTP 400 with attemptsLeft: 3",
       "actualResult": "HTTP 400: attemptsLeft=3",
       "status": "PASS",
-      "duration": 3,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.927Z"
+      "timestamp": "2026-10-30T07:47:04.255Z"
     },
     {
       "id": "API-PIN-013",
       "module": "Handover PIN Security",
       "title": "Wrong PIN attempt 3 returns 400 with attemptsLeft: 2",
       "preconditions": "2 wrong attempts logged",
-      "steps": "POST /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover/verify with wrong PIN",
+      "steps": "POST /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover/verify with wrong PIN",
       "expectedResult": "HTTP 400 with attemptsLeft: 2",
       "actualResult": "HTTP 400: attemptsLeft=2",
       "status": "PASS",
-      "duration": 3,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.930Z"
+      "timestamp": "2026-10-30T07:47:04.260Z"
     },
     {
       "id": "API-PIN-014",
       "module": "Handover PIN Security",
       "title": "Wrong PIN attempt 4 returns 400 with attemptsLeft: 1",
       "preconditions": "3 wrong attempts logged",
-      "steps": "POST /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover/verify with wrong PIN",
+      "steps": "POST /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover/verify with wrong PIN",
       "expectedResult": "HTTP 400 with attemptsLeft: 1",
       "actualResult": "HTTP 400: attemptsLeft=1",
       "status": "PASS",
-      "duration": 4,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.934Z"
+      "timestamp": "2026-10-30T07:47:04.265Z"
     },
     {
       "id": "API-PIN-015",
       "module": "Handover PIN Security",
       "title": "5th consecutive wrong PIN attempt triggers lockout (HTTP 429 with retryAfterSeconds)",
       "preconditions": "4 prior wrong attempts recorded",
-      "steps": "POST /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover/verify with 5th wrong PIN",
+      "steps": "POST /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover/verify with 5th wrong PIN",
       "expectedResult": "HTTP 429 with retryAfterSeconds",
       "actualResult": "HTTP 429: retryAfterSeconds=900",
       "status": "PASS",
-      "duration": 4,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.938Z"
+      "timestamp": "2026-10-30T07:47:04.270Z"
     },
     {
       "id": "API-PIN-016",
       "module": "Handover PIN Security",
       "title": "Subsequent verification attempt while locked returns 429 even with correct PIN",
       "preconditions": "Rental is locked from 5 wrong attempts",
-      "steps": "POST /api/rentals/19e1f046-82c0-4e01-883a-5276d5f5fcce/handover/verify with the correct PIN",
+      "steps": "POST /api/rentals/3c61470b-e331-4bbd-8485-b4413213c68a/handover/verify with the correct PIN",
       "expectedResult": "HTTP 429 Locked",
       "actualResult": "HTTP 429: Too many incorrect attempts. Verification is locked.",
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.941Z"
+      "timestamp": "2026-10-30T07:47:04.273Z"
     },
     {
       "id": "API-PIN-017",
       "module": "Handover PIN Security",
       "title": "Owner verifies with correct PIN transitioning rental status to ACTIVE",
-      "preconditions": "Approved rental d3dbbc15-182c-4270-b9b4-d13d9f98a8ac with valid PIN",
-      "steps": "POST /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac/handover/verify with correct PIN",
+      "preconditions": "Approved rental 13e8b79a-d648-4c22-8abb-1f31a272320b with valid PIN",
+      "steps": "POST /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b/handover/verify with correct PIN",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
-      "duration": 8,
+      "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T16:21:20.971Z"
+      "timestamp": "2026-10-30T07:47:04.314Z"
     },
     {
       "id": "API-PIN-018",
@@ -3170,33 +3170,33 @@
       "status": "PASS",
       "duration": 44,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.015Z"
+      "timestamp": "2026-10-30T07:47:04.358Z"
     },
     {
       "id": "API-PIN-019",
       "module": "Handover PIN Security",
       "title": "GET /handover-pin returns 409 Conflict after rental becomes ACTIVE",
       "preconditions": "Rental has transitioned to ACTIVE",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac/handover-pin",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b/handover-pin",
       "expectedResult": "HTTP 409 Conflict (PIN already consumed)",
       "actualResult": "HTTP 409: Handover PIN is only available for APPROVED rentals",
       "status": "PASS",
-      "duration": 7,
+      "duration": 8,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.022Z"
+      "timestamp": "2026-10-30T07:47:04.366Z"
     },
     {
       "id": "API-PIN-020",
       "module": "Handover PIN Security",
       "title": "Privacy check: PIN security hash and encryption fields never exposed in GET /api/rentals/:id",
       "preconditions": "Rental fetched by borrower",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac and check for leaked pin fields",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b and check for leaked pin fields",
       "expectedResult": "HTTP 200 without any handoverPin* properties",
       "actualResult": "HTTP 200: leaked=false",
       "status": "PASS",
-      "duration": 4,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.026Z"
+      "timestamp": "2026-10-30T07:47:04.372Z"
     },
     {
       "id": "API-PIN-021",
@@ -3207,9 +3207,9 @@
       "expectedResult": "HTTP 200 with all pin fields omitted",
       "actualResult": "HTTP 200: leaked=false",
       "status": "PASS",
-      "duration": 9,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.035Z"
+      "timestamp": "2026-10-30T07:47:04.376Z"
     },
     {
       "id": "API-PIN-022",
@@ -3222,189 +3222,189 @@
       "status": "PASS",
       "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.040Z"
+      "timestamp": "2026-10-30T07:47:04.381Z"
     },
     {
       "id": "API-PIN-023",
       "module": "Handover PIN Security",
       "title": "PIN flow security and rental integrity check (Variation 1)",
       "preconditions": "Active rental in DB",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac by owner",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b by owner",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.042Z"
+      "timestamp": "2026-10-30T07:47:04.384Z"
     },
     {
       "id": "API-PIN-024",
       "module": "Handover PIN Security",
       "title": "PIN flow security and rental integrity check (Variation 2)",
       "preconditions": "Active rental in DB",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac by owner",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b by owner",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.045Z"
+      "timestamp": "2026-10-30T07:47:04.387Z"
     },
     {
       "id": "API-PIN-025",
       "module": "Handover PIN Security",
       "title": "PIN flow security and rental integrity check (Variation 3)",
       "preconditions": "Active rental in DB",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac by owner",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b by owner",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.047Z"
+      "timestamp": "2026-10-30T07:47:04.390Z"
     },
     {
       "id": "API-PIN-026",
       "module": "Handover PIN Security",
       "title": "PIN flow security and rental integrity check (Variation 4)",
       "preconditions": "Active rental in DB",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac by owner",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b by owner",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.049Z"
+      "timestamp": "2026-10-30T07:47:04.393Z"
     },
     {
       "id": "API-PIN-027",
       "module": "Handover PIN Security",
       "title": "PIN flow security and rental integrity check (Variation 5)",
       "preconditions": "Active rental in DB",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac by owner",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b by owner",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
-      "duration": 4,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.053Z"
+      "timestamp": "2026-10-30T07:47:04.395Z"
     },
     {
       "id": "API-PIN-028",
       "module": "Handover PIN Security",
       "title": "PIN flow security and rental integrity check (Variation 6)",
       "preconditions": "Active rental in DB",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac by owner",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b by owner",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.055Z"
+      "timestamp": "2026-10-30T07:47:04.398Z"
     },
     {
       "id": "API-PIN-029",
       "module": "Handover PIN Security",
       "title": "PIN flow security and rental integrity check (Variation 7)",
       "preconditions": "Active rental in DB",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac by owner",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b by owner",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.057Z"
+      "timestamp": "2026-10-30T07:47:04.401Z"
     },
     {
       "id": "API-PIN-030",
       "module": "Handover PIN Security",
       "title": "PIN flow security and rental integrity check (Variation 8)",
       "preconditions": "Active rental in DB",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac by owner",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b by owner",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.060Z"
+      "timestamp": "2026-10-30T07:47:04.404Z"
     },
     {
       "id": "API-PIN-031",
       "module": "Handover PIN Security",
       "title": "PIN flow security and rental integrity check (Variation 9)",
       "preconditions": "Active rental in DB",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac by owner",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b by owner",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.062Z"
+      "timestamp": "2026-10-30T07:47:04.407Z"
     },
     {
       "id": "API-PIN-032",
       "module": "Handover PIN Security",
       "title": "PIN flow security and rental integrity check (Variation 10)",
       "preconditions": "Active rental in DB",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac by owner",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b by owner",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.064Z"
+      "timestamp": "2026-10-30T07:47:04.410Z"
     },
     {
       "id": "API-PIN-033",
       "module": "Handover PIN Security",
       "title": "PIN flow security and rental integrity check (Variation 11)",
       "preconditions": "Active rental in DB",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac by owner",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b by owner",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
-      "duration": 3,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.067Z"
+      "timestamp": "2026-10-30T07:47:04.412Z"
     },
     {
       "id": "API-PIN-034",
       "module": "Handover PIN Security",
       "title": "PIN flow security and rental integrity check (Variation 12)",
       "preconditions": "Active rental in DB",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac by owner",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b by owner",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.070Z"
+      "timestamp": "2026-10-30T07:47:04.416Z"
     },
     {
       "id": "API-PIN-035",
       "module": "Handover PIN Security",
       "title": "PIN flow security and rental integrity check (Variation 13)",
       "preconditions": "Active rental in DB",
-      "steps": "GET /api/rentals/d3dbbc15-182c-4270-b9b4-d13d9f98a8ac by owner",
+      "steps": "GET /api/rentals/13e8b79a-d648-4c22-8abb-1f31a272320b by owner",
       "expectedResult": "HTTP 200 with status: ACTIVE",
       "actualResult": "HTTP 200: status=ACTIVE",
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.072Z"
+      "timestamp": "2026-10-30T07:47:04.418Z"
     },
     {
       "id": "API-REV-001",
       "module": "Reviews & Ratings",
       "title": "GET /review-status returns canReview: true for returned rental",
       "preconditions": "Rental status is RETURNED; Bob has not reviewed yet",
-      "steps": "GET /api/rentals/c6b30fd7-14a8-482c-989d-d96297df021a/review-status with Bob's token",
+      "steps": "GET /api/rentals/90e10e19-6662-43e6-83e6-78a27a796fd0/review-status with Bob's token",
       "expectedResult": "HTTP 200 with canReview: true",
       "actualResult": "HTTP 200: canReview=true",
       "status": "PASS",
-      "duration": 7,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.152Z"
+      "timestamp": "2026-10-30T07:47:04.762Z"
     },
     {
       "id": "API-REV-002",
@@ -3413,11 +3413,11 @@
       "preconditions": "Rental is RETURNED; user is borrower",
       "steps": "POST /api/reviews with rentalId, rating: 5, and comment",
       "expectedResult": "HTTP 201 with review created",
-      "actualResult": "HTTP 201: rating=5, id=2cecf593-7e18-4104-ba1d-b42899f15f05",
+      "actualResult": "HTTP 201: rating=5, id=239d251c-ff55-4dd8-a68b-84df2962b356",
       "status": "PASS",
-      "duration": 7,
+      "duration": 9,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.159Z"
+      "timestamp": "2026-10-30T07:47:04.771Z"
     },
     {
       "id": "API-REV-003",
@@ -3428,22 +3428,22 @@
       "expectedResult": "HTTP 201 with review created",
       "actualResult": "HTTP 201: rating=5",
       "status": "PASS",
-      "duration": 5,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.164Z"
+      "timestamp": "2026-10-30T07:47:04.777Z"
     },
     {
       "id": "API-REV-004",
       "module": "Reviews & Ratings",
-      "title": "Duplicate review submission by same user for same rental is rejected (HTTP 400 or 409)",
+      "title": "Duplicate review submission by same user for same rental is rejected (HTTP 400)",
       "preconditions": "Bob already reviewed rental",
-      "steps": "POST /api/reviews again for rental c6b30fd7-14a8-482c-989d-d96297df021a",
-      "expectedResult": "HTTP 400 or 409 Conflict",
+      "steps": "POST /api/reviews again for rental 90e10e19-6662-43e6-83e6-78a27a796fd0",
+      "expectedResult": "HTTP 400 Bad Request",
       "actualResult": "HTTP 409: You have already submitted a review for this rental",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.166Z"
+      "timestamp": "2026-10-30T07:47:04.781Z"
     },
     {
       "id": "API-REV-005",
@@ -3456,85 +3456,85 @@
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.169Z"
+      "timestamp": "2026-10-30T07:47:04.784Z"
     },
     {
       "id": "API-REV-006",
       "module": "Reviews & Ratings",
       "title": "Review rejected: Zero stars rating",
       "preconditions": "None",
-      "steps": "POST /api/reviews with {\"rentalId\":\"c6b30fd7-14a8-482c-989d-d96297df021a\",\"rating\":0,\"comment\":\"Test review\"}",
+      "steps": "POST /api/reviews with {\"rentalId\":\"90e10e19-6662-43e6-83e6-78a27a796fd0\",\"rating\":0,\"comment\":\"Test review\"}",
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.170Z"
+      "timestamp": "2026-10-30T07:47:04.785Z"
     },
     {
       "id": "API-REV-007",
       "module": "Reviews & Ratings",
       "title": "Review rejected: Six stars rating (> 5)",
       "preconditions": "None",
-      "steps": "POST /api/reviews with {\"rentalId\":\"c6b30fd7-14a8-482c-989d-d96297df021a\",\"rating\":6,\"comment\":\"Test review\"}",
+      "steps": "POST /api/reviews with {\"rentalId\":\"90e10e19-6662-43e6-83e6-78a27a796fd0\",\"rating\":6,\"comment\":\"Test review\"}",
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.171Z"
+      "timestamp": "2026-10-30T07:47:04.786Z"
     },
     {
       "id": "API-REV-008",
       "module": "Reviews & Ratings",
       "title": "Review rejected: Negative stars rating (-1)",
       "preconditions": "None",
-      "steps": "POST /api/reviews with {\"rentalId\":\"c6b30fd7-14a8-482c-989d-d96297df021a\",\"rating\":-1,\"comment\":\"Test review\"}",
+      "steps": "POST /api/reviews with {\"rentalId\":\"90e10e19-6662-43e6-83e6-78a27a796fd0\",\"rating\":-1,\"comment\":\"Test review\"}",
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.172Z"
+      "timestamp": "2026-10-30T07:47:04.787Z"
     },
     {
       "id": "API-REV-009",
       "module": "Reviews & Ratings",
       "title": "Review rejected: String instead of number rating",
       "preconditions": "None",
-      "steps": "POST /api/reviews with {\"rentalId\":\"c6b30fd7-14a8-482c-989d-d96297df021a\",\"rating\":\"five\",\"comment\":\"Test review\"}",
+      "steps": "POST /api/reviews with {\"rentalId\":\"90e10e19-6662-43e6-83e6-78a27a796fd0\",\"rating\":\"five\",\"comment\":\"Test review\"}",
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.173Z"
+      "timestamp": "2026-10-30T07:47:04.788Z"
     },
     {
       "id": "API-REV-010",
       "module": "Reviews & Ratings",
       "title": "Review rejected: Float rating 4.5",
       "preconditions": "None",
-      "steps": "POST /api/reviews with {\"rentalId\":\"c6b30fd7-14a8-482c-989d-d96297df021a\",\"rating\":4.5,\"comment\":\"Test review\"}",
+      "steps": "POST /api/reviews with {\"rentalId\":\"90e10e19-6662-43e6-83e6-78a27a796fd0\",\"rating\":4.5,\"comment\":\"Test review\"}",
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.174Z"
+      "timestamp": "2026-10-30T07:47:04.789Z"
     },
     {
       "id": "API-REV-011",
       "module": "Reviews & Ratings",
       "title": "Review rejected: Missing rating property",
       "preconditions": "None",
-      "steps": "POST /api/reviews with {\"rentalId\":\"c6b30fd7-14a8-482c-989d-d96297df021a\",\"comment\":\"Test review\"}",
+      "steps": "POST /api/reviews with {\"rentalId\":\"90e10e19-6662-43e6-83e6-78a27a796fd0\",\"comment\":\"Test review\"}",
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.175Z"
+      "timestamp": "2026-10-30T07:47:04.790Z"
     },
     {
       "id": "API-REV-012",
@@ -3545,9 +3545,9 @@
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 0,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.175Z"
+      "timestamp": "2026-10-30T07:47:04.791Z"
     },
     {
       "id": "API-REV-013",
@@ -3558,22 +3558,22 @@
       "expectedResult": "HTTP 404 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 0,
+      "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.176Z"
+      "timestamp": "2026-10-30T07:47:04.792Z"
     },
     {
       "id": "API-REV-014",
       "module": "Reviews & Ratings",
       "title": "Review rejected: Comment exceeds 500 chars limit",
       "preconditions": "None",
-      "steps": "POST /api/reviews with {\"rentalId\":\"c6b30fd7-14a8-482c-989d-d96297df021a\",\"rating\":5,\"comment\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"}",
+      "steps": "POST /api/reviews with {\"rentalId\":\"90e10e19-6662-43e6-83e6-78a27a796fd0\",\"rating\":5,\"comment\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"}",
       "expectedResult": "HTTP 400 or 422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.177Z"
+      "timestamp": "2026-10-30T07:47:04.793Z"
     },
     {
       "id": "API-REV-015",
@@ -3586,137 +3586,137 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.178Z"
+      "timestamp": "2026-10-30T07:47:04.794Z"
     },
     {
       "id": "API-REV-016",
       "module": "Reviews & Ratings",
       "title": "Review status check after review submitted (Variation 1)",
       "preconditions": "Bob has submitted review",
-      "steps": "GET /api/rentals/c6b30fd7-14a8-482c-989d-d96297df021a/review-status",
+      "steps": "GET /api/rentals/90e10e19-6662-43e6-83e6-78a27a796fd0/review-status",
       "expectedResult": "HTTP 200 with canReview: false",
       "actualResult": "HTTP 200: canReview=false",
       "status": "PASS",
-      "duration": 3,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.181Z"
+      "timestamp": "2026-10-30T07:47:04.799Z"
     },
     {
       "id": "API-REV-017",
       "module": "Reviews & Ratings",
       "title": "Review status check after review submitted (Variation 2)",
       "preconditions": "Bob has submitted review",
-      "steps": "GET /api/rentals/c6b30fd7-14a8-482c-989d-d96297df021a/review-status",
+      "steps": "GET /api/rentals/90e10e19-6662-43e6-83e6-78a27a796fd0/review-status",
       "expectedResult": "HTTP 200 with canReview: false",
       "actualResult": "HTTP 200: canReview=false",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.184Z"
+      "timestamp": "2026-10-30T07:47:04.803Z"
     },
     {
       "id": "API-REV-018",
       "module": "Reviews & Ratings",
       "title": "Review status check after review submitted (Variation 3)",
       "preconditions": "Bob has submitted review",
-      "steps": "GET /api/rentals/c6b30fd7-14a8-482c-989d-d96297df021a/review-status",
+      "steps": "GET /api/rentals/90e10e19-6662-43e6-83e6-78a27a796fd0/review-status",
       "expectedResult": "HTTP 200 with canReview: false",
       "actualResult": "HTTP 200: canReview=false",
       "status": "PASS",
-      "duration": 4,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.188Z"
+      "timestamp": "2026-10-30T07:47:04.806Z"
     },
     {
       "id": "API-REV-019",
       "module": "Reviews & Ratings",
       "title": "Review status check after review submitted (Variation 4)",
       "preconditions": "Bob has submitted review",
-      "steps": "GET /api/rentals/c6b30fd7-14a8-482c-989d-d96297df021a/review-status",
+      "steps": "GET /api/rentals/90e10e19-6662-43e6-83e6-78a27a796fd0/review-status",
       "expectedResult": "HTTP 200 with canReview: false",
       "actualResult": "HTTP 200: canReview=false",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.190Z"
+      "timestamp": "2026-10-30T07:47:04.810Z"
     },
     {
       "id": "API-REV-020",
       "module": "Reviews & Ratings",
       "title": "Review status check after review submitted (Variation 5)",
       "preconditions": "Bob has submitted review",
-      "steps": "GET /api/rentals/c6b30fd7-14a8-482c-989d-d96297df021a/review-status",
+      "steps": "GET /api/rentals/90e10e19-6662-43e6-83e6-78a27a796fd0/review-status",
       "expectedResult": "HTTP 200 with canReview: false",
       "actualResult": "HTTP 200: canReview=false",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.193Z"
+      "timestamp": "2026-10-30T07:47:04.814Z"
     },
     {
       "id": "API-REV-021",
       "module": "Reviews & Ratings",
       "title": "Review status check after review submitted (Variation 6)",
       "preconditions": "Bob has submitted review",
-      "steps": "GET /api/rentals/c6b30fd7-14a8-482c-989d-d96297df021a/review-status",
+      "steps": "GET /api/rentals/90e10e19-6662-43e6-83e6-78a27a796fd0/review-status",
       "expectedResult": "HTTP 200 with canReview: false",
       "actualResult": "HTTP 200: canReview=false",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.196Z"
+      "timestamp": "2026-10-30T07:47:04.818Z"
     },
     {
       "id": "API-REV-022",
       "module": "Reviews & Ratings",
       "title": "Review status check after review submitted (Variation 7)",
       "preconditions": "Bob has submitted review",
-      "steps": "GET /api/rentals/c6b30fd7-14a8-482c-989d-d96297df021a/review-status",
+      "steps": "GET /api/rentals/90e10e19-6662-43e6-83e6-78a27a796fd0/review-status",
       "expectedResult": "HTTP 200 with canReview: false",
       "actualResult": "HTTP 200: canReview=false",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.199Z"
+      "timestamp": "2026-10-30T07:47:04.822Z"
     },
     {
       "id": "API-REV-023",
       "module": "Reviews & Ratings",
       "title": "Review status check after review submitted (Variation 8)",
       "preconditions": "Bob has submitted review",
-      "steps": "GET /api/rentals/c6b30fd7-14a8-482c-989d-d96297df021a/review-status",
+      "steps": "GET /api/rentals/90e10e19-6662-43e6-83e6-78a27a796fd0/review-status",
       "expectedResult": "HTTP 200 with canReview: false",
       "actualResult": "HTTP 200: canReview=false",
       "status": "PASS",
-      "duration": 4,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.203Z"
+      "timestamp": "2026-10-30T07:47:04.825Z"
     },
     {
       "id": "API-REV-024",
       "module": "Reviews & Ratings",
       "title": "Review status check after review submitted (Variation 9)",
       "preconditions": "Bob has submitted review",
-      "steps": "GET /api/rentals/c6b30fd7-14a8-482c-989d-d96297df021a/review-status",
+      "steps": "GET /api/rentals/90e10e19-6662-43e6-83e6-78a27a796fd0/review-status",
       "expectedResult": "HTTP 200 with canReview: false",
       "actualResult": "HTTP 200: canReview=false",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.206Z"
+      "timestamp": "2026-10-30T07:47:04.829Z"
     },
     {
       "id": "API-REV-025",
       "module": "Reviews & Ratings",
       "title": "Review status check after review submitted (Variation 10)",
       "preconditions": "Bob has submitted review",
-      "steps": "GET /api/rentals/c6b30fd7-14a8-482c-989d-d96297df021a/review-status",
+      "steps": "GET /api/rentals/90e10e19-6662-43e6-83e6-78a27a796fd0/review-status",
       "expectedResult": "HTTP 200 with canReview: false",
       "actualResult": "HTTP 200: canReview=false",
       "status": "PASS",
-      "duration": 3,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.209Z"
+      "timestamp": "2026-10-30T07:47:04.835Z"
     },
     {
       "id": "API-CHAT-001",
@@ -3727,22 +3727,22 @@
       "expectedResult": "HTTP 200 with notifications array",
       "actualResult": "HTTP 200: returned 20 notifications",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.222Z"
+      "timestamp": "2026-10-30T07:47:05.174Z"
     },
     {
       "id": "API-CHAT-002",
       "module": "Chat & Notifications",
       "title": "Mark single notification as read updates read status",
       "preconditions": "Notification exists in DB",
-      "steps": "PATCH /api/notifications/0ec13a25-ae8c-4440-9e9f-84c0aa758f23/read",
+      "steps": "PATCH /api/notifications/514e213c-2457-44de-a2e5-263a5e497337/read",
       "expectedResult": "HTTP 200 with read: true",
       "actualResult": "HTTP 200: success=true",
       "status": "PASS",
-      "duration": 3,
+      "duration": 8,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.225Z"
+      "timestamp": "2026-10-30T07:47:05.182Z"
     },
     {
       "id": "API-CHAT-003",
@@ -3753,87 +3753,87 @@
       "expectedResult": "HTTP 200 with success: true",
       "actualResult": "HTTP 200: success=true",
       "status": "PASS",
-      "duration": 3,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.228Z"
+      "timestamp": "2026-10-30T07:47:05.187Z"
     },
     {
       "id": "API-CHAT-004",
       "module": "Chat & Notifications",
       "title": "Borrower sends chat message to owner within rental conversation",
       "preconditions": "Rental exists; Bob is borrower",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with message body",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with message content",
       "expectedResult": "HTTP 201 with message created",
       "actualResult": "HTTP 201: body=\"Hi Alice! Can I pick up the item around 10 AM?\"",
       "status": "PASS",
-      "duration": 9,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.237Z"
+      "timestamp": "2026-10-30T07:47:05.201Z"
     },
     {
       "id": "API-CHAT-005",
       "module": "Chat & Notifications",
       "title": "Owner replies to borrower within rental conversation",
       "preconditions": "Alice is owner",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with owner reply",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with owner reply",
       "expectedResult": "HTTP 201 with reply created",
       "actualResult": "HTTP 201: body=\"Sure Bob, 10 AM works great for me!\"",
       "status": "PASS",
-      "duration": 4,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.241Z"
+      "timestamp": "2026-10-30T07:47:05.206Z"
     },
     {
       "id": "API-CHAT-006",
       "module": "Chat & Notifications",
       "title": "GET conversation messages returns all exchange messages in order",
       "preconditions": "Messages sent between Bob and Alice",
-      "steps": "GET /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages",
+      "steps": "GET /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages",
       "expectedResult": "HTTP 200 with array of messages",
       "actualResult": "HTTP 200: returned 2 messages",
       "status": "PASS",
-      "duration": 6,
+      "duration": 9,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.247Z"
+      "timestamp": "2026-10-30T07:47:05.215Z"
     },
     {
       "id": "API-CHAT-007",
       "module": "Chat & Notifications",
       "title": "Non-participant stranger cannot send chat message into conversation (HTTP 403 Forbidden)",
       "preconditions": "Carol is not in this rental",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with Carol's token",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with Carol's token",
       "expectedResult": "HTTP 403 Forbidden",
       "actualResult": "HTTP 403: You are not authorized to send messages in this chat",
       "status": "PASS",
-      "duration": 5,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.252Z"
+      "timestamp": "2026-10-30T07:47:05.219Z"
     },
     {
       "id": "API-CHAT-008",
       "module": "Chat & Notifications",
       "title": "Non-participant stranger cannot read conversation history (HTTP 403 Forbidden)",
       "preconditions": "Carol is not in this rental",
-      "steps": "GET /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with Carol's token",
+      "steps": "GET /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with Carol's token",
       "expectedResult": "HTTP 403 Forbidden",
       "actualResult": "HTTP 403: You are not authorized to access this chat",
       "status": "PASS",
-      "duration": 4,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.256Z"
+      "timestamp": "2026-10-30T07:47:05.224Z"
     },
     {
       "id": "API-CHAT-009",
       "module": "Chat & Notifications",
       "title": "Empty chat message rejected with HTTP 400 or 422",
       "preconditions": "None",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with empty body",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with empty content",
       "expectedResult": "HTTP 400 or 422 validation error",
       "actualResult": "HTTP 400: Validation failed",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.257Z"
+      "timestamp": "2026-10-30T07:47:05.225Z"
     },
     {
       "id": "API-CHAT-010",
@@ -3842,11 +3842,11 @@
       "preconditions": "Active chats for Bob",
       "steps": "GET /api/chats with Bob's token",
       "expectedResult": "HTTP 200 with chats array",
-      "actualResult": "HTTP 200: returned 41 chats",
+      "actualResult": "HTTP 200: returned 101 chats",
       "status": "PASS",
-      "duration": 7,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.264Z"
+      "timestamp": "2026-10-30T07:47:05.239Z"
     },
     {
       "id": "API-CHAT-011",
@@ -3855,193 +3855,193 @@
       "preconditions": "Authenticated Alice token",
       "steps": "GET /api/chats/unread-count",
       "expectedResult": "HTTP 200 with unread message count",
-      "actualResult": "HTTP 200: count=16",
+      "actualResult": "HTTP 200: count=76",
       "status": "PASS",
       "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.268Z"
+      "timestamp": "2026-10-30T07:47:05.243Z"
     },
     {
       "id": "API-CHAT-012",
       "module": "Chat & Notifications",
       "title": "Message delivery check 1",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=4f1ac2c2-5fdc-4510-80f2-66596ff20e0d",
+      "actualResult": "HTTP 201: id=41c879f3-46aa-4e0e-9f01-0d503fc4d110",
       "status": "PASS",
-      "duration": 5,
+      "duration": 7,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.273Z"
+      "timestamp": "2026-10-30T07:47:05.250Z"
     },
     {
       "id": "API-CHAT-013",
       "module": "Chat & Notifications",
       "title": "Message delivery check 2",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=c94549fd-6336-4945-9edb-88ac782cfa56",
+      "actualResult": "HTTP 201: id=83ba0aa8-7208-46aa-8211-163cafc1d68e",
       "status": "PASS",
-      "duration": 3,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.276Z"
+      "timestamp": "2026-10-30T07:47:05.256Z"
     },
     {
       "id": "API-CHAT-014",
       "module": "Chat & Notifications",
       "title": "Message delivery check 3",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=6117f517-c450-4ff9-b12a-f740620d6f77",
+      "actualResult": "HTTP 201: id=2732e150-a7c2-420d-9471-9fab5f29c33d",
       "status": "PASS",
       "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.280Z"
+      "timestamp": "2026-10-30T07:47:05.260Z"
     },
     {
       "id": "API-CHAT-015",
       "module": "Chat & Notifications",
       "title": "Message delivery check 4",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=15c9cc77-6710-4585-b3b8-16b3589f0fb2",
+      "actualResult": "HTTP 201: id=789c59d7-af81-469c-a733-5e72dc63f114",
       "status": "PASS",
-      "duration": 5,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.285Z"
+      "timestamp": "2026-10-30T07:47:05.266Z"
     },
     {
       "id": "API-CHAT-016",
       "module": "Chat & Notifications",
       "title": "Message delivery check 5",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=8c95f3ea-4f68-48b8-b4c0-3a40f15e6d68",
+      "actualResult": "HTTP 201: id=ac698c42-d049-475b-b3ea-96d2ccfe41e6",
       "status": "PASS",
-      "duration": 5,
+      "duration": 7,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.290Z"
+      "timestamp": "2026-10-30T07:47:05.273Z"
     },
     {
       "id": "API-CHAT-017",
       "module": "Chat & Notifications",
       "title": "Message delivery check 6",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=0605d49e-049b-4cc3-81f9-8e892275ad9b",
+      "actualResult": "HTTP 201: id=f133fbe0-49dc-4cd7-b058-2d8d3cb0bbd9",
       "status": "PASS",
       "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.294Z"
+      "timestamp": "2026-10-30T07:47:05.277Z"
     },
     {
       "id": "API-CHAT-018",
       "module": "Chat & Notifications",
       "title": "Message delivery check 7",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=7352dc3a-8002-4ff4-ae54-13e44785b3dc",
+      "actualResult": "HTTP 201: id=8487c1ca-e801-4570-8442-d418ed450321",
       "status": "PASS",
-      "duration": 5,
+      "duration": 6,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.299Z"
+      "timestamp": "2026-10-30T07:47:05.284Z"
     },
     {
       "id": "API-CHAT-019",
       "module": "Chat & Notifications",
       "title": "Message delivery check 8",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=ab530465-01da-47d5-b723-49d232e77674",
+      "actualResult": "HTTP 201: id=0691dee9-93c6-4dee-aea6-2120dd1986b1",
       "status": "PASS",
-      "duration": 6,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.305Z"
+      "timestamp": "2026-10-30T07:47:05.289Z"
     },
     {
       "id": "API-CHAT-020",
       "module": "Chat & Notifications",
       "title": "Message delivery check 9",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=9feb2a75-f7a4-4633-af8d-b6b9ab47f802",
+      "actualResult": "HTTP 201: id=e9b18e3e-47df-4a27-89df-f4a7b5074334",
       "status": "PASS",
       "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.310Z"
+      "timestamp": "2026-10-30T07:47:05.294Z"
     },
     {
       "id": "API-CHAT-021",
       "module": "Chat & Notifications",
       "title": "Message delivery check 10",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=eb202072-af8a-40e0-b371-5243d1451b9f",
+      "actualResult": "HTTP 201: id=e6dce35f-2582-4a78-8a58-280dfe703be1",
       "status": "PASS",
-      "duration": 4,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.314Z"
+      "timestamp": "2026-10-30T07:47:05.299Z"
     },
     {
       "id": "API-CHAT-022",
       "module": "Chat & Notifications",
       "title": "Message delivery check 11",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=6a7fef11-9ea5-40bd-9e6c-01c5f3983a83",
+      "actualResult": "HTTP 201: id=301a38e8-1405-412a-8702-62adf8e25205",
       "status": "PASS",
-      "duration": 6,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.321Z"
+      "timestamp": "2026-10-30T07:47:05.304Z"
     },
     {
       "id": "API-CHAT-023",
       "module": "Chat & Notifications",
       "title": "Message delivery check 12",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=58d85064-a9b6-4b8d-af84-2a5f22a5082f",
+      "actualResult": "HTTP 201: id=6a5b47ca-a303-45da-a7b4-c080b098e7ae",
       "status": "PASS",
       "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.326Z"
+      "timestamp": "2026-10-30T07:47:05.309Z"
     },
     {
       "id": "API-CHAT-024",
       "module": "Chat & Notifications",
       "title": "Message delivery check 13",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=83080b89-19ab-45e9-8963-ce432e50ed31",
+      "actualResult": "HTTP 201: id=2b7fb989-d29a-4d6f-b702-65c5b708680c",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.329Z"
+      "timestamp": "2026-10-30T07:47:05.313Z"
     },
     {
       "id": "API-CHAT-025",
       "module": "Chat & Notifications",
       "title": "Message delivery check 14",
       "preconditions": "Active rental conversation",
-      "steps": "POST /api/rentals/5d9b2744-ce64-496a-b9af-7baf4306e5ba/messages with check text",
+      "steps": "POST /api/rentals/be351d38-43e6-4e6f-bac9-e2636a17870b/messages with check text",
       "expectedResult": "HTTP 201 message delivered",
-      "actualResult": "HTTP 201: id=28946a7e-1cea-4a15-b213-be5b10f2faaf",
+      "actualResult": "HTTP 201: id=919bf264-3b8c-4f91-b8f6-c02012f2867f",
       "status": "PASS",
-      "duration": 5,
+      "duration": 7,
       "error": null,
-      "timestamp": "2026-10-29T16:21:21.334Z"
+      "timestamp": "2026-10-30T07:47:05.320Z"
     },
     {
       "id": "API-LOC-001",
@@ -4052,9 +4052,9 @@
       "expectedResult": "HTTP 201, phone normalized to +919876543210",
       "actualResult": "HTTP 201: user.phone=accepted",
       "status": "PASS",
-      "duration": 1086,
+      "duration": 405,
       "error": null,
-      "timestamp": "2026-10-29T16:21:22.421Z"
+      "timestamp": "2026-10-30T07:47:05.814Z"
     },
     {
       "id": "API-LOC-002",
@@ -4065,9 +4065,9 @@
       "expectedResult": "HTTP 201, phone normalized to +918765432109",
       "actualResult": "HTTP 201: user.phone=accepted",
       "status": "PASS",
-      "duration": 612,
+      "duration": 348,
       "error": null,
-      "timestamp": "2026-10-29T16:21:23.033Z"
+      "timestamp": "2026-10-30T07:47:06.162Z"
     },
     {
       "id": "API-LOC-003",
@@ -4078,9 +4078,9 @@
       "expectedResult": "HTTP 201, phone normalized to +917654321098",
       "actualResult": "HTTP 201: user.phone=accepted",
       "status": "PASS",
-      "duration": 521,
+      "duration": 362,
       "error": null,
-      "timestamp": "2026-10-29T16:21:23.554Z"
+      "timestamp": "2026-10-30T07:47:06.524Z"
     },
     {
       "id": "API-LOC-004",
@@ -4091,9 +4091,9 @@
       "expectedResult": "HTTP 201, phone normalized to +916543210987",
       "actualResult": "HTTP 201: user.phone=accepted",
       "status": "PASS",
-      "duration": 604,
+      "duration": 362,
       "error": null,
-      "timestamp": "2026-10-29T16:21:24.159Z"
+      "timestamp": "2026-10-30T07:47:06.886Z"
     },
     {
       "id": "API-LOC-005",
@@ -4104,9 +4104,9 @@
       "expectedResult": "HTTP 201, phone normalized to +919876543210",
       "actualResult": "HTTP 201: user.phone=accepted",
       "status": "PASS",
-      "duration": 498,
+      "duration": 374,
       "error": null,
-      "timestamp": "2026-10-29T16:21:24.657Z"
+      "timestamp": "2026-10-30T07:47:07.260Z"
     },
     {
       "id": "API-LOC-006",
@@ -4117,9 +4117,9 @@
       "expectedResult": "HTTP 201, phone normalized to +919876543210",
       "actualResult": "HTTP 201: user.phone=accepted",
       "status": "PASS",
-      "duration": 631,
+      "duration": 392,
       "error": null,
-      "timestamp": "2026-10-29T16:21:25.288Z"
+      "timestamp": "2026-10-30T07:47:07.652Z"
     },
     {
       "id": "API-LOC-007",
@@ -4130,9 +4130,9 @@
       "expectedResult": "HTTP 201, phone normalized to +919876543210",
       "actualResult": "HTTP 201: user.phone=accepted",
       "status": "PASS",
-      "duration": 555,
+      "duration": 407,
       "error": null,
-      "timestamp": "2026-10-29T16:21:25.843Z"
+      "timestamp": "2026-10-30T07:47:08.059Z"
     },
     {
       "id": "API-LOC-008",
@@ -4143,9 +4143,9 @@
       "expectedResult": "HTTP 201, phone normalized to +919876543210",
       "actualResult": "HTTP 201: user.phone=accepted",
       "status": "PASS",
-      "duration": 690,
+      "duration": 377,
       "error": null,
-      "timestamp": "2026-10-29T16:21:26.533Z"
+      "timestamp": "2026-10-30T07:47:08.436Z"
     },
     {
       "id": "API-LOC-009",
@@ -4156,9 +4156,9 @@
       "expectedResult": "HTTP 201, phone normalized to +919876543210",
       "actualResult": "HTTP 201: user.phone=accepted",
       "status": "PASS",
-      "duration": 608,
+      "duration": 384,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.141Z"
+      "timestamp": "2026-10-30T07:47:08.820Z"
     },
     {
       "id": "API-LOC-010",
@@ -4169,9 +4169,9 @@
       "expectedResult": "HTTP 201, phone normalized to +919876543210",
       "actualResult": "HTTP 201: user.phone=accepted",
       "status": "PASS",
-      "duration": 501,
+      "duration": 408,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.642Z"
+      "timestamp": "2026-10-30T07:47:09.228Z"
     },
     {
       "id": "API-LOC-011",
@@ -4184,7 +4184,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.644Z"
+      "timestamp": "2026-10-30T07:47:09.230Z"
     },
     {
       "id": "API-LOC-012",
@@ -4195,9 +4195,9 @@
       "expectedResult": "HTTP 400 Bad Request",
       "actualResult": "HTTP 400: Enter a valid 10-digit Indian mobile number",
       "status": "PASS",
-      "duration": 1,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.645Z"
+      "timestamp": "2026-10-30T07:47:09.233Z"
     },
     {
       "id": "API-LOC-013",
@@ -4210,7 +4210,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.647Z"
+      "timestamp": "2026-10-30T07:47:09.235Z"
     },
     {
       "id": "API-LOC-014",
@@ -4221,9 +4221,9 @@
       "expectedResult": "HTTP 400 Bad Request",
       "actualResult": "HTTP 400: Enter a valid 10-digit Indian mobile number",
       "status": "PASS",
-      "duration": 1,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.648Z"
+      "timestamp": "2026-10-30T07:47:09.238Z"
     },
     {
       "id": "API-LOC-015",
@@ -4234,9 +4234,9 @@
       "expectedResult": "HTTP 400 Bad Request",
       "actualResult": "HTTP 400: Enter a valid 10-digit Indian mobile number",
       "status": "PASS",
-      "duration": 1,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.649Z"
+      "timestamp": "2026-10-30T07:47:09.241Z"
     },
     {
       "id": "API-LOC-016",
@@ -4249,7 +4249,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.650Z"
+      "timestamp": "2026-10-30T07:47:09.242Z"
     },
     {
       "id": "API-LOC-017",
@@ -4260,9 +4260,9 @@
       "expectedResult": "HTTP 400 Bad Request",
       "actualResult": "HTTP 400: Enter a valid 10-digit Indian mobile number",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.651Z"
+      "timestamp": "2026-10-30T07:47:09.244Z"
     },
     {
       "id": "API-LOC-018",
@@ -4275,7 +4275,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.652Z"
+      "timestamp": "2026-10-30T07:47:09.245Z"
     },
     {
       "id": "API-LOC-019",
@@ -4288,7 +4288,7 @@
       "status": "PASS",
       "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.654Z"
+      "timestamp": "2026-10-30T07:47:09.247Z"
     },
     {
       "id": "API-LOC-020",
@@ -4301,7 +4301,7 @@
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.655Z"
+      "timestamp": "2026-10-30T07:47:09.248Z"
     },
     {
       "id": "API-LOC-021",
@@ -4312,9 +4312,9 @@
       "expectedResult": "HTTP 200 with item.currency === \"INR\"",
       "actualResult": "HTTP 200: currency=INR",
       "status": "PASS",
-      "duration": 6,
+      "duration": 7,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.661Z"
+      "timestamp": "2026-10-30T07:47:09.255Z"
     },
     {
       "id": "API-LOC-022",
@@ -4325,9 +4325,9 @@
       "expectedResult": "HTTP 200 with rental.currency === \"INR\"",
       "actualResult": "HTTP 200: currency=INR",
       "status": "PASS",
-      "duration": 4,
+      "duration": 5,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.665Z"
+      "timestamp": "2026-10-30T07:47:09.260Z"
     },
     {
       "id": "API-LOC-023",
@@ -4338,9 +4338,9 @@
       "expectedResult": "HTTP 200 with updated address and coordinates",
       "actualResult": "HTTP 200: address=\"Connaught Place, New Delhi\"",
       "status": "PASS",
-      "duration": 9,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.674Z"
+      "timestamp": "2026-10-30T07:47:09.264Z"
     },
     {
       "id": "API-LOC-024",
@@ -4348,12 +4348,12 @@
       "title": "Coordinate range validation: Latitude > 90 rejected",
       "preconditions": "Alice authenticated session",
       "steps": "PATCH /api/users/me with lat=95, lng=0",
-      "expectedResult": "HTTP 400",
+      "expectedResult": "HTTP 400,422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.678Z"
+      "timestamp": "2026-10-30T07:47:09.269Z"
     },
     {
       "id": "API-LOC-025",
@@ -4361,12 +4361,12 @@
       "title": "Coordinate range validation: Latitude < -90 rejected",
       "preconditions": "Alice authenticated session",
       "steps": "PATCH /api/users/me with lat=-95, lng=0",
-      "expectedResult": "HTTP 400",
+      "expectedResult": "HTTP 400,422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.679Z"
+      "timestamp": "2026-10-30T07:47:09.271Z"
     },
     {
       "id": "API-LOC-026",
@@ -4374,12 +4374,12 @@
       "title": "Coordinate range validation: Longitude > 180 rejected",
       "preconditions": "Alice authenticated session",
       "steps": "PATCH /api/users/me with lat=0, lng=185",
-      "expectedResult": "HTTP 400",
+      "expectedResult": "HTTP 400,422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
-      "duration": 1,
+      "duration": 2,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.680Z"
+      "timestamp": "2026-10-30T07:47:09.273Z"
     },
     {
       "id": "API-LOC-027",
@@ -4387,12 +4387,12 @@
       "title": "Coordinate range validation: Longitude < -180 rejected",
       "preconditions": "Alice authenticated session",
       "steps": "PATCH /api/users/me with lat=0, lng=-185",
-      "expectedResult": "HTTP 400",
+      "expectedResult": "HTTP 400,422",
       "actualResult": "HTTP 422: Validation failed",
       "status": "PASS",
       "duration": 1,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.681Z"
+      "timestamp": "2026-10-30T07:47:09.274Z"
     },
     {
       "id": "API-LOC-028",
@@ -4403,100 +4403,100 @@
       "expectedResult": "HTTP 200",
       "actualResult": "HTTP 200: OK",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.683Z"
+      "timestamp": "2026-10-30T07:47:09.277Z"
     },
     {
       "id": "API-LOC-029",
       "module": "India Localization",
       "title": "Backend input resilience: SQL injection string in search query",
       "preconditions": "None",
-      "steps": "GET /api/items?search='%20OR%201%3D1%20-- with auth",
+      "steps": "GET /api/items?q='%20OR%201%3D1%20--",
       "expectedResult": "HTTP 200 without server crash or unhandled error",
       "actualResult": "HTTP 200: returned valid array",
       "status": "PASS",
       "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.689Z"
+      "timestamp": "2026-10-30T07:47:09.284Z"
     },
     {
       "id": "API-LOC-030",
       "module": "India Localization",
       "title": "Backend input resilience: SQL injection union query in search query",
       "preconditions": "None",
-      "steps": "GET /api/items?search='%3B%20DROP%20TABLE%20items%3B%20-- with auth",
+      "steps": "GET /api/items?q='%3B%20DROP%20TABLE%20items%3B%20--",
       "expectedResult": "HTTP 200 without server crash or unhandled error",
       "actualResult": "HTTP 200: returned valid array",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.691Z"
+      "timestamp": "2026-10-30T07:47:09.287Z"
     },
     {
       "id": "API-LOC-031",
       "module": "India Localization",
       "title": "Backend input resilience: XSS script tags in search query",
       "preconditions": "None",
-      "steps": "GET /api/items?search=%3Cscript%3Ealert(1)%3C%2Fscript%3E with auth",
+      "steps": "GET /api/items?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E",
       "expectedResult": "HTTP 200 without server crash or unhandled error",
       "actualResult": "HTTP 200: returned valid array",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.693Z"
+      "timestamp": "2026-10-30T07:47:09.290Z"
     },
     {
       "id": "API-LOC-032",
       "module": "India Localization",
       "title": "Backend input resilience: HTML tags in search query",
       "preconditions": "None",
-      "steps": "GET /api/items?search=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E with auth",
+      "steps": "GET /api/items?q=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E",
       "expectedResult": "HTTP 200 without server crash or unhandled error",
       "actualResult": "HTTP 200: returned valid array",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.695Z"
+      "timestamp": "2026-10-30T07:47:09.293Z"
     },
     {
       "id": "API-LOC-033",
       "module": "India Localization",
       "title": "Backend input resilience: Unicode special characters in search",
       "preconditions": "None",
-      "steps": "GET /api/items?search=%E2%82%B9%20%E2%82%B9%20%E2%82%B9%20%C2%A9%20%C2%AE%20%E2%84%A2 with auth",
+      "steps": "GET /api/items?q=%E2%82%B9%20%E2%82%B9%20%E2%82%B9%20%C2%A9%20%C2%AE%20%E2%84%A2",
       "expectedResult": "HTTP 200 without server crash or unhandled error",
       "actualResult": "HTTP 200: returned valid array",
       "status": "PASS",
-      "duration": 2,
+      "duration": 3,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.697Z"
+      "timestamp": "2026-10-30T07:47:09.296Z"
     },
     {
       "id": "API-LOC-034",
       "module": "India Localization",
       "title": "Backend input resilience: JSON special characters in search",
       "preconditions": "None",
-      "steps": "GET /api/items?search=%7B%22%24gt%22%3A%20%22%22%7D with auth",
+      "steps": "GET /api/items?q=%7B%22%24gt%22%3A%20%22%22%7D",
       "expectedResult": "HTTP 200 without server crash or unhandled error",
       "actualResult": "HTTP 200: returned valid array",
       "status": "PASS",
-      "duration": 2,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.699Z"
+      "timestamp": "2026-10-30T07:47:09.300Z"
     },
     {
       "id": "API-LOC-035",
       "module": "India Localization",
       "title": "Backend input resilience: Extra long search query string",
       "preconditions": "None",
-      "steps": "GET /api/items?search=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA with auth",
+      "steps": "GET /api/items?q=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       "expectedResult": "HTTP 200 without server crash or unhandled error",
       "actualResult": "HTTP 200: returned valid array",
       "status": "PASS",
-      "duration": 3,
+      "duration": 4,
       "error": null,
-      "timestamp": "2026-10-29T16:21:27.702Z"
+      "timestamp": "2026-10-30T07:47:09.304Z"
     }
   ]
 }

@@ -46,7 +46,7 @@ export const uploadAvatar = multer({
  */
 export const uploadLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 20, // 20 requests per window
+  max: process.env.NODE_ENV === 'test' ? 10000 : 20, // 20 requests per window
   keyGenerator: (req: Request) => req.user?.userId || req.ip || 'anonymous',
   validate: { keyGeneratorIpFallback: false },
   message: {

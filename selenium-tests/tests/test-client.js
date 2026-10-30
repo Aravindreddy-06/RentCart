@@ -113,6 +113,16 @@ class SeleniumTestCollector {
 
 const collector = new SeleniumTestCollector();
 
+function findCachedChromedriver() {
+  if (process.env.CHROMEDRIVER_PATH && fs.existsSync(process.env.CHROMEDRIVER_PATH)) {
+    return process.env.CHROMEDRIVER_PATH;
+  }
+  const homeDir = process.env.USERPROFILE || process.env.HOME || '';
+  const winCached = path.join(homeDir, '.cache', 'selenium', 'chromedriver', 'win64', '156.0.8078.73', 'chromedriver.exe');
+  if (fs.existsSync(winCached)) return winCached;
+  return null;
+}
+
 async function createDriver(viewport = { width: 1280, height: 800 }) {
   const options = new chrome.Options();
   options.addArguments(
@@ -126,10 +136,13 @@ async function createDriver(viewport = { width: 1280, height: 800 }) {
     '--ignore-certificate-errors',
   );
 
-  const driver = await new Builder()
-    .forBrowser('chrome')
-    .setChromeOptions(options)
-    .build();
+  const builder = new Builder().forBrowser('chrome').setChromeOptions(options);
+  const cachedDriver = findCachedChromedriver();
+  if (cachedDriver) {
+    builder.setChromeService(new chrome.ServiceBuilder(cachedDriver));
+  }
+
+  const driver = await builder.build();
 
   await driver.manage().setTimeouts({ implicit: 3000, pageLoad: 15000, script: 10000 });
   return driver;
@@ -159,16 +172,18 @@ async function loginAndSetToken(driver, email = 'alice@example.com', password = 
     });
     const json = await res.json();
     const token = json.data?.accessToken;
+    const refreshToken = json.data?.refreshToken;
     const user = json.data?.user;
 
     if (token) {
       await driver.get(WEB_BASE_URL);
-      await driver.executeScript((tkn, usr) => {
+      await driver.executeScript((tkn, rfTkn, usr) => {
         localStorage.setItem('accessToken', tkn);
+        if (rfTkn) localStorage.setItem('refreshToken', rfTkn);
         if (usr) localStorage.setItem('user', JSON.stringify(usr));
-      }, token, user);
-      await driver.navigate().refresh();
-      await driver.sleep(500);
+      }, token, refreshToken, user);
+      await driver.get(`${WEB_BASE_URL}/home`);
+      await driver.sleep(600);
       return { token, user };
     }
   } catch (err) {}

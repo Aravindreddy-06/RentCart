@@ -17,6 +17,18 @@ function requireEnv(key: string): string {
 
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 
+if (nodeEnv === 'production') {
+  if (process.env.CLOUDINARY_MOCK === 'true') {
+    throw new Error('CLOUDINARY_MOCK is not permitted in production');
+  }
+  if (process.env.EMAIL_DISABLED === 'true') {
+    throw new Error('EMAIL_DISABLED is not permitted in production');
+  }
+  if (process.env.DISABLE_OTP_COOLDOWN === 'true') {
+    throw new Error('DISABLE_OTP_COOLDOWN is not permitted in production');
+  }
+}
+
 const parseMailProvider = (): 'brevo' | 'smtp' => {
   const provider = process.env.MAIL_PROVIDER?.trim().toLowerCase();
   if (nodeEnv === 'production') {
@@ -63,4 +75,7 @@ export const env = {
   CANCELLED_COOLDOWN_MINUTES: process.env.CANCELLED_COOLDOWN_MINUTES
     ? parseFloat(process.env.CANCELLED_COOLDOWN_MINUTES)
     : 10,
+  CLOUDINARY_MOCK: nodeEnv === 'test' && process.env.CLOUDINARY_MOCK === 'true',
+  EMAIL_DISABLED: nodeEnv === 'test' && process.env.EMAIL_DISABLED === 'true',
+  DISABLE_OTP_COOLDOWN: nodeEnv === 'test' && process.env.DISABLE_OTP_COOLDOWN === 'true',
 } as const;

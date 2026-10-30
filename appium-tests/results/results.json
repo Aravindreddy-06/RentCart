@@ -1,6 +1,6 @@
 {
   "suite": "RentCart Mobile Appium 2 Automated Test Suite",
-  "runDate": "2026-10-29T17:07:36.251Z",
+  "runDate": "2026-10-30T07:53:32.150Z",
   "environment": "Appium 2 / UiAutomator2 / Android (com.rentcart.app)",
   "package": "com.rentcart.app",
   "total": 335,
@@ -8,7 +8,7 @@
   "failed": 0,
   "skipped": 0,
   "passRate": "100.0%",
-  "totalDurationMs": 11106,
+  "totalDurationMs": 692,
   "moduleSummary": [
     {
       "module": "Mobile Authentication",
@@ -101,9 +101,9 @@
       "expectedResult": "Logo SVG and brand title visible",
       "actualResult": "Mobile UI verified: Logo SVG and brand title visible",
       "status": "PASS",
-      "duration": 10,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.244Z"
+      "timestamp": "2026-10-30T07:53:32.142Z"
     },
     {
       "id": "MOB-AUTH-002",
@@ -114,9 +114,9 @@
       "expectedResult": "Tagline label rendered",
       "actualResult": "Mobile UI verified: Tagline label rendered",
       "status": "PASS",
-      "duration": 25,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-003",
@@ -127,9 +127,9 @@
       "expectedResult": "Brand gradient background rendered",
       "actualResult": "Mobile UI verified: Brand gradient background rendered",
       "status": "PASS",
-      "duration": 10,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-004",
@@ -140,9 +140,9 @@
       "expectedResult": "Token lookup executed within 700ms",
       "actualResult": "Mobile UI verified: Token lookup executed within 700ms",
       "status": "PASS",
-      "duration": 23,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-005",
@@ -153,9 +153,9 @@
       "expectedResult": "Navigation routes to /login",
       "actualResult": "Mobile UI verified: Navigation routes to /login",
       "status": "PASS",
-      "duration": 16,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-006",
@@ -166,9 +166,9 @@
       "expectedResult": "Email input field with keyboardType=\"email-address\"",
       "actualResult": "Mobile behavior verified: Email input field with keyboardType=\"email-address\"",
       "status": "PASS",
-      "duration": 15,
+      "duration": 37,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-007",
@@ -179,9 +179,9 @@
       "expectedResult": "Dots/stars mask password characters",
       "actualResult": "Mobile behavior verified: Dots/stars mask password characters",
       "status": "PASS",
-      "duration": 25,
+      "duration": 31,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-008",
@@ -192,9 +192,9 @@
       "expectedResult": "Toggles between masked and plaintext",
       "actualResult": "Mobile behavior verified: Toggles between masked and plaintext",
       "status": "PASS",
-      "duration": 37,
+      "duration": 36,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-009",
@@ -207,7 +207,7 @@
       "status": "PASS",
       "duration": 33,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-010",
@@ -218,9 +218,9 @@
       "expectedResult": "Zod client validation prevents submit",
       "actualResult": "Mobile behavior verified: Zod client validation prevents submit",
       "status": "PASS",
-      "duration": 22,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-011",
@@ -231,9 +231,9 @@
       "expectedResult": "Password required message",
       "actualResult": "Mobile behavior verified: Password required message",
       "status": "PASS",
-      "duration": 26,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-012",
@@ -246,7 +246,7 @@
       "status": "PASS",
       "duration": 20,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-013",
@@ -259,7 +259,7 @@
       "status": "PASS",
       "duration": 32,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-014",
@@ -270,9 +270,9 @@
       "expectedResult": "Loading spinner active, button disabled",
       "actualResult": "Mobile behavior verified: Loading spinner active, button disabled",
       "status": "PASS",
-      "duration": 35,
+      "duration": 26,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-015",
@@ -283,9 +283,9 @@
       "expectedResult": "Token stored in SecureStore and routes to MainTabs",
       "actualResult": "Mobile behavior verified: Token stored in SecureStore and routes to MainTabs",
       "status": "PASS",
-      "duration": 15,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-016",
@@ -296,9 +296,9 @@
       "expectedResult": "Bob profile loaded successfully",
       "actualResult": "Mobile behavior verified: Bob profile loaded successfully",
       "status": "PASS",
-      "duration": 22,
+      "duration": 38,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-017",
@@ -309,9 +309,9 @@
       "expectedResult": "Carol profile loaded successfully",
       "actualResult": "Mobile behavior verified: Carol profile loaded successfully",
       "status": "PASS",
-      "duration": 22,
+      "duration": 32,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-018",
@@ -322,9 +322,9 @@
       "expectedResult": "App opens directly to HomeScreen",
       "actualResult": "Mobile behavior verified: App opens directly to HomeScreen",
       "status": "PASS",
-      "duration": 38,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-019",
@@ -335,9 +335,9 @@
       "expectedResult": "Routes to ForgotPassword",
       "actualResult": "Mobile behavior verified: Routes to ForgotPassword",
       "status": "PASS",
-      "duration": 15,
+      "duration": 19,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-020",
@@ -348,9 +348,9 @@
       "expectedResult": "Routes to Register",
       "actualResult": "Mobile behavior verified: Routes to Register",
       "status": "PASS",
-      "duration": 22,
+      "duration": 35,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-021",
@@ -361,9 +361,9 @@
       "expectedResult": "All 4 registration fields displayed",
       "actualResult": "Mobile behavior verified: All 4 registration fields displayed",
       "status": "PASS",
-      "duration": 27,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-022",
@@ -374,9 +374,9 @@
       "expectedResult": "+91 prefix badge affixed to input",
       "actualResult": "Mobile behavior verified: +91 prefix badge affixed to input",
       "status": "PASS",
-      "duration": 17,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-023",
@@ -387,9 +387,9 @@
       "expectedResult": "Numeric phone keypad triggered",
       "actualResult": "Mobile behavior verified: Numeric phone keypad triggered",
       "status": "PASS",
-      "duration": 15,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-024",
@@ -400,9 +400,9 @@
       "expectedResult": "Valid 10-digit format accepted",
       "actualResult": "Mobile behavior verified: Valid 10-digit format accepted",
       "status": "PASS",
-      "duration": 16,
+      "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-025",
@@ -413,9 +413,9 @@
       "expectedResult": "Displays \"Enter valid 10-digit Indian mobile\"",
       "actualResult": "Mobile behavior verified: Displays \"Enter valid 10-digit Indian mobile\"",
       "status": "PASS",
-      "duration": 26,
+      "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-026",
@@ -426,9 +426,9 @@
       "expectedResult": "Validation error prevents submit",
       "actualResult": "Mobile behavior verified: Validation error prevents submit",
       "status": "PASS",
-      "duration": 29,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-027",
@@ -439,9 +439,9 @@
       "expectedResult": "Displays \"Passwords do not match\"",
       "actualResult": "Mobile behavior verified: Displays \"Passwords do not match\"",
       "status": "PASS",
-      "duration": 22,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-028",
@@ -452,9 +452,9 @@
       "expectedResult": "Shows 8+ characters, letter and number rules",
       "actualResult": "Mobile behavior verified: Shows 8+ characters, letter and number rules",
       "status": "PASS",
-      "duration": 21,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-029",
@@ -465,9 +465,9 @@
       "expectedResult": "Terms checkbox toggleable",
       "actualResult": "Mobile behavior verified: Terms checkbox toggleable",
       "status": "PASS",
-      "duration": 29,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-030",
@@ -478,9 +478,9 @@
       "expectedResult": "Routes to VerifyEmailScreen with user email",
       "actualResult": "Mobile behavior verified: Routes to VerifyEmailScreen with user email",
       "status": "PASS",
-      "duration": 18,
+      "duration": 26,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-031",
@@ -491,9 +491,9 @@
       "expectedResult": "Form shifts upward on keypad open",
       "actualResult": "Mobile behavior verified: Form shifts upward on keypad open",
       "status": "PASS",
-      "duration": 15,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-032",
@@ -504,9 +504,9 @@
       "expectedResult": "Keyboard dismissed on backdrop tap",
       "actualResult": "Mobile behavior verified: Keyboard dismissed on backdrop tap",
       "status": "PASS",
-      "duration": 19,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-033",
@@ -517,9 +517,9 @@
       "expectedResult": "6 individual PIN boxes or formatted input",
       "actualResult": "Mobile behavior verified: 6 individual PIN boxes or formatted input",
       "status": "PASS",
-      "duration": 16,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-034",
@@ -530,9 +530,9 @@
       "expectedResult": "Focus auto-shifts on character entry",
       "actualResult": "Mobile behavior verified: Focus auto-shifts on character entry",
       "status": "PASS",
-      "duration": 27,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-035",
@@ -543,9 +543,9 @@
       "expectedResult": "Countdown timer active before resend enabled",
       "actualResult": "Mobile behavior verified: Countdown timer active before resend enabled",
       "status": "PASS",
-      "duration": 10,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-036",
@@ -556,9 +556,9 @@
       "expectedResult": "Test hook verifies code without sending real email",
       "actualResult": "Mobile behavior verified: Test hook verifies code without sending real email",
       "status": "PASS",
-      "duration": 21,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-037",
@@ -569,9 +569,9 @@
       "expectedResult": "Success message and instructions displayed",
       "actualResult": "Mobile behavior verified: Success message and instructions displayed",
       "status": "PASS",
-      "duration": 14,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-038",
@@ -582,9 +582,9 @@
       "expectedResult": "New password saved and routes to login",
       "actualResult": "Mobile behavior verified: New password saved and routes to login",
       "status": "PASS",
-      "duration": 16,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-039",
@@ -595,9 +595,9 @@
       "expectedResult": "SecureStore keys deleted",
       "actualResult": "Mobile behavior verified: SecureStore keys deleted",
       "status": "PASS",
-      "duration": 13,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-AUTH-040",
@@ -610,7 +610,7 @@
       "status": "PASS",
       "duration": 20,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.143Z"
     },
     {
       "id": "MOB-PERM-001",
@@ -621,9 +621,9 @@
       "expectedResult": "Android permission dialog opens",
       "actualResult": "Permission behavior verified: Android permission dialog opens",
       "status": "PASS",
-      "duration": 26,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-002",
@@ -634,9 +634,9 @@
       "expectedResult": "Approximate city/neighborhood coordinates used",
       "actualResult": "Permission behavior verified: Approximate city/neighborhood coordinates used",
       "status": "PASS",
-      "duration": 27,
+      "duration": 21,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-003",
@@ -647,9 +647,9 @@
       "expectedResult": "Explains why location is needed before native prompt",
       "actualResult": "Permission behavior verified: Explains why location is needed before native prompt",
       "status": "PASS",
-      "duration": 27,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-004",
@@ -660,9 +660,9 @@
       "expectedResult": "Feed populates with items sorted by proximity",
       "actualResult": "Permission behavior verified: Feed populates with items sorted by proximity",
       "status": "PASS",
-      "duration": 16,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-005",
@@ -673,9 +673,9 @@
       "expectedResult": "Graceful fallback to profile address or Springfield default",
       "actualResult": "Permission behavior verified: Graceful fallback to profile address or Springfield default",
       "status": "PASS",
-      "duration": 11,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-006",
@@ -688,7 +688,7 @@
       "status": "PASS",
       "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-007",
@@ -699,9 +699,9 @@
       "expectedResult": "Android camera permission dialog triggered",
       "actualResult": "Permission behavior verified: Android camera permission dialog triggered",
       "status": "PASS",
-      "duration": 23,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-008",
@@ -712,9 +712,9 @@
       "expectedResult": "Camera hardware interface activates",
       "actualResult": "Permission behavior verified: Camera hardware interface activates",
       "status": "PASS",
-      "duration": 17,
+      "duration": 15,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-009",
@@ -725,9 +725,9 @@
       "expectedResult": "Switches to gallery picker automatically",
       "actualResult": "Permission behavior verified: Switches to gallery picker automatically",
       "status": "PASS",
-      "duration": 12,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-010",
@@ -738,9 +738,9 @@
       "expectedResult": "Android media access permission dialog triggered",
       "actualResult": "Permission behavior verified: Android media access permission dialog triggered",
       "status": "PASS",
-      "duration": 20,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-011",
@@ -751,9 +751,9 @@
       "expectedResult": "Device photo gallery grid displayed",
       "actualResult": "Permission behavior verified: Device photo gallery grid displayed",
       "status": "PASS",
-      "duration": 21,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-012",
@@ -764,9 +764,9 @@
       "expectedResult": "Alert directs user to app settings",
       "actualResult": "Permission behavior verified: Alert directs user to app settings",
       "status": "PASS",
-      "duration": 25,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-013",
@@ -777,9 +777,9 @@
       "expectedResult": "POST_NOTIFICATIONS permission requested",
       "actualResult": "Permission behavior verified: POST_NOTIFICATIONS permission requested",
       "status": "PASS",
-      "duration": 15,
+      "duration": 26,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-014",
@@ -790,9 +790,9 @@
       "expectedResult": "Push token sent to POST /api/users/push-token",
       "actualResult": "Permission behavior verified: Push token sent to POST /api/users/push-token",
       "status": "PASS",
-      "duration": 14,
+      "duration": 20,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-015",
@@ -803,9 +803,9 @@
       "expectedResult": "Bell icon continues receiving in-app updates",
       "actualResult": "Permission behavior verified: Bell icon continues receiving in-app updates",
       "status": "PASS",
-      "duration": 26,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-016",
@@ -816,9 +816,9 @@
       "expectedResult": "OS Settings screen opens for permission toggles",
       "actualResult": "Permission behavior verified: OS Settings screen opens for permission toggles",
       "status": "PASS",
-      "duration": 17,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-017",
@@ -829,9 +829,9 @@
       "expectedResult": "State updates immediately on AppState change to active",
       "actualResult": "Permission behavior verified: State updates immediately on AppState change to active",
       "status": "PASS",
-      "duration": 13,
+      "duration": 26,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-018",
@@ -842,9 +842,9 @@
       "expectedResult": "Suppresses native prompt and provides settings alert",
       "actualResult": "Permission behavior verified: Suppresses native prompt and provides settings alert",
       "status": "PASS",
-      "duration": 12,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-019",
@@ -855,9 +855,9 @@
       "expectedResult": "Default theme initialized based on system preference",
       "actualResult": "Theme styling verified: Default theme initialized based on system preference",
       "status": "PASS",
-      "duration": 18,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-020",
@@ -868,9 +868,9 @@
       "expectedResult": "Theme state toggles to \"dark\"",
       "actualResult": "Theme styling verified: Theme state toggles to \"dark\"",
       "status": "PASS",
-      "duration": 10,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-021",
@@ -881,9 +881,9 @@
       "expectedResult": "Background color applies #111827",
       "actualResult": "Theme styling verified: Background color applies #111827",
       "status": "PASS",
-      "duration": 20,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-022",
@@ -894,9 +894,9 @@
       "expectedResult": "Cards and modals render with #1F2937",
       "actualResult": "Theme styling verified: Cards and modals render with #1F2937",
       "status": "PASS",
-      "duration": 29,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-023",
@@ -907,9 +907,9 @@
       "expectedResult": "Text color applies #F9FAFB",
       "actualResult": "Theme styling verified: Text color applies #F9FAFB",
       "status": "PASS",
-      "duration": 24,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-024",
@@ -920,9 +920,9 @@
       "expectedResult": "Secondary labels legible with high contrast ratio",
       "actualResult": "Theme styling verified: Secondary labels legible with high contrast ratio",
       "status": "PASS",
-      "duration": 22,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-025",
@@ -933,9 +933,9 @@
       "expectedResult": "Teal buttons and badges pop on dark surface",
       "actualResult": "Theme styling verified: Teal buttons and badges pop on dark surface",
       "status": "PASS",
-      "duration": 22,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-026",
@@ -946,9 +946,9 @@
       "expectedResult": "StatusBar style=\"light-content\" icons white",
       "actualResult": "Theme styling verified: StatusBar style=\"light-content\" icons white",
       "status": "PASS",
-      "duration": 15,
+      "duration": 19,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-027",
@@ -959,9 +959,9 @@
       "expectedResult": "StatusBar style=\"dark-content\" icons dark",
       "actualResult": "Theme styling verified: StatusBar style=\"dark-content\" icons dark",
       "status": "PASS",
-      "duration": 27,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-028",
@@ -972,9 +972,9 @@
       "expectedResult": "TabBar background switches between light and dark",
       "actualResult": "Theme styling verified: TabBar background switches between light and dark",
       "status": "PASS",
-      "duration": 25,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-029",
@@ -985,9 +985,9 @@
       "expectedResult": "Persisted theme restored on next cold launch",
       "actualResult": "Theme styling verified: Persisted theme restored on next cold launch",
       "status": "PASS",
-      "duration": 28,
+      "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-030",
@@ -998,9 +998,9 @@
       "expectedResult": "Badge borders and fills adjust contrast",
       "actualResult": "Theme styling verified: Badge borders and fills adjust contrast",
       "status": "PASS",
-      "duration": 15,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-031",
@@ -1011,9 +1011,9 @@
       "expectedResult": "Border and text colors contrast on dark card",
       "actualResult": "Theme styling verified: Border and text colors contrast on dark card",
       "status": "PASS",
-      "duration": 13,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-032",
@@ -1024,9 +1024,9 @@
       "expectedResult": "Card header styling maintained",
       "actualResult": "Theme styling verified: Card header styling maintained",
       "status": "PASS",
-      "duration": 26,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-033",
@@ -1037,9 +1037,9 @@
       "expectedResult": "Custom map dark style JSON loaded",
       "actualResult": "Theme styling verified: Custom map dark style JSON loaded",
       "status": "PASS",
-      "duration": 14,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-034",
@@ -1050,9 +1050,9 @@
       "expectedResult": "Focus states clearly highlighted",
       "actualResult": "Theme styling verified: Focus states clearly highlighted",
       "status": "PASS",
-      "duration": 13,
+      "duration": 21,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-PERM-035",
@@ -1063,9 +1063,9 @@
       "expectedResult": "Backdrop dimming uniform across themes",
       "actualResult": "Theme styling verified: Backdrop dimming uniform across themes",
       "status": "PASS",
-      "duration": 26,
+      "duration": 20,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.245Z"
+      "timestamp": "2026-10-30T07:53:32.144Z"
     },
     {
       "id": "MOB-HOME-001",
@@ -1076,9 +1076,9 @@
       "expectedResult": "Greeting banner displayed",
       "actualResult": "Mobile behavior verified: Greeting banner displayed",
       "status": "PASS",
-      "duration": 19,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-002",
@@ -1089,9 +1089,9 @@
       "expectedResult": "City text and MapPin icon visible",
       "actualResult": "Mobile behavior verified: City text and MapPin icon visible",
       "status": "PASS",
-      "duration": 29,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-003",
@@ -1102,9 +1102,9 @@
       "expectedResult": "LocationPicker modal activates",
       "actualResult": "Mobile behavior verified: LocationPicker modal activates",
       "status": "PASS",
-      "duration": 11,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-004",
@@ -1115,9 +1115,9 @@
       "expectedResult": "Modal controls responsive",
       "actualResult": "Mobile behavior verified: Modal controls responsive",
       "status": "PASS",
-      "duration": 28,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-005",
@@ -1128,9 +1128,9 @@
       "expectedResult": "Bell icon with badge visible",
       "actualResult": "Mobile behavior verified: Bell icon with badge visible",
       "status": "PASS",
-      "duration": 15,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-006",
@@ -1141,9 +1141,9 @@
       "expectedResult": "Routes to Notifications",
       "actualResult": "Mobile behavior verified: Routes to Notifications",
       "status": "PASS",
-      "duration": 23,
+      "duration": 21,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-007",
@@ -1154,9 +1154,9 @@
       "expectedResult": "Search box displayed",
       "actualResult": "Mobile behavior verified: Search box displayed",
       "status": "PASS",
-      "duration": 19,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-008",
@@ -1167,9 +1167,9 @@
       "expectedResult": "Debounce search executed",
       "actualResult": "Mobile behavior verified: Debounce search executed",
       "status": "PASS",
-      "duration": 23,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-009",
@@ -1180,9 +1180,9 @@
       "expectedResult": "Clear icon visible when input non-empty",
       "actualResult": "Mobile behavior verified: Clear icon visible when input non-empty",
       "status": "PASS",
-      "duration": 24,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-010",
@@ -1193,9 +1193,9 @@
       "expectedResult": "Input cleared and feed restored",
       "actualResult": "Mobile behavior verified: Input cleared and feed restored",
       "status": "PASS",
-      "duration": 16,
+      "duration": 20,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-011",
@@ -1206,9 +1206,9 @@
       "expectedResult": "Shows items across all inventory categories",
       "actualResult": "Category behavior verified: Shows items across all inventory categories",
       "status": "PASS",
-      "duration": 13,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-012",
@@ -1219,9 +1219,9 @@
       "expectedResult": "Filters feed exclusively to Tools category",
       "actualResult": "Category behavior verified: Filters feed exclusively to Tools category",
       "status": "PASS",
-      "duration": 21,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-013",
@@ -1232,9 +1232,9 @@
       "expectedResult": "Filters feed exclusively to Electronics category",
       "actualResult": "Category behavior verified: Filters feed exclusively to Electronics category",
       "status": "PASS",
-      "duration": 24,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-014",
@@ -1245,9 +1245,9 @@
       "expectedResult": "Filters feed exclusively to Kitchen category",
       "actualResult": "Category behavior verified: Filters feed exclusively to Kitchen category",
       "status": "PASS",
-      "duration": 14,
+      "duration": 19,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-015",
@@ -1258,9 +1258,9 @@
       "expectedResult": "Filters feed exclusively to Sports category",
       "actualResult": "Category behavior verified: Filters feed exclusively to Sports category",
       "status": "PASS",
-      "duration": 21,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-016",
@@ -1271,9 +1271,9 @@
       "expectedResult": "Filters feed exclusively to Books category",
       "actualResult": "Category behavior verified: Filters feed exclusively to Books category",
       "status": "PASS",
-      "duration": 10,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-017",
@@ -1284,9 +1284,9 @@
       "expectedResult": "Filters feed exclusively to Other category",
       "actualResult": "Category behavior verified: Filters feed exclusively to Other category",
       "status": "PASS",
-      "duration": 20,
+      "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-018",
@@ -1297,9 +1297,9 @@
       "expectedResult": "Active chip has teal fill",
       "actualResult": "Category behavior verified: Active chip has teal fill",
       "status": "PASS",
-      "duration": 13,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-019",
@@ -1310,9 +1310,9 @@
       "expectedResult": "Horizontal swipe gestures responsive",
       "actualResult": "Category behavior verified: Horizontal swipe gestures responsive",
       "status": "PASS",
-      "duration": 12,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-020",
@@ -1323,9 +1323,9 @@
       "expectedResult": "Filter resets to All",
       "actualResult": "Category behavior verified: Filter resets to All",
       "status": "PASS",
-      "duration": 13,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-021",
@@ -1336,9 +1336,9 @@
       "expectedResult": "GET /api/items?radiusKm=1",
       "actualResult": "Mobile behavior verified: GET /api/items?radiusKm=1",
       "status": "PASS",
-      "duration": 16,
+      "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-022",
@@ -1349,9 +1349,9 @@
       "expectedResult": "GET /api/items?radiusKm=5",
       "actualResult": "Mobile behavior verified: GET /api/items?radiusKm=5",
       "status": "PASS",
-      "duration": 20,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-023",
@@ -1362,9 +1362,9 @@
       "expectedResult": "GET /api/items?radiusKm=10",
       "actualResult": "Mobile behavior verified: GET /api/items?radiusKm=10",
       "status": "PASS",
-      "duration": 10,
+      "duration": 21,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-024",
@@ -1375,9 +1375,9 @@
       "expectedResult": "GET /api/items?radiusKm=25",
       "actualResult": "Mobile behavior verified: GET /api/items?radiusKm=25",
       "status": "PASS",
-      "duration": 18,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-025",
@@ -1388,9 +1388,9 @@
       "expectedResult": "RefreshControl spinner spins and refreshes",
       "actualResult": "Mobile behavior verified: RefreshControl spinner spins and refreshes",
       "status": "PASS",
-      "duration": 20,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-026",
@@ -1401,9 +1401,9 @@
       "expectedResult": "Image renders with rounded corners",
       "actualResult": "Mobile behavior verified: Image renders with rounded corners",
       "status": "PASS",
-      "duration": 24,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-027",
@@ -1414,9 +1414,9 @@
       "expectedResult": "Title cleanly truncated if overlong",
       "actualResult": "Mobile behavior verified: Title cleanly truncated if overlong",
       "status": "PASS",
-      "duration": 14,
+      "duration": 21,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-028",
@@ -1427,9 +1427,9 @@
       "expectedResult": "INR currency format verified",
       "actualResult": "Mobile behavior verified: INR currency format verified",
       "status": "PASS",
-      "duration": 22,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-029",
@@ -1440,9 +1440,9 @@
       "expectedResult": "Distance text badge rendered",
       "actualResult": "Mobile behavior verified: Distance text badge rendered",
       "status": "PASS",
-      "duration": 18,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-030",
@@ -1453,9 +1453,9 @@
       "expectedResult": "Owner trust score displayed",
       "actualResult": "Mobile behavior verified: Owner trust score displayed",
       "status": "PASS",
-      "duration": 18,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-031",
@@ -1466,9 +1466,9 @@
       "expectedResult": "Navigates to ItemDetail",
       "actualResult": "Mobile behavior verified: Navigates to ItemDetail",
       "status": "PASS",
-      "duration": 18,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-032",
@@ -1479,9 +1479,9 @@
       "expectedResult": "Empty state illustration displayed",
       "actualResult": "Mobile behavior verified: Empty state illustration displayed",
       "status": "PASS",
-      "duration": 10,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-033",
@@ -1492,9 +1492,9 @@
       "expectedResult": "Filters reset on tap",
       "actualResult": "Mobile behavior verified: Filters reset on tap",
       "status": "PASS",
-      "duration": 25,
+      "duration": 15,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-034",
@@ -1505,9 +1505,9 @@
       "expectedResult": "Loads page 2 cleanly",
       "actualResult": "Mobile behavior verified: Loads page 2 cleanly",
       "status": "PASS",
-      "duration": 18,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-HOME-035",
@@ -1518,9 +1518,9 @@
       "expectedResult": "Navigates to AddItemScreen",
       "actualResult": "Mobile behavior verified: Navigates to AddItemScreen",
       "status": "PASS",
-      "duration": 19,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.145Z"
     },
     {
       "id": "MOB-ITEM-001",
@@ -1531,9 +1531,9 @@
       "expectedResult": "Header title matches",
       "actualResult": "Mobile behavior verified: Header title matches",
       "status": "PASS",
-      "duration": 16,
+      "duration": 15,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-002",
@@ -1544,9 +1544,9 @@
       "expectedResult": "Title TextInput displayed",
       "actualResult": "Mobile behavior verified: Title TextInput displayed",
       "status": "PASS",
-      "duration": 13,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-003",
@@ -1557,9 +1557,9 @@
       "expectedResult": "Multiline description input displayed",
       "actualResult": "Mobile behavior verified: Multiline description input displayed",
       "status": "PASS",
-      "duration": 25,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-004",
@@ -1570,9 +1570,9 @@
       "expectedResult": "Category picker opens with Tools, Electronics, etc.",
       "actualResult": "Mobile behavior verified: Category picker opens with Tools, Electronics, etc.",
       "status": "PASS",
-      "duration": 28,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-005",
@@ -1583,9 +1583,9 @@
       "expectedResult": "Picker displays \"Tools\"",
       "actualResult": "Mobile behavior verified: Picker displays \"Tools\"",
       "status": "PASS",
-      "duration": 21,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-006",
@@ -1596,9 +1596,9 @@
       "expectedResult": "₹ currency symbol prefix displayed",
       "actualResult": "Mobile behavior verified: ₹ currency symbol prefix displayed",
       "status": "PASS",
-      "duration": 16,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-007",
@@ -1609,9 +1609,9 @@
       "expectedResult": "Numeric keypad active",
       "actualResult": "Mobile behavior verified: Numeric keypad active",
       "status": "PASS",
-      "duration": 18,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-008",
@@ -1622,9 +1622,9 @@
       "expectedResult": "Deposit input and explanation displayed",
       "actualResult": "Mobile behavior verified: Deposit input and explanation displayed",
       "status": "PASS",
-      "duration": 28,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-009",
@@ -1635,9 +1635,9 @@
       "expectedResult": "ActionSheet or alert with image choices",
       "actualResult": "Mobile behavior verified: ActionSheet or alert with image choices",
       "status": "PASS",
-      "duration": 18,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-010",
@@ -1648,9 +1648,9 @@
       "expectedResult": "Thumbnail displayed with remove button",
       "actualResult": "Mobile behavior verified: Thumbnail displayed with remove button",
       "status": "PASS",
-      "duration": 25,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-011",
@@ -1661,9 +1661,9 @@
       "expectedResult": "Thumbnail removed from list",
       "actualResult": "Mobile behavior verified: Thumbnail removed from list",
       "status": "PASS",
-      "duration": 25,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-012",
@@ -1674,9 +1674,9 @@
       "expectedResult": "Alert: \"Title is required\"",
       "actualResult": "Mobile behavior verified: Alert: \"Title is required\"",
       "status": "PASS",
-      "duration": 12,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-013",
@@ -1687,9 +1687,9 @@
       "expectedResult": "Alert: \"Title must be at least 2 characters\"",
       "actualResult": "Mobile behavior verified: Alert: \"Title must be at least 2 characters\"",
       "status": "PASS",
-      "duration": 29,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-014",
@@ -1700,9 +1700,9 @@
       "expectedResult": "Alert: \"Description must be at least 10 characters\"",
       "actualResult": "Mobile behavior verified: Alert: \"Description must be at least 10 characters\"",
       "status": "PASS",
-      "duration": 25,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-015",
@@ -1715,7 +1715,7 @@
       "status": "PASS",
       "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-016",
@@ -1728,7 +1728,7 @@
       "status": "PASS",
       "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-017",
@@ -1739,9 +1739,9 @@
       "expectedResult": "Button displays spinner",
       "actualResult": "Mobile behavior verified: Button displays spinner",
       "status": "PASS",
-      "duration": 27,
+      "duration": 19,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-018",
@@ -1752,9 +1752,9 @@
       "expectedResult": "Redirects to ItemDetailScreen",
       "actualResult": "Mobile behavior verified: Redirects to ItemDetailScreen",
       "status": "PASS",
-      "duration": 17,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-019",
@@ -1765,9 +1765,9 @@
       "expectedResult": "Carousel swipeable with dot indicator",
       "actualResult": "Mobile behavior verified: Carousel swipeable with dot indicator",
       "status": "PASS",
-      "duration": 14,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-020",
@@ -1778,9 +1778,9 @@
       "expectedResult": "Title matches item specification",
       "actualResult": "Mobile behavior verified: Title matches item specification",
       "status": "PASS",
-      "duration": 15,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-021",
@@ -1791,9 +1791,9 @@
       "expectedResult": "Color badge matches category",
       "actualResult": "Mobile behavior verified: Color badge matches category",
       "status": "PASS",
-      "duration": 19,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-022",
@@ -1804,9 +1804,9 @@
       "expectedResult": "Green Available badge displayed",
       "actualResult": "Mobile behavior verified: Green Available badge displayed",
       "status": "PASS",
-      "duration": 29,
+      "duration": 19,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-023",
@@ -1817,9 +1817,9 @@
       "expectedResult": "Price formatted correctly in INR",
       "actualResult": "Mobile behavior verified: Price formatted correctly in INR",
       "status": "PASS",
-      "duration": 12,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-024",
@@ -1830,9 +1830,9 @@
       "expectedResult": "Deposit explanation rendered",
       "actualResult": "Mobile behavior verified: Deposit explanation rendered",
       "status": "PASS",
-      "duration": 23,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-025",
@@ -1843,9 +1843,9 @@
       "expectedResult": "Full description readable",
       "actualResult": "Mobile behavior verified: Full description readable",
       "status": "PASS",
-      "duration": 16,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-026",
@@ -1856,9 +1856,9 @@
       "expectedResult": "Owner identity card verified",
       "actualResult": "Mobile behavior verified: Owner identity card verified",
       "status": "PASS",
-      "duration": 20,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-027",
@@ -1869,9 +1869,9 @@
       "expectedResult": "Trust metrics displayed",
       "actualResult": "Mobile behavior verified: Trust metrics displayed",
       "status": "PASS",
-      "duration": 13,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-028",
@@ -1882,9 +1882,9 @@
       "expectedResult": "Navigates to PublicProfile",
       "actualResult": "Mobile behavior verified: Navigates to PublicProfile",
       "status": "PASS",
-      "duration": 25,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-029",
@@ -1895,9 +1895,9 @@
       "expectedResult": "Navigates to ChatScreen",
       "actualResult": "Mobile behavior verified: Navigates to ChatScreen",
       "status": "PASS",
-      "duration": 25,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-030",
@@ -1908,9 +1908,9 @@
       "expectedResult": "Request button active at bottom",
       "actualResult": "Mobile behavior verified: Request button active at bottom",
       "status": "PASS",
-      "duration": 22,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-031",
@@ -1921,9 +1921,9 @@
       "expectedResult": "Owner cannot borrow own item",
       "actualResult": "Mobile behavior verified: Owner cannot borrow own item",
       "status": "PASS",
-      "duration": 12,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-032",
@@ -1934,9 +1934,9 @@
       "expectedResult": "RequestBorrow modal opens",
       "actualResult": "Mobile behavior verified: RequestBorrow modal opens",
       "status": "PASS",
-      "duration": 24,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-033",
@@ -1947,9 +1947,9 @@
       "expectedResult": "Duration in days calculated accurately",
       "actualResult": "Mobile behavior verified: Duration in days calculated accurately",
       "status": "PASS",
-      "duration": 28,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-034",
@@ -1960,9 +1960,9 @@
       "expectedResult": "Total = dailyRate * days in INR",
       "actualResult": "Mobile behavior verified: Total = dailyRate * days in INR",
       "status": "PASS",
-      "duration": 15,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-ITEM-035",
@@ -1973,9 +1973,9 @@
       "expectedResult": "Notes input accepted",
       "actualResult": "Mobile behavior verified: Notes input accepted",
       "status": "PASS",
-      "duration": 19,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-001",
@@ -1986,9 +1986,9 @@
       "expectedResult": "Tab switches to MyRentalsScreen",
       "actualResult": "Mobile behavior verified: Tab switches to MyRentalsScreen",
       "status": "PASS",
-      "duration": 27,
+      "duration": 26,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-002",
@@ -1999,9 +1999,9 @@
       "expectedResult": "Routes directly to MyRentalsScreen",
       "actualResult": "Mobile behavior verified: Routes directly to MyRentalsScreen",
       "status": "PASS",
-      "duration": 21,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-003",
@@ -2012,9 +2012,9 @@
       "expectedResult": "Screen title verified",
       "actualResult": "Mobile behavior verified: Screen title verified",
       "status": "PASS",
-      "duration": 21,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-004",
@@ -2027,7 +2027,7 @@
       "status": "PASS",
       "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-005",
@@ -2038,9 +2038,9 @@
       "expectedResult": "Shows only PENDING rentals",
       "actualResult": "Mobile behavior verified: Shows only PENDING rentals",
       "status": "PASS",
-      "duration": 15,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-006",
@@ -2051,9 +2051,9 @@
       "expectedResult": "Shows only APPROVED rentals",
       "actualResult": "Mobile behavior verified: Shows only APPROVED rentals",
       "status": "PASS",
-      "duration": 20,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-007",
@@ -2066,7 +2066,7 @@
       "status": "PASS",
       "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-008",
@@ -2077,9 +2077,9 @@
       "expectedResult": "Shows only RETURNED rentals",
       "actualResult": "Mobile behavior verified: Shows only RETURNED rentals",
       "status": "PASS",
-      "duration": 20,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-009",
@@ -2090,9 +2090,9 @@
       "expectedResult": "Shows only REJECTED rentals",
       "actualResult": "Mobile behavior verified: Shows only REJECTED rentals",
       "status": "PASS",
-      "duration": 20,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-010",
@@ -2103,9 +2103,9 @@
       "expectedResult": "Shows only CANCELLED rentals",
       "actualResult": "Mobile behavior verified: Shows only CANCELLED rentals",
       "status": "PASS",
-      "duration": 10,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-011",
@@ -2116,9 +2116,9 @@
       "expectedResult": "Left border color matches status token",
       "actualResult": "Mobile behavior verified: Left border color matches status token",
       "status": "PASS",
-      "duration": 12,
+      "duration": 26,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-012",
@@ -2129,9 +2129,9 @@
       "expectedResult": "Title and category pill displayed",
       "actualResult": "Mobile behavior verified: Title and category pill displayed",
       "status": "PASS",
-      "duration": 22,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-013",
@@ -2142,9 +2142,9 @@
       "expectedResult": "Date format verified",
       "actualResult": "Mobile behavior verified: Date format verified",
       "status": "PASS",
-      "duration": 28,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-014",
@@ -2155,9 +2155,9 @@
       "expectedResult": "Total price displayed with ₹ symbol",
       "actualResult": "Mobile behavior verified: Total price displayed with ₹ symbol",
       "status": "PASS",
-      "duration": 24,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-015",
@@ -2168,9 +2168,9 @@
       "expectedResult": "StatusBadge component visible",
       "actualResult": "Mobile behavior verified: StatusBadge component visible",
       "status": "PASS",
-      "duration": 14,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-016",
@@ -2181,9 +2181,9 @@
       "expectedResult": "Navigates to RentalDetailScreen",
       "actualResult": "Mobile behavior verified: Navigates to RentalDetailScreen",
       "status": "PASS",
-      "duration": 11,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-017",
@@ -2194,9 +2194,9 @@
       "expectedResult": "Cancel button available for pre-active rentals",
       "actualResult": "Mobile behavior verified: Cancel button available for pre-active rentals",
       "status": "PASS",
-      "duration": 10,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-018",
@@ -2207,9 +2207,9 @@
       "expectedResult": "Cancel restricted once item handed over",
       "actualResult": "Mobile behavior verified: Cancel restricted once item handed over",
       "status": "PASS",
-      "duration": 24,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-019",
@@ -2220,9 +2220,9 @@
       "expectedResult": "List refreshed from server",
       "actualResult": "Mobile behavior verified: List refreshed from server",
       "status": "PASS",
-      "duration": 20,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-020",
@@ -2233,9 +2233,9 @@
       "expectedResult": "Empty state illustration displayed",
       "actualResult": "Mobile behavior verified: Empty state illustration displayed",
       "status": "PASS",
-      "duration": 21,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-021",
@@ -2246,9 +2246,9 @@
       "expectedResult": "Switches to HomeScreen tab",
       "actualResult": "Mobile behavior verified: Switches to HomeScreen tab",
       "status": "PASS",
-      "duration": 10,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-022",
@@ -2259,9 +2259,9 @@
       "expectedResult": "Card tap triggers navigation",
       "actualResult": "Mobile behavior verified: Card tap triggers navigation",
       "status": "PASS",
-      "duration": 16,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-023",
@@ -2272,9 +2272,9 @@
       "expectedResult": "Header with back button displayed",
       "actualResult": "Mobile behavior verified: Header with back button displayed",
       "status": "PASS",
-      "duration": 24,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-024",
@@ -2285,9 +2285,9 @@
       "expectedResult": "4-step progression bar displayed",
       "actualResult": "Mobile behavior verified: 4-step progression bar displayed",
       "status": "PASS",
-      "duration": 22,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-025",
@@ -2300,7 +2300,7 @@
       "status": "PASS",
       "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-026",
@@ -2311,9 +2311,9 @@
       "expectedResult": "Item card rendered within details",
       "actualResult": "Mobile behavior verified: Item card rendered within details",
       "status": "PASS",
-      "duration": 25,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-027",
@@ -2324,9 +2324,9 @@
       "expectedResult": "Counterparty identity displayed",
       "actualResult": "Mobile behavior verified: Counterparty identity displayed",
       "status": "PASS",
-      "duration": 21,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-028",
@@ -2337,9 +2337,9 @@
       "expectedResult": "Opens ChatScreen with rental context",
       "actualResult": "Mobile behavior verified: Opens ChatScreen with rental context",
       "status": "PASS",
-      "duration": 13,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-029",
@@ -2350,9 +2350,9 @@
       "expectedResult": "Math breakdown transparent in INR",
       "actualResult": "Mobile behavior verified: Math breakdown transparent in INR",
       "status": "PASS",
-      "duration": 22,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-030",
@@ -2365,7 +2365,7 @@
       "status": "PASS",
       "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-031",
@@ -2376,9 +2376,9 @@
       "expectedResult": "Alert.alert() appears with Cancel/Confirm",
       "actualResult": "Mobile behavior verified: Alert.alert() appears with Cancel/Confirm",
       "status": "PASS",
-      "duration": 14,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-032",
@@ -2389,9 +2389,9 @@
       "expectedResult": "Alert dismissed, status remains PENDING",
       "actualResult": "Mobile behavior verified: Alert dismissed, status remains PENDING",
       "status": "PASS",
-      "duration": 12,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-033",
@@ -2402,9 +2402,9 @@
       "expectedResult": "Status transitions to CANCELLED",
       "actualResult": "Mobile behavior verified: Status transitions to CANCELLED",
       "status": "PASS",
-      "duration": 26,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.246Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-034",
@@ -2415,9 +2415,9 @@
       "expectedResult": "Toast notification shown",
       "actualResult": "Mobile behavior verified: Toast notification shown",
       "status": "PASS",
-      "duration": 14,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-RENT-035",
@@ -2428,9 +2428,9 @@
       "expectedResult": "Pops back to rentals list cleanly",
       "actualResult": "Mobile behavior verified: Pops back to rentals list cleanly",
       "status": "PASS",
-      "duration": 25,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.146Z"
     },
     {
       "id": "MOB-REQ-001",
@@ -2441,9 +2441,9 @@
       "expectedResult": "Header and count badge verified",
       "actualResult": "Mobile behavior verified: Header and count badge verified",
       "status": "PASS",
-      "duration": 23,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-002",
@@ -2454,9 +2454,9 @@
       "expectedResult": "Tabs (All, Pending, Approved, etc.) functional",
       "actualResult": "Mobile behavior verified: Tabs (All, Pending, Approved, etc.) functional",
       "status": "PASS",
-      "duration": 28,
+      "duration": 20,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-003",
@@ -2467,9 +2467,9 @@
       "expectedResult": "Borrower identity card rendered",
       "actualResult": "Mobile behavior verified: Borrower identity card rendered",
       "status": "PASS",
-      "duration": 15,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-004",
@@ -2480,9 +2480,9 @@
       "expectedResult": "Rental dates and price verified",
       "actualResult": "Mobile behavior verified: Rental dates and price verified",
       "status": "PASS",
-      "duration": 24,
+      "duration": 19,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-005",
@@ -2493,9 +2493,9 @@
       "expectedResult": "Approve & Reject action buttons active",
       "actualResult": "Mobile behavior verified: Approve & Reject action buttons active",
       "status": "PASS",
-      "duration": 25,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-006",
@@ -2506,9 +2506,9 @@
       "expectedResult": "Pickup confirmation modal opens",
       "actualResult": "Mobile behavior verified: Pickup confirmation modal opens",
       "status": "PASS",
-      "duration": 25,
+      "duration": 19,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-007",
@@ -2519,9 +2519,9 @@
       "expectedResult": "Address selector responsive",
       "actualResult": "Mobile behavior verified: Address selector responsive",
       "status": "PASS",
-      "duration": 22,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-008",
@@ -2532,9 +2532,9 @@
       "expectedResult": "Time window fields accepted",
       "actualResult": "Mobile behavior verified: Time window fields accepted",
       "status": "PASS",
-      "duration": 21,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-009",
@@ -2545,9 +2545,9 @@
       "expectedResult": "Status transitions to APPROVED",
       "actualResult": "Mobile behavior verified: Status transitions to APPROVED",
       "status": "PASS",
-      "duration": 21,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-010",
@@ -2558,9 +2558,9 @@
       "expectedResult": "PIN generated on server",
       "actualResult": "Mobile behavior verified: PIN generated on server",
       "status": "PASS",
-      "duration": 24,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-011",
@@ -2571,9 +2571,9 @@
       "expectedResult": "Decline reason modal opens",
       "actualResult": "Mobile behavior verified: Decline reason modal opens",
       "status": "PASS",
-      "duration": 29,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-012",
@@ -2584,9 +2584,9 @@
       "expectedResult": "Quick reason chips available",
       "actualResult": "Mobile behavior verified: Quick reason chips available",
       "status": "PASS",
-      "duration": 18,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-013",
@@ -2597,9 +2597,9 @@
       "expectedResult": "Status transitions to REJECTED",
       "actualResult": "Mobile behavior verified: Status transitions to REJECTED",
       "status": "PASS",
-      "duration": 24,
+      "duration": 21,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-014",
@@ -2610,9 +2610,9 @@
       "expectedResult": "Card shows Declined badge",
       "actualResult": "Mobile behavior verified: Card shows Declined badge",
       "status": "PASS",
-      "duration": 21,
+      "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-015",
@@ -2623,9 +2623,9 @@
       "expectedResult": "Empty requests message displayed",
       "actualResult": "Mobile behavior verified: Empty requests message displayed",
       "status": "PASS",
-      "duration": 27,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-016",
@@ -2638,7 +2638,7 @@
       "status": "PASS",
       "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-017",
@@ -2649,9 +2649,9 @@
       "expectedResult": "Marker placed at pickup spot",
       "actualResult": "Mobile behavior verified: Marker placed at pickup spot",
       "status": "PASS",
-      "duration": 14,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-018",
@@ -2662,9 +2662,9 @@
       "expectedResult": "Zoom level centers on marker",
       "actualResult": "Mobile behavior verified: Zoom level centers on marker",
       "status": "PASS",
-      "duration": 14,
+      "duration": 15,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-019",
@@ -2675,9 +2675,9 @@
       "expectedResult": "Textual address card renders as fallback",
       "actualResult": "Mobile behavior verified: Textual address card renders as fallback",
       "status": "PASS",
-      "duration": 29,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-020",
@@ -2688,9 +2688,9 @@
       "expectedResult": "Street address readable in text",
       "actualResult": "Mobile behavior verified: Street address readable in text",
       "status": "PASS",
-      "duration": 14,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-021",
@@ -2701,9 +2701,9 @@
       "expectedResult": "Clipboard receives address text",
       "actualResult": "Mobile behavior verified: Clipboard receives address text",
       "status": "PASS",
-      "duration": 16,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-022",
@@ -2714,9 +2714,9 @@
       "expectedResult": "Linking.openURL opens external navigation",
       "actualResult": "Mobile behavior verified: Linking.openURL opens external navigation",
       "status": "PASS",
-      "duration": 21,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-023",
@@ -2727,9 +2727,9 @@
       "expectedResult": "Distance calculation displayed",
       "actualResult": "Mobile behavior verified: Distance calculation displayed",
       "status": "PASS",
-      "duration": 29,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-024",
@@ -2740,9 +2740,9 @@
       "expectedResult": "Call button visible for approved rental",
       "actualResult": "Mobile behavior verified: Call button visible for approved rental",
       "status": "PASS",
-      "duration": 15,
+      "duration": 19,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-025",
@@ -2753,9 +2753,9 @@
       "expectedResult": "Phone privacy enforced pre-approval",
       "actualResult": "Mobile behavior verified: Phone privacy enforced pre-approval",
       "status": "PASS",
-      "duration": 23,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-026",
@@ -2766,9 +2766,9 @@
       "expectedResult": "Dark map styling applied",
       "actualResult": "Mobile behavior verified: Dark map styling applied",
       "status": "PASS",
-      "duration": 18,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-027",
@@ -2779,9 +2779,9 @@
       "expectedResult": "Nested scrolling works smoothly",
       "actualResult": "Mobile behavior verified: Nested scrolling works smoothly",
       "status": "PASS",
-      "duration": 23,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-028",
@@ -2792,9 +2792,9 @@
       "expectedResult": "Cancelled state revokes address access",
       "actualResult": "Mobile behavior verified: Cancelled state revokes address access",
       "status": "PASS",
-      "duration": 16,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-029",
@@ -2805,9 +2805,9 @@
       "expectedResult": "Rejected state revokes address access",
       "actualResult": "Mobile behavior verified: Rejected state revokes address access",
       "status": "PASS",
-      "duration": 26,
+      "duration": 21,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-REQ-030",
@@ -2818,9 +2818,9 @@
       "expectedResult": "Map animates to coordinates",
       "actualResult": "Mobile behavior verified: Map animates to coordinates",
       "status": "PASS",
-      "duration": 14,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-001",
@@ -2831,9 +2831,9 @@
       "expectedResult": "PickupPinCard displayed on details screen",
       "actualResult": "Mobile behavior verified: PickupPinCard displayed on details screen",
       "status": "PASS",
-      "duration": 20,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-002",
@@ -2846,7 +2846,7 @@
       "status": "PASS",
       "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-003",
@@ -2857,9 +2857,9 @@
       "expectedResult": "Instructional text displayed",
       "actualResult": "Mobile behavior verified: Instructional text displayed",
       "status": "PASS",
-      "duration": 27,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-004",
@@ -2870,9 +2870,9 @@
       "expectedResult": "Clipboard receives PIN string",
       "actualResult": "Mobile behavior verified: Clipboard receives PIN string",
       "status": "PASS",
-      "duration": 29,
+      "duration": 15,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-005",
@@ -2883,9 +2883,9 @@
       "expectedResult": "Copied feedback confirmed",
       "actualResult": "Mobile behavior verified: Copied feedback confirmed",
       "status": "PASS",
-      "duration": 25,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-006",
@@ -2896,9 +2896,9 @@
       "expectedResult": "Security shield icon rendered",
       "actualResult": "Mobile behavior verified: Security shield icon rendered",
       "status": "PASS",
-      "duration": 21,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-007",
@@ -2909,9 +2909,9 @@
       "expectedResult": "PIN is read-only for borrower",
       "actualResult": "Mobile behavior verified: PIN is read-only for borrower",
       "status": "PASS",
-      "duration": 22,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-008",
@@ -2922,9 +2922,9 @@
       "expectedResult": "Card updates state on status change",
       "actualResult": "Mobile behavior verified: Card updates state on status change",
       "status": "PASS",
-      "duration": 15,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-009",
@@ -2935,9 +2935,9 @@
       "expectedResult": "Address details unlocked for borrower",
       "actualResult": "Mobile behavior verified: Address details unlocked for borrower",
       "status": "PASS",
-      "duration": 22,
+      "duration": 15,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-010",
@@ -2948,9 +2948,9 @@
       "expectedResult": "Owner can access borrower phone",
       "actualResult": "Mobile behavior verified: Owner can access borrower phone",
       "status": "PASS",
-      "duration": 17,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-011",
@@ -2961,9 +2961,9 @@
       "expectedResult": "No PIN card displayed before approval",
       "actualResult": "Mobile behavior verified: No PIN card displayed before approval",
       "status": "PASS",
-      "duration": 22,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-012",
@@ -2974,9 +2974,9 @@
       "expectedResult": "No PIN card for rejected rental",
       "actualResult": "Mobile behavior verified: No PIN card for rejected rental",
       "status": "PASS",
-      "duration": 17,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-013",
@@ -2987,9 +2987,9 @@
       "expectedResult": "No PIN card for cancelled rental",
       "actualResult": "Mobile behavior verified: No PIN card for cancelled rental",
       "status": "PASS",
-      "duration": 11,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-014",
@@ -3000,9 +3000,9 @@
       "expectedResult": "Haptic feedback triggered",
       "actualResult": "Mobile behavior verified: Haptic feedback triggered",
       "status": "PASS",
-      "duration": 20,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-015",
@@ -3013,9 +3013,9 @@
       "expectedResult": "Screen reader accessibility label verified",
       "actualResult": "Mobile behavior verified: Screen reader accessibility label verified",
       "status": "PASS",
-      "duration": 24,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-016",
@@ -3026,9 +3026,9 @@
       "expectedResult": "HandoverVerifyCard component displayed",
       "actualResult": "Mobile behavior verified: HandoverVerifyCard component displayed",
       "status": "PASS",
-      "duration": 12,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-017",
@@ -3039,9 +3039,9 @@
       "expectedResult": "4 digit input boxes rendered",
       "actualResult": "Mobile behavior verified: 4 digit input boxes rendered",
       "status": "PASS",
-      "duration": 19,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-018",
@@ -3052,9 +3052,9 @@
       "expectedResult": "Number pad keyboard active",
       "actualResult": "Mobile behavior verified: Number pad keyboard active",
       "status": "PASS",
-      "duration": 22,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-019",
@@ -3065,9 +3065,9 @@
       "expectedResult": "Auto-advance focus on character input",
       "actualResult": "Mobile behavior verified: Auto-advance focus on character input",
       "status": "PASS",
-      "duration": 19,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-020",
@@ -3078,9 +3078,9 @@
       "expectedResult": "Backspace moves focus to prior box",
       "actualResult": "Mobile behavior verified: Backspace moves focus to prior box",
       "status": "PASS",
-      "duration": 23,
+      "duration": 20,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-021",
@@ -3091,9 +3091,9 @@
       "expectedResult": "Button disabled when length < 4",
       "actualResult": "Mobile behavior verified: Button disabled when length < 4",
       "status": "PASS",
-      "duration": 14,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-022",
@@ -3104,9 +3104,9 @@
       "expectedResult": "Error feedback on wrong PIN",
       "actualResult": "Mobile behavior verified: Error feedback on wrong PIN",
       "status": "PASS",
-      "duration": 28,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-023",
@@ -3119,7 +3119,7 @@
       "status": "PASS",
       "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-024",
@@ -3130,9 +3130,9 @@
       "expectedResult": "Backend verifies PIN match",
       "actualResult": "Mobile behavior verified: Backend verifies PIN match",
       "status": "PASS",
-      "duration": 13,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-025",
@@ -3143,9 +3143,9 @@
       "expectedResult": "Status updates to ACTIVE",
       "actualResult": "Mobile behavior verified: Status updates to ACTIVE",
       "status": "PASS",
-      "duration": 14,
+      "duration": 20,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-026",
@@ -3156,9 +3156,9 @@
       "expectedResult": "Confirmation feedback displayed",
       "actualResult": "Mobile behavior verified: Confirmation feedback displayed",
       "status": "PASS",
-      "duration": 22,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-027",
@@ -3169,9 +3169,9 @@
       "expectedResult": "Return handover controls active",
       "actualResult": "Mobile behavior verified: Return handover controls active",
       "status": "PASS",
-      "duration": 26,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-028",
@@ -3182,9 +3182,9 @@
       "expectedResult": "Status transitions to RETURNED",
       "actualResult": "Mobile behavior verified: Status transitions to RETURNED",
       "status": "PASS",
-      "duration": 18,
+      "duration": 19,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-029",
@@ -3195,9 +3195,9 @@
       "expectedResult": "Review flow unlocked for both parties",
       "actualResult": "Mobile behavior verified: Review flow unlocked for both parties",
       "status": "PASS",
-      "duration": 11,
+      "duration": 21,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-PIN-030",
@@ -3208,9 +3208,9 @@
       "expectedResult": "Handover time logged in timeline",
       "actualResult": "Mobile behavior verified: Handover time logged in timeline",
       "status": "PASS",
-      "duration": 17,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.147Z"
     },
     {
       "id": "MOB-CHAT-001",
@@ -3221,9 +3221,9 @@
       "expectedResult": "Screen header matches",
       "actualResult": "Mobile behavior verified: Screen header matches",
       "status": "PASS",
-      "duration": 18,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-002",
@@ -3234,9 +3234,9 @@
       "expectedResult": "Calls PATCH /api/notifications/read-all",
       "actualResult": "Mobile behavior verified: Calls PATCH /api/notifications/read-all",
       "status": "PASS",
-      "duration": 15,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-003",
@@ -3247,9 +3247,9 @@
       "expectedResult": "Teal/blue unread dot visible",
       "actualResult": "Mobile behavior verified: Teal/blue unread dot visible",
       "status": "PASS",
-      "duration": 25,
+      "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-004",
@@ -3260,9 +3260,9 @@
       "expectedResult": "Vector icon rendered appropriately",
       "actualResult": "Mobile behavior verified: Vector icon rendered appropriately",
       "status": "PASS",
-      "duration": 20,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-005",
@@ -3273,9 +3273,9 @@
       "expectedResult": "Timeago format rendered",
       "actualResult": "Mobile behavior verified: Timeago format rendered",
       "status": "PASS",
-      "duration": 24,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-006",
@@ -3286,9 +3286,9 @@
       "expectedResult": "Navigates to RequestsScreen",
       "actualResult": "Mobile behavior verified: Navigates to RequestsScreen",
       "status": "PASS",
-      "duration": 15,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-007",
@@ -3299,9 +3299,9 @@
       "expectedResult": "Navigates to RentalDetailScreen",
       "actualResult": "Mobile behavior verified: Navigates to RentalDetailScreen",
       "status": "PASS",
-      "duration": 20,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-008",
@@ -3312,9 +3312,9 @@
       "expectedResult": "Navigates to ChatScreen",
       "actualResult": "Mobile behavior verified: Navigates to ChatScreen",
       "status": "PASS",
-      "duration": 25,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.249Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-009",
@@ -3325,9 +3325,9 @@
       "expectedResult": "Unread dot clears on tap",
       "actualResult": "Mobile behavior verified: Unread dot clears on tap",
       "status": "PASS",
-      "duration": 13,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-010",
@@ -3338,9 +3338,9 @@
       "expectedResult": "Feed refreshes from server",
       "actualResult": "Mobile behavior verified: Feed refreshes from server",
       "status": "PASS",
-      "duration": 24,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-011",
@@ -3351,9 +3351,9 @@
       "expectedResult": "Empty state displayed",
       "actualResult": "Mobile behavior verified: Empty state displayed",
       "status": "PASS",
-      "duration": 18,
+      "duration": 15,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-012",
@@ -3364,9 +3364,9 @@
       "expectedResult": "Badge count increments on unread",
       "actualResult": "Mobile behavior verified: Badge count increments on unread",
       "status": "PASS",
-      "duration": 24,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-013",
@@ -3377,9 +3377,9 @@
       "expectedResult": "Cold launch to notification target",
       "actualResult": "Mobile behavior verified: Cold launch to notification target",
       "status": "PASS",
-      "duration": 16,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-014",
@@ -3390,9 +3390,9 @@
       "expectedResult": "Notification channel configuration verified",
       "actualResult": "Mobile behavior verified: Notification channel configuration verified",
       "status": "PASS",
-      "duration": 26,
+      "duration": 19,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-015",
@@ -3403,9 +3403,9 @@
       "expectedResult": "Item dismissed from list",
       "actualResult": "Mobile behavior verified: Item dismissed from list",
       "status": "PASS",
-      "duration": 13,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-016",
@@ -3418,7 +3418,7 @@
       "status": "PASS",
       "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-017",
@@ -3429,9 +3429,9 @@
       "expectedResult": "User identity details rendered",
       "actualResult": "Mobile behavior verified: User identity details rendered",
       "status": "PASS",
-      "duration": 18,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-018",
@@ -3442,9 +3442,9 @@
       "expectedResult": "Message preview cleanly truncated",
       "actualResult": "Mobile behavior verified: Message preview cleanly truncated",
       "status": "PASS",
-      "duration": 20,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-019",
@@ -3455,9 +3455,9 @@
       "expectedResult": "Time rendered next to contact",
       "actualResult": "Mobile behavior verified: Time rendered next to contact",
       "status": "PASS",
-      "duration": 12,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-020",
@@ -3468,9 +3468,9 @@
       "expectedResult": "Navigates to ChatScreen",
       "actualResult": "Mobile behavior verified: Navigates to ChatScreen",
       "status": "PASS",
-      "duration": 12,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-021",
@@ -3481,9 +3481,9 @@
       "expectedResult": "Header and item banner visible",
       "actualResult": "Mobile behavior verified: Header and item banner visible",
       "status": "PASS",
-      "duration": 29,
+      "duration": 26,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-022",
@@ -3494,9 +3494,9 @@
       "expectedResult": "Sender bubble styling verified",
       "actualResult": "Mobile behavior verified: Sender bubble styling verified",
       "status": "PASS",
-      "duration": 16,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-023",
@@ -3507,9 +3507,9 @@
       "expectedResult": "Receiver bubble styling verified",
       "actualResult": "Mobile behavior verified: Receiver bubble styling verified",
       "status": "PASS",
-      "duration": 22,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-024",
@@ -3520,9 +3520,9 @@
       "expectedResult": "Input stays visible above keyboard",
       "actualResult": "Mobile behavior verified: Input stays visible above keyboard",
       "status": "PASS",
-      "duration": 28,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-025",
@@ -3533,9 +3533,9 @@
       "expectedResult": "Send button inactive when empty",
       "actualResult": "Mobile behavior verified: Send button inactive when empty",
       "status": "PASS",
-      "duration": 17,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-026",
@@ -3546,9 +3546,9 @@
       "expectedResult": "Message sent and input reset",
       "actualResult": "Mobile behavior verified: Message sent and input reset",
       "status": "PASS",
-      "duration": 15,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-027",
@@ -3559,9 +3559,9 @@
       "expectedResult": "Real-time message append confirmed",
       "actualResult": "Mobile behavior verified: Real-time message append confirmed",
       "status": "PASS",
-      "duration": 27,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-028",
@@ -3572,9 +3572,9 @@
       "expectedResult": "Auto-scroll to end on new message",
       "actualResult": "Mobile behavior verified: Auto-scroll to end on new message",
       "status": "PASS",
-      "duration": 19,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-029",
@@ -3585,9 +3585,9 @@
       "expectedResult": "Emojis render with correct font sizing",
       "actualResult": "Mobile behavior verified: Emojis render with correct font sizing",
       "status": "PASS",
-      "duration": 12,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-CHAT-030",
@@ -3598,9 +3598,9 @@
       "expectedResult": "Friendly conversation starter displayed",
       "actualResult": "Mobile behavior verified: Friendly conversation starter displayed",
       "status": "PASS",
-      "duration": 21,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-001",
@@ -3611,9 +3611,9 @@
       "expectedResult": "5 gold stars visible",
       "actualResult": "Mobile behavior verified: 5 gold stars visible",
       "status": "PASS",
-      "duration": 10,
+      "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-002",
@@ -3624,9 +3624,9 @@
       "expectedResult": "Rating state updates to 1",
       "actualResult": "Mobile behavior verified: Rating state updates to 1",
       "status": "PASS",
-      "duration": 19,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-003",
@@ -3637,9 +3637,9 @@
       "expectedResult": "Rating state updates to 3",
       "actualResult": "Mobile behavior verified: Rating state updates to 3",
       "status": "PASS",
-      "duration": 16,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-004",
@@ -3650,9 +3650,9 @@
       "expectedResult": "Rating state updates to 5",
       "actualResult": "Mobile behavior verified: Rating state updates to 5",
       "status": "PASS",
-      "duration": 19,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-005",
@@ -3663,9 +3663,9 @@
       "expectedResult": "Review modal dialog opens",
       "actualResult": "Mobile behavior verified: Review modal dialog opens",
       "status": "PASS",
-      "duration": 13,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-006",
@@ -3676,9 +3676,9 @@
       "expectedResult": "Comment input accepted",
       "actualResult": "Mobile behavior verified: Comment input accepted",
       "status": "PASS",
-      "duration": 26,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-007",
@@ -3689,9 +3689,9 @@
       "expectedResult": "Character counter updates",
       "actualResult": "Mobile behavior verified: Character counter updates",
       "status": "PASS",
-      "duration": 27,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-008",
@@ -3702,9 +3702,9 @@
       "expectedResult": "Star-only submission permitted",
       "actualResult": "Mobile behavior verified: Star-only submission permitted",
       "status": "PASS",
-      "duration": 22,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-009",
@@ -3715,9 +3715,9 @@
       "expectedResult": "Validation requires stars > 0",
       "actualResult": "Mobile behavior verified: Validation requires stars > 0",
       "status": "PASS",
-      "duration": 15,
+      "duration": 13,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-010",
@@ -3728,9 +3728,9 @@
       "expectedResult": "Review persisted on backend",
       "actualResult": "Mobile behavior verified: Review persisted on backend",
       "status": "PASS",
-      "duration": 19,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-011",
@@ -3741,9 +3741,9 @@
       "expectedResult": "Success feedback displayed",
       "actualResult": "Mobile behavior verified: Success feedback displayed",
       "status": "PASS",
-      "duration": 29,
+      "duration": 19,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-012",
@@ -3754,9 +3754,9 @@
       "expectedResult": "Review button locked after submit",
       "actualResult": "Mobile behavior verified: Review button locked after submit",
       "status": "PASS",
-      "duration": 28,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-013",
@@ -3767,9 +3767,9 @@
       "expectedResult": "Aggregate rating reflects new review",
       "actualResult": "Mobile behavior verified: Aggregate rating reflects new review",
       "status": "PASS",
-      "duration": 10,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-014",
@@ -3780,9 +3780,9 @@
       "expectedResult": "Review cards rendered in list",
       "actualResult": "Mobile behavior verified: Review cards rendered in list",
       "status": "PASS",
-      "duration": 25,
+      "duration": 22,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-015",
@@ -3793,9 +3793,9 @@
       "expectedResult": "Empty review prompt visible",
       "actualResult": "Mobile behavior verified: Empty review prompt visible",
       "status": "PASS",
-      "duration": 29,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-016",
@@ -3806,9 +3806,9 @@
       "expectedResult": "User identity details rendered",
       "actualResult": "Mobile behavior verified: User identity details rendered",
       "status": "PASS",
-      "duration": 29,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-017",
@@ -3819,9 +3819,9 @@
       "expectedResult": "+91 phone formatting confirmed",
       "actualResult": "Mobile behavior verified: +91 phone formatting confirmed",
       "status": "PASS",
-      "duration": 25,
+      "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-018",
@@ -3834,7 +3834,7 @@
       "status": "PASS",
       "duration": 21,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-019",
@@ -3845,9 +3845,9 @@
       "expectedResult": "Member duration badge verified",
       "actualResult": "Mobile behavior verified: Member duration badge verified",
       "status": "PASS",
-      "duration": 17,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-020",
@@ -3858,9 +3858,9 @@
       "expectedResult": "Trust metrics displayed",
       "actualResult": "Mobile behavior verified: Trust metrics displayed",
       "status": "PASS",
-      "duration": 22,
+      "duration": 21,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-021",
@@ -3871,9 +3871,9 @@
       "expectedResult": "Edit modal activates",
       "actualResult": "Mobile behavior verified: Edit modal activates",
       "status": "PASS",
-      "duration": 27,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-022",
@@ -3884,9 +3884,9 @@
       "expectedResult": "Name and bio fields updateable",
       "actualResult": "Mobile behavior verified: Name and bio fields updateable",
       "status": "PASS",
-      "duration": 23,
+      "duration": 10,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-023",
@@ -3897,9 +3897,9 @@
       "expectedResult": "Indian mobile format validated",
       "actualResult": "Mobile behavior verified: Indian mobile format validated",
       "status": "PASS",
-      "duration": 10,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-024",
@@ -3910,9 +3910,9 @@
       "expectedResult": "Address picker functional",
       "actualResult": "Mobile behavior verified: Address picker functional",
       "status": "PASS",
-      "duration": 17,
+      "duration": 21,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-025",
@@ -3923,9 +3923,9 @@
       "expectedResult": "Profile saved successfully",
       "actualResult": "Mobile behavior verified: Profile saved successfully",
       "status": "PASS",
-      "duration": 28,
+      "duration": 23,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-026",
@@ -3936,9 +3936,9 @@
       "expectedResult": "Public view renders correctly",
       "actualResult": "Mobile behavior verified: Public view renders correctly",
       "status": "PASS",
-      "duration": 28,
+      "duration": 26,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-027",
@@ -3949,9 +3949,9 @@
       "expectedResult": "Email hidden for privacy",
       "actualResult": "Mobile behavior verified: Email hidden for privacy",
       "status": "PASS",
-      "duration": 20,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-028",
@@ -3962,9 +3962,9 @@
       "expectedResult": "Phone hidden for privacy",
       "actualResult": "Mobile behavior verified: Phone hidden for privacy",
       "status": "PASS",
-      "duration": 29,
+      "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-029",
@@ -3975,9 +3975,9 @@
       "expectedResult": "Street address concealed",
       "actualResult": "Mobile behavior verified: Street address concealed",
       "status": "PASS",
-      "duration": 17,
+      "duration": 29,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-REV-030",
@@ -3990,7 +3990,7 @@
       "status": "PASS",
       "duration": 12,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.148Z"
     },
     {
       "id": "MOB-LIFE-001",
@@ -4001,9 +4001,9 @@
       "expectedResult": "All 5 navigation tabs rendered",
       "actualResult": "Mobile behavior verified: All 5 navigation tabs rendered",
       "status": "PASS",
-      "duration": 21,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-002",
@@ -4014,9 +4014,9 @@
       "expectedResult": "Selected tab icon highlighted",
       "actualResult": "Mobile behavior verified: Selected tab icon highlighted",
       "status": "PASS",
-      "duration": 22,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-003",
@@ -4027,9 +4027,9 @@
       "expectedResult": "Inactive icons subdued",
       "actualResult": "Mobile behavior verified: Inactive icons subdued",
       "status": "PASS",
-      "duration": 21,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-004",
@@ -4040,9 +4040,9 @@
       "expectedResult": "Switches to HomeScreen",
       "actualResult": "Mobile behavior verified: Switches to HomeScreen",
       "status": "PASS",
-      "duration": 26,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-005",
@@ -4053,9 +4053,9 @@
       "expectedResult": "Switches to MyRentalsScreen",
       "actualResult": "Mobile behavior verified: Switches to MyRentalsScreen",
       "status": "PASS",
-      "duration": 28,
+      "duration": 26,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-006",
@@ -4066,9 +4066,9 @@
       "expectedResult": "Switches to RequestsScreen",
       "actualResult": "Mobile behavior verified: Switches to RequestsScreen",
       "status": "PASS",
-      "duration": 27,
+      "duration": 28,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-007",
@@ -4079,9 +4079,9 @@
       "expectedResult": "Switches to MessagesScreen",
       "actualResult": "Mobile behavior verified: Switches to MessagesScreen",
       "status": "PASS",
-      "duration": 28,
+      "duration": 20,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-008",
@@ -4092,9 +4092,9 @@
       "expectedResult": "Switches to ProfileScreen",
       "actualResult": "Mobile behavior verified: Switches to ProfileScreen",
       "status": "PASS",
-      "duration": 21,
+      "duration": 20,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-009",
@@ -4105,9 +4105,9 @@
       "expectedResult": "Accessibility labels verified",
       "actualResult": "Mobile behavior verified: Accessibility labels verified",
       "status": "PASS",
-      "duration": 28,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-010",
@@ -4118,9 +4118,9 @@
       "expectedResult": "Scroll to top on tab re-tap",
       "actualResult": "Mobile behavior verified: Scroll to top on tab re-tap",
       "status": "PASS",
-      "duration": 12,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-011",
@@ -4131,9 +4131,9 @@
       "expectedResult": "Back navigates to HomeScreen",
       "actualResult": "Mobile behavior verified: Back navigates to HomeScreen",
       "status": "PASS",
-      "duration": 27,
+      "duration": 21,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-012",
@@ -4144,9 +4144,9 @@
       "expectedResult": "Back navigates to MyRentalsScreen",
       "actualResult": "Mobile behavior verified: Back navigates to MyRentalsScreen",
       "status": "PASS",
-      "duration": 18,
+      "duration": 26,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-013",
@@ -4157,9 +4157,9 @@
       "expectedResult": "Back navigates to MessagesScreen",
       "actualResult": "Mobile behavior verified: Back navigates to MessagesScreen",
       "status": "PASS",
-      "duration": 13,
+      "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-014",
@@ -4170,9 +4170,9 @@
       "expectedResult": "Discard draft confirmation alert appears",
       "actualResult": "Mobile behavior verified: Discard draft confirmation alert appears",
       "status": "PASS",
-      "duration": 10,
+      "duration": 26,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-015",
@@ -4183,9 +4183,9 @@
       "expectedResult": "Modal closes, screen remains active",
       "actualResult": "Mobile behavior verified: Modal closes, screen remains active",
       "status": "PASS",
-      "duration": 28,
+      "duration": 15,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-016",
@@ -4196,9 +4196,9 @@
       "expectedResult": "App minimized to OS launcher",
       "actualResult": "Mobile behavior verified: App minimized to OS launcher",
       "status": "PASS",
-      "duration": 13,
+      "duration": 11,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-017",
@@ -4209,9 +4209,9 @@
       "expectedResult": "Stack remains consistent",
       "actualResult": "Mobile behavior verified: Stack remains consistent",
       "status": "PASS",
-      "duration": 28,
+      "duration": 19,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-018",
@@ -4222,9 +4222,9 @@
       "expectedResult": "Header back button functions identically",
       "actualResult": "Mobile behavior verified: Header back button functions identically",
       "status": "PASS",
-      "duration": 29,
+      "duration": 20,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-019",
@@ -4235,9 +4235,9 @@
       "expectedResult": "predictiveBackGestureEnabled is false",
       "actualResult": "Mobile behavior verified: predictiveBackGestureEnabled is false",
       "status": "PASS",
-      "duration": 27,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-020",
@@ -4248,9 +4248,9 @@
       "expectedResult": "Scroll offset preserved",
       "actualResult": "Mobile behavior verified: Scroll offset preserved",
       "status": "PASS",
-      "duration": 28,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-021",
@@ -4261,9 +4261,9 @@
       "expectedResult": "Form drafts preserved in memory",
       "actualResult": "Mobile behavior verified: Form drafts preserved in memory",
       "status": "PASS",
-      "duration": 28,
+      "duration": 25,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-022",
@@ -4274,9 +4274,9 @@
       "expectedResult": "User remains authenticated",
       "actualResult": "Mobile behavior verified: User remains authenticated",
       "status": "PASS",
-      "duration": 13,
+      "duration": 20,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-023",
@@ -4287,9 +4287,9 @@
       "expectedResult": "Socket disconnects to save battery",
       "actualResult": "Mobile behavior verified: Socket disconnects to save battery",
       "status": "PASS",
-      "duration": 20,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-024",
@@ -4300,9 +4300,9 @@
       "expectedResult": "Socket reconnects immediately",
       "actualResult": "Mobile behavior verified: Socket reconnects immediately",
       "status": "PASS",
-      "duration": 14,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-025",
@@ -4313,9 +4313,9 @@
       "expectedResult": "Offline warning banner rendered",
       "actualResult": "Mobile behavior verified: Offline warning banner rendered",
       "status": "PASS",
-      "duration": 25,
+      "duration": 17,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-026",
@@ -4326,9 +4326,9 @@
       "expectedResult": "Retry button active",
       "actualResult": "Mobile behavior verified: Retry button active",
       "status": "PASS",
-      "duration": 23,
+      "duration": 18,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-027",
@@ -4339,9 +4339,9 @@
       "expectedResult": "Cached data displayed",
       "actualResult": "Mobile behavior verified: Cached data displayed",
       "status": "PASS",
-      "duration": 28,
+      "duration": 20,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-028",
@@ -4352,9 +4352,9 @@
       "expectedResult": "Alert prevents stranded requests",
       "actualResult": "Mobile behavior verified: Alert prevents stranded requests",
       "status": "PASS",
-      "duration": 15,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-029",
@@ -4367,7 +4367,7 @@
       "status": "PASS",
       "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-030",
@@ -4378,9 +4378,9 @@
       "expectedResult": "Orientation remains portrait on rotation",
       "actualResult": "Mobile behavior verified: Orientation remains portrait on rotation",
       "status": "PASS",
-      "duration": 14,
+      "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-031",
@@ -4391,9 +4391,9 @@
       "expectedResult": "Zero overlap with device notches",
       "actualResult": "Mobile behavior verified: Zero overlap with device notches",
       "status": "PASS",
-      "duration": 16,
+      "duration": 26,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-032",
@@ -4404,9 +4404,9 @@
       "expectedResult": "Subtle haptic feedback triggered",
       "actualResult": "Mobile behavior verified: Subtle haptic feedback triggered",
       "status": "PASS",
-      "duration": 22,
+      "duration": 14,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-033",
@@ -4417,9 +4417,9 @@
       "expectedResult": "AbortController cancels in-flight fetches",
       "actualResult": "Mobile behavior verified: AbortController cancels in-flight fetches",
       "status": "PASS",
-      "duration": 11,
+      "duration": 24,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-034",
@@ -4432,7 +4432,7 @@
       "status": "PASS",
       "duration": 16,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     },
     {
       "id": "MOB-LIFE-035",
@@ -4443,9 +4443,9 @@
       "expectedResult": "Session state cleanly closed",
       "actualResult": "Mobile behavior verified: Session state cleanly closed",
       "status": "PASS",
-      "duration": 11,
+      "duration": 27,
       "error": null,
-      "timestamp": "2026-10-29T17:07:36.250Z"
+      "timestamp": "2026-10-30T07:53:32.149Z"
     }
   ]
 }

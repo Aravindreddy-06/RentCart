@@ -185,6 +185,7 @@ async function runPickupTrackingTests() {
     const res = await request(`/rentals/${rentalId}/pickup`, 'PATCH', {
       pickupLatitude: 0,
       pickupLongitude: 0,
+      pickupAddress: '123 Fake St, Springfield',
     }, carolToken);
     const passed = res.status === 403;
 

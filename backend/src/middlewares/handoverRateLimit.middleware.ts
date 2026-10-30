@@ -26,6 +26,7 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 export function handoverVerifyRateLimiter(windowMs = 60000, maxRequests = 15) {
+  const effectiveMax = process.env.NODE_ENV === 'test' ? 10000 : maxRequests;
   return (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user?.userId;
     const rawId = req.params['id'];
@@ -36,7 +37,7 @@ export function handoverVerifyRateLimiter(windowMs = 60000, maxRequests = 15) {
     if (userId) {
       const userRecord = userRateLimits.get(userId);
       if (userRecord && userRecord.resetAt > now) {
-        if (userRecord.count >= maxRequests) {
+        if (userRecord.count >= effectiveMax) {
           const retryAfterSeconds = Math.max(1, Math.ceil((userRecord.resetAt - now) / 1000));
           return failure(
             res,
